@@ -3,8 +3,8 @@
 // Município de Reguengos de Monsaraz
 // ============================================================
 
-const CACHE_NAME    = 'rmz-nacionalidades-v1';
-const CACHE_STATIC  = 'rmz-static-v1';
+const CACHE_NAME    = 'rmz-nacionalidades-v2';
+const CACHE_STATIC  = 'rmz-static-v2';
 
 // Recursos a pré-cachear (shell da app)
 const STATIC_ASSETS = [
