@@ -26,9 +26,10 @@
     <div class="login-sub">Registo Diário de Nacionalidades</div>
     <div class="login-erro" id="loginErro"></div>
     <div class="login-field">
-      <label>Utilizador</label>
-      <input type="text" id="loginUser" placeholder="Nome de utilizador"
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="nome@exemplo.pt"
              autocomplete="username"
+             inputmode="email"
              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
     </div>
     <div class="login-field">
@@ -191,10 +192,15 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK (compat — compatível com todos os browsers modernos) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<!-- Aplicação -->
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/api.js"></script>
-<script src="js/app.js"></script>
+<script src="js/api.js"></script>   <!-- inicializa Firebase e define funções api* -->
+<script src="js/app.js"></script>   <!-- usa as funções api* e arranca o observador -->
 <script src="js/pwa.js"></script>
 </body>
 </html>
