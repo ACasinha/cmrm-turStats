@@ -9,18 +9,40 @@ let nomeFuncionarioAtual  = '';
 let verificacaoTimer      = null;
 let ultimoLocalVerificado = '';
 let ultimaDataVerificada  = '';
+let unsubscribeAuth       = null;   // referência ao observador Firebase
+
+// ============================================================
+// OBSERVADOR DE AUTENTICAÇÃO FIREBASE
+//
+// Arranca imediatamente ao carregar a página.
+// O Firebase restaura a sessão automaticamente se o token
+// ainda for válido (persiste em localStorage por omissão).
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  unsubscribeAuth = apiObservarAuth(user => {
+    if (user) {
+      // Utilizador autenticado (login novo ou sessão restaurada)
+      nomeFuncionarioAtual = user.displayName || user.email;
+      activarApp();
+    } else {
+      // Sem sessão — mostrar ecrã de login
+      mostrarEcraLogin();
+    }
+  });
+});
 
 // ============================================================
 // LOGIN / LOGOUT
 // ============================================================
 
 function fazerLogin() {
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value;
-  const erro = document.getElementById('loginErro');
-  const btn  = document.getElementById('btnLogin');
+  const email = document.getElementById('loginUser').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const erro  = document.getElementById('loginErro');
+  const btn   = document.getElementById('btnLogin');
 
-  if (!user || !pass) {
+  if (!email || !pass) {
     erro.textContent = 'Por favor preencha todos os campos.';
     erro.classList.add('visivel');
     return;
@@ -31,62 +53,59 @@ function fazerLogin() {
   erro.classList.remove('visivel');
 
   apiAutenticar(
-    user, pass,
+    email, pass,
     function onSuccess(resp) {
+      // O observador onAuthStateChanged acima trata do activarApp()
+      // automaticamente após login bem-sucedido.
+      // Aqui apenas repõe o botão em caso de delay.
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
-      if (resp.sucesso) {
-        nomeFuncionarioAtual = resp.nomeFuncionario;
-        sessionStorage.setItem('rmz_user', JSON.stringify(resp));
-        activarApp();
-      } else {
-        erro.textContent = resp.mensagem || 'Credenciais inválidas.';
-        erro.classList.add('visivel');
-        document.getElementById('loginPass').value = '';
-        document.getElementById('loginPass').focus();
-      }
     },
     function onFailure(err) {
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
-      erro.textContent = 'Erro de ligação: ' + err.message;
+      erro.textContent = err.message;
       erro.classList.add('visivel');
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
     }
   );
 }
 
 function fazerLogout() {
   if (!confirm('Deseja terminar a sessão?')) return;
-  sessionStorage.removeItem('rmz_user');
-  nomeFuncionarioAtual = '';
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  limparFormularioParcial();
-  mostrarBanner('', '');
-  ultimoLocalVerificado = '';
-  ultimaDataVerificada  = '';
+
+  apiLogout().then(() => {
+    // O observador onAuthStateChanged chama mostrarEcraLogin() automaticamente
+    nomeFuncionarioAtual  = '';
+    ultimoLocalVerificado = '';
+    ultimaDataVerificada  = '';
+    limparFormularioParcial();
+    mostrarBanner('', '');
+  });
 }
 
 function activarApp() {
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('headerNomeFuncionario').textContent  = nomeFuncionarioAtual;
   document.getElementById('nomeFuncionarioDisplay').textContent = nomeFuncionarioAtual;
-  inicializarApp();
+
+  // Inicializar só se as tabelas ainda não existirem
+  if (!document.querySelector('.pais-input')) {
+    inicializarApp();
+  }
 }
 
-// Restaurar sessão ao carregar a página
-(function verificarSessaoGuardada() {
-  const saved = sessionStorage.getItem('rmz_user');
-  if (!saved) return;
-  try {
-    const r = JSON.parse(saved);
-    if (r.sucesso && r.nomeFuncionario) {
-      nomeFuncionarioAtual = r.nomeFuncionario;
-      activarApp();
-    }
-  } catch (_) {}
-})();
+function mostrarEcraLogin() {
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginPass').value = '';
+
+  // Limpar estado visual
+  limparFormularioParcial();
+  mostrarBanner('', '');
+  ultimoLocalVerificado = '';
+  ultimaDataVerificada  = '';
+}
 
 // ============================================================
 // INICIALIZAÇÃO
@@ -100,7 +119,7 @@ function inicializarApp() {
 }
 
 // ============================================================
-// VERIFICAÇÃO AUTOMÁTICA
+// VERIFICAÇÃO AUTOMÁTICA (ao mudar local/data)
 // ============================================================
 
 function agendarVerificacao() {
@@ -138,6 +157,7 @@ function verificarDados() {
     function onFailure(err) {
       mostrarBanner('', '');
       mostrarToast('Erro: ' + err.message, 'erro');
+      // Se a sessão expirou, o apiLogout já foi chamado em api.js
     }
   );
 }
@@ -150,7 +170,7 @@ function guardarDados() {
   const local       = document.getElementById('local').value.trim();
   const data        = document.getElementById('data').value;
   const observacoes = document.getElementById('observacoes').value;
-  const funcionario = nomeFuncionarioAtual;
+  // funcionario é preenchido no backend com o email Firebase (não confiamos no cliente)
 
   if (!local) {
     mostrarToast('Por favor, indique o local/posto.', 'erro');
@@ -182,7 +202,8 @@ function guardarDados() {
   mostrarToast('A guardar...', 'info');
 
   apiGuardarRegisto(
-    { data, local, paises, operadores, sugestoes, observacoes, funcionario },
+    { data, local, paises, operadores, sugestoes, observacoes },
+    // Nota: funcionario é preenchido no Code.gs com o email Firebase verificado
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
