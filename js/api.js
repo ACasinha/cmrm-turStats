@@ -12,7 +12,7 @@
 'use strict';
  
 // ▼▼▼ COLOQUE AQUI O URL DO SEU WEB APP PUBLICADO ▼▼▼
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgb_MygMewX8EOxwFn-DFTgFYP0tB7S-jnjY8nd1hrDoFGSlR3qtH6Llwtw4YInwA-PQ/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSnGrcTTAVlBxPZY_RwwRMpBUZ0gOSIoz-_nNi-PPoINsRqeghOlnofYhASjMjm_-1fA/exec';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  
 // Timeout para cada pedido (ms)
