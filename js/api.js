@@ -21,7 +21,7 @@
 // CONFIGURAÇÃO:
 //   Substitua os valores em FIREBASE_CONFIG com os do seu projeto.
 //   Firebase Console → Definições do projeto → As suas apps → Web app
-//   Substitua APPS_SCRIPT_URL com o URL do Web App publicado.
+//   Substitua APPS_SCRIPT_URL com o URL do Web App publicado. .
 // ============================================================
 
 'use strict';
