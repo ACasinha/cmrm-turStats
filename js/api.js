@@ -74,43 +74,6 @@ async function chamarAPI(action, payload) {
 }
  
 // ============================================================
-// MODO DEMO — usado quando o URL não está configurado
-// ============================================================
- 
-/**
- * Simula respostas do backend para desenvolvimento/pré-visualização local.
- * Remove esta função (ou o aviso) quando o URL estiver configurado.
- */
-function modoDemo(action, payload) {
-  console.log('[Demo] Ação:', action, '| Payload:', payload);
- 
-  switch (action) {
-    case 'autenticar':
-      // Aceita qualquer credencial não vazia em modo demo
-      if (payload.username && payload.password) {
-        return Promise.resolve({
-          sucesso: true,
-          nomeFuncionario: 'Utilizador Demo',
-          username: payload.username
-        });
-      }
-      return Promise.resolve({ sucesso: false, mensagem: 'Preencha os campos.' });
- 
-    case 'verificarDados':
-      return Promise.resolve({
-        sucesso: true, existe: false,
-        paises: {}, operadores: [], sugestoes: []
-      });
- 
-    case 'guardarRegisto':
-      return Promise.resolve({ sucesso: true, mensagem: '[Demo] Dados prontos para guardar.' });
- 
-    default:
-      return Promise.resolve({ sucesso: false, mensagem: 'Ação desconhecida.' });
-  }
-}
- 
-// ============================================================
 // FUNÇÕES PÚBLICAS — usadas por app.js
 // ============================================================
  
