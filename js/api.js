@@ -29,7 +29,7 @@
 // ── Apps Script URL ─────────────────────────────────────────
 // URL do Web App publicado (termina em /exec).
 // Não é um segredo — o Apps Script valida o token em cada pedido.
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/SEU_ID_AQUI/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBfLKMZX95z-5Q6qs2kkddsedB1pCiT5LKMyUsur17ZABOPVQwJAB7lnEhPTvGcBiQbg/exec';
 
 // ── Firebase Configuration ───────────────────────────────────
 // Estes valores são públicos por design.
