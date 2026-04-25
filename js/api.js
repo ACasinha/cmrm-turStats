@@ -31,11 +31,6 @@ const REQUEST_TIMEOUT_MS = 15000;
  * @returns {Promise<Object>}
  */
 async function chamarAPI(action, payload) {
-  // Verificar se o URL foi configurado
-  if (APPS_SCRIPT_URL.includes('AKfycbzgb_MygMewX8EOxwFn-DFTgFYP0tB7S-jnjY8nd1hrDoFGSlR3qtH6Llwtw4YInwA-PQ')) {
-    console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
-    return modoDemo(action, payload);
-  }
  
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
