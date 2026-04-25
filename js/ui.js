@@ -202,6 +202,6 @@ function carregarDados(resp) {
   const nObs  = Math.max(NUM_LINHAS_OBS,  (resp.observacoes || []).length + 1);
   construirTabelaOperadores(nOp,  resp.operadores || []);
   construirTabelaSugestoes(nSug,  resp.sugestoes  || []);
-  construirTabelaObservacoes(nSug,  resp.observacoes  || []);
+  document.getElementById('observacoes').value = resp.observacoes || '';
   recalcularTotais();
 }
