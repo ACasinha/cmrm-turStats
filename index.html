@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#8B4A2B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nacionalidades">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Registo Diário de Nacionalidades</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     ECRÃ DE LOGIN
+============================================================ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="https://www.cm-reguengos-monsaraz.pt/wp-content/uploads/2024/02/logoRMZ2024.png" alt="Logo Município">
+    </div>
+    <div class="login-titulo">Bem-vindo(a)</div>
+    <div class="login-sub">Registo Diário de Nacionalidades</div>
+    <div class="login-erro" id="loginErro">Utilizador ou password incorretos.</div>
+    <div class="login-field">
+      <label>Utilizador</label>
+      <input type="text" id="loginUser" placeholder="Nome de utilizador"
+             autocomplete="username"
+             onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar →</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     BANNER PWA
+============================================================ -->
+<div class="install-banner" id="installBanner">
+  <span>📱 Instale esta app no seu dispositivo para acesso rápido</span>
+  <button class="btn-instalar" id="btnInstalar">Instalar</button>
+  <button class="btn-instalar-fechar"
+          onclick="document.getElementById('installBanner').classList.remove('visivel')">✕</button>
+</div>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-circle">
+      <img src="https://www.cm-reguengos-monsaraz.pt/wp-content/uploads/2024/02/logoRMZ2024.png" alt="Logo">
+    </div>
+    <div class="header-text">
+      <h1>Registo Diário de Nacionalidades</h1>
+      <p>Município de Reguengos de Monsaraz</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="header-badge">
+      <span class="badge-num" id="totalGeral">0</span>
+      <span class="badge-label">Visitantes</span>
+    </div>
+    <div class="user-info">
+      <span class="user-name" id="headerNomeFuncionario">—</span>
+      <span>Funcionário(a)</span>
+      <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONTEÚDO PRINCIPAL
+============================================================ -->
+<div class="container">
+
+  <div class="estado-banner" id="estadoBanner">
+    <div class="spinner" id="estadoSpinner" style="display:none"></div>
+    <span id="estadoTexto"></span>
+  </div>
+
+  <!-- META -->
+  <div class="meta-card">
+    <div class="field-group">
+      <label>📍 Local / Posto</label>
+      <select onchange="agendarVerificacao()" id="local">
+        <option value="" disabled selected>Escolha uma opção...</option>
+        <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
+        <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
+        <option value="Casa do Barro">Casa do Barro</option>
+        <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
+        <option value="Auditório António Marcelino">Auditório António Marcelino</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>📅 Data</label>
+      <input type="date" id="data" onchange="agendarVerificacao()">
+    </div>
+  </div>
+
+  <!-- TABELA PAÍSES -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2>Países — Turistas e Visitantes</h2>
+      <span class="section-count" id="contadorPaises">0 entradas</span>
+    </div>
+    <div class="table-scroll">
+      <table class="paises-table">
+        <thead><tr>
+          <th>País</th>
+          <th style="text-align:center">Turistas / Visitantes</th>
+        </tr></thead>
+        <tbody id="tabelaPaises"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TOTAL -->
+  <div class="totais-card">
+    <div>
+      <div class="total-label">Total Diário</div>
+      <div class="total-sub">Soma de todos os visitantes</div>
+    </div>
+    <div class="total-num" id="totalDiario">0</div>
+  </div>
+
+  <!-- OPERADORES -->
+  <div class="section-card">
+    <div class="section-header azul">
+      <h2>Operadores e Agências</h2>
+    </div>
+    <div class="verso-body">
+      <div class="table-scroll">
+        <table class="op-table">
+          <thead><tr>
+            <th>Operador / Agência</th>
+            <th>Nacionalidades (nº por nacionalidade)</th>
+            <th>Total</th>
+          </tr></thead>
+          <tbody id="tabelaOperadores"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUGESTÕES -->
+  <div class="section-card">
+    <div class="section-header terra">
+      <h2>Sugestões e Críticas</h2>
+    </div>
+    <div class="verso-body">
+      <div class="table-scroll">
+        <table class="sug-table">
+          <thead><tr>
+            <th>Sugestão / Crítica</th>
+            <th>Nacionalidade do turista</th>
+          </tr></thead>
+          <tbody id="tabelaSugestoes"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- OBSERVAÇÕES -->
+  <div class="section-card">
+    <div class="section-header terra">
+      <h2>Outras Observações</h2>
+    </div>
+    <div class="verso-body">
+      <textarea class="obs-area" id="observacoes"
+        placeholder="Registe aqui quaisquer outras observações relevantes do dia..."></textarea>
+      <div class="funcionario-fixo">
+        <span>👤</span>
+        <div>
+          <span class="fn-label">Registado por</span>
+          <span id="nomeFuncionarioDisplay">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AÇÕES -->
+  <div class="actions">
+    <button class="btn btn-limpar" onclick="limparFormulario()">🗑 Limpar</button>
+    <button class="btn btn-guardar" id="btnGuardar" onclick="guardarDados()">💾 Guardar Registo</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>

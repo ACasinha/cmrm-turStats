@@ -1,0 +1,27 @@
+{
+  "name": "Registo Diário de Nacionalidades",
+  "short_name": "Nacionalidades",
+  "description": "Registo diário de turistas e visitantes por nacionalidade — Município de Reguengos de Monsaraz",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F5EBE0",
+  "theme_color": "#8B4A2B",
+  "lang": "pt",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": []
+}
