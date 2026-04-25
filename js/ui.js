@@ -199,7 +199,9 @@ function carregarDados(resp) {
   });
   const nOp  = Math.max(NUM_LINHAS_OP,  (resp.operadores || []).length + 1);
   const nSug = Math.max(NUM_LINHAS_SUG, (resp.sugestoes  || []).length + 1);
+  const nObs  = Math.max(NUM_LINHAS_OBS,  (resp.observacoes || []).length + 1);
   construirTabelaOperadores(nOp,  resp.operadores || []);
   construirTabelaSugestoes(nSug,  resp.sugestoes  || []);
+  construirTabelaObservacoes(nSug,  resp.observacoes  || []);
   recalcularTotais();
 }
