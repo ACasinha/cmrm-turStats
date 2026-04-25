@@ -1,12 +1,11 @@
 // ============================================================
-// SERVICE WORKER — Registo Diário de Nacionalidades
-// Município de Reguengos de Monsaraz
+// sw.js — Service Worker
+// Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 // ============================================================
 
-const CACHE_NAME    = 'rmz-nacionalidades-v1';
-const CACHE_STATIC  = 'rmz-static-v1';
+const CACHE_NAME   = 'rmz-nacionalidades-v1';
+const CACHE_STATIC = 'rmz-static-v1';
 
-// Recursos a pré-cachear (shell da app)
 const STATIC_ASSETS = [
   './index.html',
   './manifest.json',
@@ -16,14 +15,12 @@ const STATIC_ASSETS = [
   './js/api.js',
   './js/app.js',
   './js/pwa.js',
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap'
+  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap',
 ];
 
-// ============================================================
-// INSTALL — pré-cachear o shell
-// ============================================================
-self.addEventListener('install', event => {
-  event.waitUntil(
+// INSTALL
+self.addEventListener('install', e => {
+  e.waitUntil(
     caches.open(CACHE_STATIC)
       .then(cache => cache.addAll(STATIC_ASSETS))
       .then(() => self.skipWaiting())
@@ -31,93 +28,66 @@ self.addEventListener('install', event => {
   );
 });
 
-// ============================================================
 // ACTIVATE — limpar caches antigas
-// ============================================================
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(k => k !== CACHE_NAME && k !== CACHE_STATIC)
-          .map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE_NAME && k !== CACHE_STATIC).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-// ============================================================
-// FETCH — estratégia Network-first com fallback para cache
-// Para chamadas ao Google Apps Script: network-only (precisam
-// de autenticação e dados em tempo real).
-// Para assets estáticos: cache-first.
-// ============================================================
-self.addEventListener('fetch', event => {
-  const url = event.request.url;
+// FETCH
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
 
-  // Ignorar métodos que não sejam GET
-  if (event.request.method !== 'GET') return;
+  const url = e.request.url;
 
   // Chamadas ao Apps Script — sempre network, nunca cachear
   if (url.includes('script.google.com') || url.includes('script.googleusercontent.com')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // Assets estáticos da app — cache-first
-  if (
-    url.includes('/css/') ||
-    url.includes('/js/')  ||
-    url.includes('/icons/') ||
-    url.endsWith('manifest.json')
-  ) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_STATIC).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        });
-      })
-    );
+    e.respondWith(fetch(e.request));
     return;
   }
 
   // Google Fonts — cache-first
   if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_STATIC).then(cache => cache.put(event.request, clone));
-          return response;
-        });
-      })
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE_STATIC).then(c => c.put(e.request, clone));
+        return resp;
+      }))
     );
     return;
   }
 
-  // Documento HTML principal — network-first com fallback
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
+  // Assets estáticos (css, js, icons, manifest) — cache-first
+  if (url.includes('/css/') || url.includes('/js/') || url.includes('/icons/') || url.endsWith('manifest.json')) {
+    e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE_STATIC).then(c => c.put(e.request, clone));
+        return resp;
+      }))
+    );
+    return;
+  }
+
+  // HTML principal — network-first com fallback para cache
+  e.respondWith(
+    fetch(e.request)
+      .then(resp => {
+        const clone = resp.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        return resp;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(e.request))
   );
 });
 
-// ============================================================
-// MENSAGENS — permite forçar update a partir da app
-// ============================================================
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+// Mensagens (ex: forçar update)
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
