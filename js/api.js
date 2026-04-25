@@ -32,7 +32,7 @@ const REQUEST_TIMEOUT_MS = 15000;
  */
 async function chamarAPI(action, payload) {
   // Verificar se o URL foi configurado
-  if (APPS_SCRIPT_URL.includes('SEU_ID_AQUI')) {
+  if (APPS_SCRIPT_URL.includes('1zBhqr5yH3g0nY5zuuRmMBFBiUJhCcAYvrOgWs2Qalzs')) {
     console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
     return modoDemo(action, payload);
   }
