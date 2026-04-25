@@ -12,7 +12,7 @@
 'use strict';
  
 // ▼▼▼ COLOQUE AQUI O URL DO SEU WEB APP PUBLICADO ▼▼▼
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw_YZ4aTui3gMUbKh0xCQH-lwzy37ahBLIu2clqngjBYLHPawPxmlwecHR8HJmXgFCY1w/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgb_MygMewX8EOxwFn-DFTgFYP0tB7S-jnjY8nd1hrDoFGSlR3qtH6Llwtw4YInwA-PQ/exec';
 // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
  
 // Timeout para cada pedido (ms)
@@ -32,7 +32,7 @@ const REQUEST_TIMEOUT_MS = 15000;
  */
 async function chamarAPI(action, payload) {
   // Verificar se o URL foi configurado
-  if (APPS_SCRIPT_URL.includes('AKfycbw_YZ4aTui3gMUbKh0xCQH-lwzy37ahBLIu2clqngjBYLHPawPxmlwecHR8HJmXgFCY1w')) {
+  if (APPS_SCRIPT_URL.includes('AKfycbzgb_MygMewX8EOxwFn-DFTgFYP0tB7S-jnjY8nd1hrDoFGSlR3qtH6Llwtw4YInwA-PQ')) {
     console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
     return modoDemo(action, payload);
   }
