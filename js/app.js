@@ -9,32 +9,55 @@ let nomeFuncionarioAtual  = '';
 let verificacaoTimer      = null;
 let ultimoLocalVerificado = '';
 let ultimaDataVerificada  = '';
+let appInicializada       = false;
 
 // ============================================================
-// OBSERVADOR DE AUTENTICAÇÃO
+// ARRANQUE — verificar sessão existente ao carregar a página
 //
-// onAuthStateChanged dispara:
-//   - ao carregar a página (com user se havia sessão, null se não)
-//   - após login / logout
+// Não usamos onAuthStateChanged para controlar o fluxo de login.
+// Usamos apenas para detetar logout externo (token revogado,
+// expiração do Firebase) e expulsão após 10h.
 //
-// A sessão Firebase usa persistência SESSION (definida em api.js),
-// por isso só sobrevive enquanto o separador estiver aberto.
-// O limite de 10h é verificado em api.js antes de cada pedido.
+// O fluxo é simples:
+//   - Ao carregar: verificar se currentUser existe → activar ou mostrar login
+//   - Ao fazer login: activar diretamente no onSuccess
+//   - Ao fazer logout: mostrar login diretamente
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  apiObservarAuth(user => {
-    if (user) {
+  // O Firebase pode demorar um momento a restaurar a sessão do
+  // localStorage após um reload. Aguardamos pela primeira emissão
+  // do onAuthStateChanged que nos diz o estado real.
+  const unsub = firebaseAuth.onAuthStateChanged(user => {
+    unsub(); // desligar após o primeiro disparo — só queremos o estado inicial
+
+    if (user && sessaoValida()) {
       nomeFuncionarioAtual = user.displayName || user.email;
       activarApp();
     } else {
+      if (user) {
+        // Há utilizador Firebase mas a nossa sessão de 10h expirou
+        apiLogout();
+      }
       mostrarEcraLogin();
+    }
+  });
+
+  // Observador contínuo apenas para detetar logout externo
+  // (token revogado pelo admin, expiração Firebase)
+  firebaseAuth.onAuthStateChanged(user => {
+    if (!user && appInicializada) {
+      // Sessão terminou externamente — voltar ao login
+      limparSessao();
+      appInicializada = false;
+      mostrarEcraLogin();
+      mostrarToast('Sessão terminada. Por favor faça login novamente.', 'info');
     }
   });
 });
 
 // ============================================================
-// LOGIN / LOGOUT
+// LOGIN
 // ============================================================
 
 function fazerLogin() {
@@ -53,14 +76,12 @@ function fazerLogin() {
   btn.textContent = 'A autenticar...';
   erro.classList.remove('visivel');
 
-  // apiAutenticar chama onSuccess após signInWithEmailAndPassword completar.
-  // O onAuthStateChanged acima dispara a seguir e chama activarApp().
-  // O onSuccess aqui apenas repõe o botão por precaução.
   apiAutenticar(email, pass,
-    function onSuccess() {
+    function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
-      // activarApp() é chamado pelo observador acima
+      nomeFuncionarioAtual = resp.nomeFuncionario;
+      activarApp();  // ← activar directamente, sem depender do observador
     },
     function onFailure(err) {
       btn.disabled    = false;
@@ -73,23 +94,34 @@ function fazerLogin() {
   );
 }
 
+// ============================================================
+// LOGOUT
+// ============================================================
+
 function fazerLogout() {
   if (!confirm('Deseja terminar a sessão?')) return;
-  apiLogout();
-  // mostrarEcraLogin() é chamado pelo observador quando user passa a null
+  appInicializada = false;
+  apiLogout().then(() => mostrarEcraLogin());
 }
+
+// ============================================================
+// ACTIVAR / MOSTRAR LOGIN
+// ============================================================
 
 function activarApp() {
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('headerNomeFuncionario').textContent  = nomeFuncionarioAtual;
   document.getElementById('nomeFuncionarioDisplay').textContent = nomeFuncionarioAtual;
-  if (!document.querySelector('.pais-input')) {
+
+  if (!appInicializada) {
     inicializarApp();
+    appInicializada = true;
   }
 }
 
 function mostrarEcraLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginErro').classList.remove('visivel');
   document.getElementById('loginPass').value = '';
   limparFormularioParcial();
   mostrarBanner('', '');
