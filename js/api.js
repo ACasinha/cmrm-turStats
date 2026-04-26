@@ -5,9 +5,9 @@
 
 'use strict';
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBwXXtMYm8AOCL1Gl3jBYUF1E1tEQpKb1ibDdiEe4iMZR3odHtSUYNK_TXtyz_s8rwAw/exec';
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBwXXtMYm8AOCL1Gl3jBYUF1E1tEQpKb1ibDdiEe4iMZR3odHtSUYNK_TXtyz_s8rwAw/exec';
 
-const FIREBASE_CONFIG = {
+var FIREBASE_CONFIG = {
   apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
   authDomain: "stats-tur.firebaseapp.com",
   projectId: "stats-tur",
@@ -16,8 +16,8 @@ const FIREBASE_CONFIG = {
   appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
 
-const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
-const REQUEST_TIMEOUT_MS = 20000;
+var SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
+var REQUEST_TIMEOUT_MS = 20000;
 
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
@@ -50,7 +50,7 @@ const _persistenciaPronte = firebaseAuth
 // antes de cada pedido ao servidor.
 // ============================================================
  
-const CHAVE_LOGIN_TS = 'rmz_login_ts';
+var CHAVE_LOGIN_TS = 'rmz_login_ts';
  
 function registarInicioSessao() {
   localStorage.setItem(CHAVE_LOGIN_TS, Date.now().toString());
