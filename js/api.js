@@ -8,12 +8,12 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ/exec';
 
 const FIREBASE_CONFIG = {
-  apiKey:            'SUA_API_KEY_AQUI',
-  authDomain:        'SEU_PROJECT_ID.firebaseapp.com',
-  projectId:         'SEU_PROJECT_ID_AQUI',
-  storageBucket:     'SEU_PROJECT_ID.appspot.com',
-  messagingSenderId: 'SEU_SENDER_ID_AQUI',
-  appId:             'SEU_APP_ID_AQUI'
+  apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
+  authDomain: "stats-tur.firebaseapp.com",
+  projectId: "stats-tur",
+  storageBucket: "stats-tur.firebasestorage.app",
+  messagingSenderId: "146563538068",
+  appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
 
 const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
