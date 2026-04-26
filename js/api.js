@@ -82,10 +82,13 @@ function obterIdToken() {
     return Promise.reject(new Error('Sessão terminada. Por favor, faça login novamente.'));
   }
 
-  return user.getIdToken(false)
-    .catch(function() {
-      return user.getIdToken(true); // forçar refresh se falhar
-    });
+  // 🔥 proteção contra bloqueio
+  return Promise.race([
+    user.getIdToken(true),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout ao obter token')), 5000)
+    )
+  ]);
 }
 
 // ============================================================
