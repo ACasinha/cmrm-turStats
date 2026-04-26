@@ -133,24 +133,6 @@ async function chamarAPI(action, payload = {}) {
 }
 
 // ============================================================
-// MODO DEMO
-// Ativo quando APPS_SCRIPT_URL não está configurado.
-// Remove antes de ir para produção.
-// ============================================================
-
-function modoDemo(action, payload) {
-  console.log('[Demo] Ação:', action, '| Payload:', payload);
-  switch (action) {
-    case 'verificarDados':
-      return Promise.resolve({ sucesso: true, existe: false, paises: {}, operadores: [], sugestoes: [] });
-    case 'guardarRegisto':
-      return Promise.resolve({ sucesso: true, mensagem: '[Demo] Dados prontos para guardar.' });
-    default:
-      return Promise.resolve({ sucesso: false, mensagem: 'Ação desconhecida em modo demo.' });
-  }
-}
-
-// ============================================================
 // FUNÇÕES PÚBLICAS DE AUTENTICAÇÃO (Firebase direto)
 //
 // O login/logout é feito 100% no cliente com o Firebase SDK.
