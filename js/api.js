@@ -1,90 +1,194 @@
 // ============================================================
-// api.js — Comunicação com o Google Apps Script
+// api.js — Ligação ao Apps Script com segurança via Firebase Auth
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-//
-// Todas as chamadas ao backend passam por aqui.
-// Em modo de pré-visualização (sem Apps Script), as funções
-// degradam graciosamente com mensagens informativas.
 // ============================================================
 
 'use strict';
 
-/**
- * Indica se o contexto do Google Apps Script está disponível.
- * @returns {boolean}
- */
-function appsScriptDisponivel() {
-  return typeof google !== 'undefined' && google.script && google.script.run;
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ/exec';
+
+const FIREBASE_CONFIG = {
+  apiKey:            'SUA_API_KEY_AQUI',
+  authDomain:        'SEU_PROJECT_ID.firebaseapp.com',
+  projectId:         'SEU_PROJECT_ID_AQUI',
+  storageBucket:     'SEU_PROJECT_ID.appspot.com',
+  messagingSenderId: 'SEU_SENDER_ID_AQUI',
+  appId:             'SEU_APP_ID_AQUI'
+};
+
+const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
+const REQUEST_TIMEOUT_MS = 20000;
+
+// ── Inicialização ─────────────────────────────────────────────
+if (!firebase.apps.length) {
+  firebase.initializeApp(FIREBASE_CONFIG);
 }
 
-// ============================================================
-// AUTENTICAÇÃO
-// ============================================================
+const firebaseAuth = firebase.auth();
 
-/**
- * Autentica o utilizador contra a folha "Utilizadores" no Google Sheets.
- * @param {string}   username
- * @param {string}   password
- * @param {Function} onSuccess - Callback com { sucesso, nomeFuncionario, username } ou { sucesso: false, mensagem }
- * @param {Function} onFailure - Callback com objeto de erro
- */
-function apiAutenticar(username, password, onSuccess, onFailure) {
-  if (!appsScriptDisponivel()) {
-    // Modo demo — aceita qualquer credencial não vazia
-    onSuccess({ sucesso: true, nomeFuncionario: 'Utilizador Demo', username });
+// Persistência SESSION: sessão dura enquanto o separador estiver aberto.
+firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .catch(err => console.warn('[Firebase] Erro persistência:', err));
+
+// ── Gestão de sessão de 10 horas ─────────────────────────────
+const CHAVE_LOGIN_TS = 'rmz_login_ts';
+
+function registarInicioSessao() {
+  sessionStorage.setItem(CHAVE_LOGIN_TS, Date.now().toString());
+}
+
+function sessaoValida() {
+  const ts = sessionStorage.getItem(CHAVE_LOGIN_TS);
+  if (!ts) return false;
+  return (Date.now() - parseInt(ts, 10)) < SESSAO_MAX_MS;
+}
+
+function limparSessao() {
+  sessionStorage.removeItem(CHAVE_LOGIN_TS);
+}
+
+// ── Obter token JWT ───────────────────────────────────────────
+// Após signInWithEmailAndPassword() completar com sucesso,
+// firebaseAuth.currentUser está sempre disponível de forma
+// síncrona. getIdToken() renova o JWT automaticamente se
+// o token de 1h estiver perto de expirar.
+async function obterIdToken() {
+  // Verificar limite de 10h antes de qualquer pedido
+  if (!sessaoValida()) {
+    await firebaseAuth.signOut();
+    limparSessao();
+    throw new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.');
+  }
+
+  const user = firebaseAuth.currentUser;
+  if (!user) {
+    limparSessao();
+    throw new Error('Sem sessão ativa. Por favor, faça login.');
+  }
+
+  try {
+    return await user.getIdToken(false);
+  } catch (err) {
+    console.warn('[Firebase] getIdToken falhou, a tentar refresh:', err.code);
+    return await user.getIdToken(true);
+  }
+}
+
+// ── Fetch para o Apps Script ──────────────────────────────────
+async function chamarAPI(action, payload = {}) {
+
+  const idToken = await obterIdToken();
+
+  const controller = new AbortController();
+  const timeoutId  = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action, payload, idToken }),
+      signal:  controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) throw new Error('Erro de servidor: HTTP ' + response.status);
+
+    const data = await response.json();
+
+    if (data.codigo === 401) {
+      await firebaseAuth.signOut();
+      limparSessao();
+      throw new Error('Sessão rejeitada pelo servidor. Por favor, faça login novamente.');
+    }
+
+    return data;
+
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Tempo limite excedido (' + (REQUEST_TIMEOUT_MS / 1000) + 's). Verifique a ligação.');
+    }
+    throw err;
+  }
+}
+
+// ── Autenticação pública ──────────────────────────────────────
+function apiAutenticar(email, password, onSuccess, onFailure) {
+  if (!firebase.apps.length) {
+    onFailure({ message: 'Firebase não inicializado. Verifique a FIREBASE_CONFIG.' });
     return;
   }
 
-  google.script.run
-    .withSuccessHandler(onSuccess)
-    .withFailureHandler(onFailure)
-    .autenticarUtilizador(username, password);
+  let respondido = false;
+  const timeoutId = setTimeout(() => {
+    if (respondido) return;
+    respondido = true;
+    console.error('[Firebase] Timeout. Verifique: authDomain, domínios autorizados, ligação.');
+    onFailure({ message: 'Sem resposta do servidor de autenticação (15s). Verifique a ligação.' });
+  }, 15000);
+
+  firebaseAuth.signInWithEmailAndPassword(email, password)
+    .then(credencial => {
+      if (respondido) return;
+      respondido = true;
+      clearTimeout(timeoutId);
+      const user = credencial.user;
+      registarInicioSessao();
+      console.log('[Firebase] Login:', user.email);
+      onSuccess({
+        sucesso:         true,
+        nomeFuncionario: user.displayName || user.email,
+        email:           user.email,
+        uid:             user.uid
+      });
+    })
+    .catch(err => {
+      if (respondido) return;
+      respondido = true;
+      clearTimeout(timeoutId);
+      console.error('[Firebase] Erro:', err.code, err.message);
+      const msgs = {
+        'auth/invalid-email':          'Endereço de email inválido.',
+        'auth/user-disabled':          'Esta conta foi desativada.',
+        'auth/user-not-found':         'Utilizador não encontrado.',
+        'auth/wrong-password':         'Password incorreta.',
+        'auth/invalid-credential':     'Email ou password incorretos.',
+        'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
+        'auth/network-request-failed': 'Sem ligação à internet.',
+        'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
+        'auth/unauthorized-domain':    'Domínio não autorizado. Adicione-o em Firebase Console → Authentication → Authorized domains.'
+      };
+      onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
+    });
 }
 
-// ============================================================
-// VERIFICAR DADOS EXISTENTES
-// ============================================================
+function apiLogout() {
+  limparSessao();
+  return firebaseAuth.signOut();
+}
 
-/**
- * Verifica se já existem registos para o local e data indicados.
- * @param {string}   local
- * @param {string}   data       - Formato yyyy-MM-dd
- * @param {Function} onSuccess  - Callback com { sucesso, existe, paises, operadores, sugestoes }
- * @param {Function} onFailure  - Callback com objeto de erro
- */
+// Observador com verificação automática do limite de 10h
+function apiObservarAuth(callback) {
+  return firebaseAuth.onAuthStateChanged(user => {
+    if (user && !sessaoValida()) {
+      console.log('[Sessão] 10 horas atingidas, a terminar sessão.');
+      apiLogout();
+      return;
+    }
+    callback(user);
+  });
+}
+
+// ── Apps Script ───────────────────────────────────────────────
 function apiVerificarDados(local, data, onSuccess, onFailure) {
-  if (!appsScriptDisponivel()) {
-    // Modo demo — simula "sem dados"
-    onSuccess({ sucesso: true, existe: false, paises: {}, operadores: [], sugestoes: [] });
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler(onSuccess)
-    .withFailureHandler(onFailure)
-    .verificarDadosExistentes(local, data);
+  chamarAPI('verificarDados', { local, data })
+    .then(onSuccess)
+    .catch(err => onFailure({ message: err.message }));
 }
 
-// ============================================================
-// GUARDAR REGISTO
-// ============================================================
-
-/**
- * Envia os dados do formulário para o Google Sheets.
- * @param {Object}   payload    - { data, local, paises, operadores, sugestoes, observacoes, funcionario }
- * @param {Function} onSuccess  - Callback com { sucesso, mensagem }
- * @param {Function} onFailure  - Callback com objeto de erro
- */
 function apiGuardarRegisto(payload, onSuccess, onFailure) {
-  if (!appsScriptDisponivel()) {
-    // Modo demo — simula sucesso e imprime no console
-    console.log('[Demo] Dados a guardar:', payload);
-    onSuccess({ sucesso: true, mensagem: 'Modo demo: dados prontos para guardar.' });
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler(onSuccess)
-    .withFailureHandler(onFailure)
-    .guardarRegisto(payload);
+  chamarAPI('guardarRegisto', payload)
+    .then(onSuccess)
+    .catch(err => onFailure({ message: err.message }));
 }
