@@ -3,8 +3,8 @@
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v2.3.5';
-const CACHE_STATIC = 'rmz-static-v2.3.5';
+const CACHE_NAME   = 'rmz-nacionalidades-v2.3.6';
+const CACHE_STATIC = 'rmz-static-v2.3.6';
 
 const STATIC_ASSETS = [
   './index.html',
