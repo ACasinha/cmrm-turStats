@@ -1,7 +1,7 @@
 // ============================================================
 // api.js — Ligação ao Apps Script com segurança via Firebase Auth
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-// ============================================================
+/// ============================================================
 
 'use strict';
 
