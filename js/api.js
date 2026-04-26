@@ -103,11 +103,6 @@ function obterIdToken() {
 function chamarAPI(action, payload) {
   payload = payload || {};
 
-  if (APPS_SCRIPT_URL.includes('AKfycbwqN-2l6Hr4_fuUHM---iONi24wl3B2SCmpY-V3jAf0J9OKZFsDcit1VJ5_WktFXMTmsA')) {
-    console.warn('[API] APPS_SCRIPT_URL não configurado — modo demo.');
-    return Promise.resolve(modoDemo(action, payload));
-  }
-
   return obterIdToken().then(function(idToken) {
     var corpo = JSON.stringify({ action: action, payload: payload, idToken: idToken });
 
