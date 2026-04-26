@@ -1,41 +1,12 @@
 // ============================================================
 // api.js — Ligação ao Apps Script com segurança via Firebase Auth
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-///
-// SEGURANÇA — como funciona:
-//   Este ficheiro é público no GitHub. Isso é intencional e seguro.
-//   O segredo não está no código — está na autenticação.
-///
-//   Fluxo por pedido:
-//     1. Firebase SDK autentica o utilizador (email + password)
-//     2. Firebase devolve um ID Token JWT assinado pela Google
-//     3. Cada pedido ao Apps Script inclui esse token no corpo
-//     4. O Apps Script verifica o token junto do Firebase
-//     5. Só executa a operação se o token for válido e não expirado
-//
-//   O que um atacante vê neste ficheiro:
-//     • O URL do Apps Script  → só aceita pedidos com token válido
-//     • A Firebase config     → é pública por design (não é um segredo)
-//     • A lógica de fetch     → inútil sem credenciais Firebase válidas
-//
-// CONFIGURAÇÃO:
-//   Substitua os valores em FIREBASE_CONFIG com os do seu projeto.
-//   Firebase Console → Definições do projeto → As suas apps → Web app
-//   Substitua APPS_SCRIPT_URL com o URL do Web App publicado.
 // ============================================================
 
 'use strict';
 
-// ── Apps Script URL ─────────────────────────────────────────
-// URL do Web App publicado (termina em /exec).
-// Não é um segredo — o Apps Script valida o token em cada pedido.
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ/exec';
 
-// ── Firebase Configuration ───────────────────────────────────
-// Estes valores são públicos por design.
-// Veja: https://firebase.google.com/docs/web/setup#available-libraries
-// A segurança real é garantida pelas Firebase Security Rules
-// e pela verificação do ID Token no Apps Script.
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
   authDomain: "stats-tur.firebaseapp.com",
@@ -45,59 +16,67 @@ const FIREBASE_CONFIG = {
   appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
 
-// Timeout por pedido (ms)
+const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
 const REQUEST_TIMEOUT_MS = 20000;
 
-// ============================================================
-// INICIALIZAÇÃO DO FIREBASE
-// ============================================================
-
-// Inicializar apenas uma vez
+// ── Inicialização ─────────────────────────────────────────────
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
 
 const firebaseAuth = firebase.auth();
 
-// ============================================================
-// ESTADO DE AUTENTICAÇÃO
-//
-// O Firebase resolve o estado inicial de forma assíncrona
-// (lê o token guardado no localStorage e valida-o).
-// Guardamos uma Promise que resolve UMA VEZ quando esse
-// processo termina — depois disso firebaseAuth.currentUser
-// é sempre fiável e usamo-lo diretamente.
-// ============================================================
+// Persistência SESSION: sessão dura enquanto o separador estiver aberto.
+firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+  .catch(err => console.warn('[Firebase] Erro persistência:', err));
 
-// Promise que resolve com o utilizador (ou null) assim que
-// o Firebase termina de verificar o estado inicial.
-const firebaseAuthPronto = new Promise(resolve => {
-  const unsub = firebaseAuth.onAuthStateChanged(user => {
-    unsub();        // desligar após o primeiro disparo
-    resolve(user);  // null se não há sessão, user se há
-  });
-});
+// ── Gestão de sessão de 10 horas ─────────────────────────────
+const CHAVE_LOGIN_TS = 'rmz_login_ts';
 
-async function obterIdToken() {
-  // Garantir que o estado inicial do Firebase foi resolvido
-  await firebaseAuthPronto;
-
-  // Agora currentUser é fiável
-  const user = firebaseAuth.currentUser;
-  if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.');
-
-  // getIdToken(false) usa o token em cache se ainda for válido;
-  // renova automaticamente se estiver prestes a expirar.
-  return await user.getIdToken(false);
+function registarInicioSessao() {
+  sessionStorage.setItem(CHAVE_LOGIN_TS, Date.now().toString());
 }
 
-// ============================================================
-// FUNÇÃO BASE — fetch com token e timeout
-// ============================================================
+function sessaoValida() {
+  const ts = sessionStorage.getItem(CHAVE_LOGIN_TS);
+  if (!ts) return false;
+  return (Date.now() - parseInt(ts, 10)) < SESSAO_MAX_MS;
+}
 
+function limparSessao() {
+  sessionStorage.removeItem(CHAVE_LOGIN_TS);
+}
+
+// ── Obter token JWT ───────────────────────────────────────────
+// Após signInWithEmailAndPassword() completar com sucesso,
+// firebaseAuth.currentUser está sempre disponível de forma
+// síncrona. getIdToken() renova o JWT automaticamente se
+// o token de 1h estiver perto de expirar.
+async function obterIdToken() {
+  // Verificar limite de 10h antes de qualquer pedido
+  if (!sessaoValida()) {
+    await firebaseAuth.signOut();
+    limparSessao();
+    throw new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.');
+  }
+
+  const user = firebaseAuth.currentUser;
+  if (!user) {
+    limparSessao();
+    throw new Error('Sem sessão ativa. Por favor, faça login.');
+  }
+
+  try {
+    return await user.getIdToken(false);
+  } catch (err) {
+    console.warn('[Firebase] getIdToken falhou, a tentar refresh:', err.code);
+    return await user.getIdToken(true);
+  }
+}
+
+// ── Fetch para o Apps Script ──────────────────────────────────
 async function chamarAPI(action, payload = {}) {
-
-  // Obter token Firebase (lança erro se não houver sessão)
+  
   const idToken = await obterIdToken();
 
   const controller = new AbortController();
@@ -105,29 +84,22 @@ async function chamarAPI(action, payload = {}) {
 
   try {
     const response = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      // text/plain evita preflight CORS (o Apps Script não suporta OPTIONS)
+      method:  'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        action,
-        payload,
-        idToken  // ← token JWT enviado em cada pedido
-      }),
-      signal: controller.signal
+      body:    JSON.stringify({ action, payload, idToken }),
+      signal:  controller.signal
     });
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error('Erro de servidor: HTTP ' + response.status);
 
     const data = await response.json();
 
-    // Token expirado ou inválido — forçar novo login
     if (data.codigo === 401) {
       await firebaseAuth.signOut();
-      throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      limparSessao();
+      throw new Error('Sessão rejeitada pelo servidor. Por favor, faça login novamente.');
     }
 
     return data;
@@ -135,57 +107,35 @@ async function chamarAPI(action, payload = {}) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw new Error('O pedido excedeu o tempo limite (' + (REQUEST_TIMEOUT_MS/1000) + 's). Verifique a ligação à internet.');
+      throw new Error('Tempo limite excedido (' + (REQUEST_TIMEOUT_MS / 1000) + 's). Verifique a ligação.');
     }
     throw err;
   }
 }
 
-// ============================================================
-// FUNÇÕES PÚBLICAS DE AUTENTICAÇÃO (Firebase direto)
-//
-// O login/logout é feito 100% no cliente com o Firebase SDK.
-// O Apps Script nunca vê a password — só vê o token JWT.
-// ============================================================
-
-/**
- * Autentica com email e password via Firebase Auth.
- * @param {string}   email
- * @param {string}   password
- * @param {Function} onSuccess — ({ sucesso, nomeFuncionario, email })
- * @param {Function} onFailure — ({ message })
- */
+// ── Autenticação pública ──────────────────────────────────────
 function apiAutenticar(email, password, onSuccess, onFailure) {
-  // Verificar se o Firebase foi inicializado corretamente
   if (!firebase.apps.length) {
-    onFailure({ message: 'Firebase não inicializado. Verifique a FIREBASE_CONFIG em api.js.' });
+    onFailure({ message: 'Firebase não inicializado. Verifique a FIREBASE_CONFIG.' });
     return;
   }
 
-  // Timeout de segurança — se o Firebase não responder em 15s
-  // (ex: domínio não autorizado, rede bloqueada), garantir que o
-  // utilizador vê um erro em vez de ficar preso no "A autenticar..."
-  let resolvido = false;
+  let respondido = false;
   const timeoutId = setTimeout(() => {
-    if (!resolvido) {
-      resolvido = true;
-      console.error('[Firebase] Timeout na autenticação. Verifique:',
-        '1) authDomain no FIREBASE_CONFIG',
-        '2) Domínio autorizado no Firebase Console → Authentication → Settings → Authorized domains',
-        '3) Ligação à internet'
-      );
-      onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação ou contacte o administrador.' });
-    }
+    if (respondido) return;
+    respondido = true;
+    console.error('[Firebase] Timeout. Verifique: authDomain, domínios autorizados, ligação.');
+    onFailure({ message: 'Sem resposta do servidor de autenticação (15s). Verifique a ligação.' });
   }, 15000);
 
   firebaseAuth.signInWithEmailAndPassword(email, password)
     .then(credencial => {
-      if (resolvido) return;   // timeout já disparou — ignorar
-      resolvido = true;
+      if (respondido) return;
+      respondido = true;
       clearTimeout(timeoutId);
-
       const user = credencial.user;
-      console.log('[Firebase] Login bem-sucedido:', user.email);
+      registarInicioSessao();
+      console.log('[Firebase] Login:', user.email);
       onSuccess({
         sucesso:         true,
         nomeFuncionario: user.displayName || user.email,
@@ -194,62 +144,49 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
       });
     })
     .catch(err => {
-      if (resolvido) return;
-      resolvido = true;
+      if (respondido) return;
+      respondido = true;
       clearTimeout(timeoutId);
-
-      // Log completo para diagnóstico
-      console.error('[Firebase] Erro de autenticação:', err.code, err.message);
-
-      const mensagens = {
+      console.error('[Firebase] Erro:', err.code, err.message);
+      const msgs = {
         'auth/invalid-email':          'Endereço de email inválido.',
         'auth/user-disabled':          'Esta conta foi desativada.',
         'auth/user-not-found':         'Utilizador não encontrado.',
         'auth/wrong-password':         'Password incorreta.',
         'auth/invalid-credential':     'Email ou password incorretos.',
-        'auth/too-many-requests':      'Demasiadas tentativas falhadas. Tente mais tarde.',
+        'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
         'auth/network-request-failed': 'Sem ligação à internet.',
-        'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase.',
-        'auth/unauthorized-domain':    'Domínio não autorizado. Adicione-o no Firebase Console → Authentication → Authorized domains.'
+        'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
+        'auth/unauthorized-domain':    'Domínio não autorizado. Adicione-o em Firebase Console → Authentication → Authorized domains.'
       };
-      const mensagem = mensagens[err.code] || ('Erro (' + err.code + '): ' + err.message);
-      onFailure({ message: mensagem });
+      onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
     });
 }
 
-/**
- * Termina a sessão Firebase.
- * @returns {Promise}
- */
 function apiLogout() {
+  limparSessao();
   return firebaseAuth.signOut();
 }
 
-/**
- * Observador de estado de autenticação.
- * Chama o callback sempre que o estado muda (login/logout/expiração).
- * @param {Function} callback — (user | null)
- */
+// Observador com verificação automática do limite de 10h
 function apiObservarAuth(callback) {
-  return firebaseAuth.onAuthStateChanged(callback);
+  return firebaseAuth.onAuthStateChanged(user => {
+    if (user && !sessaoValida()) {
+      console.log('[Sessão] 10 horas atingidas, a terminar sessão.');
+      apiLogout();
+      return;
+    }
+    callback(user);
+  });
 }
 
-// ============================================================
-// FUNÇÕES PÚBLICAS — Apps Script (requerem token válido)
-// ============================================================
-
-/**
- * Verifica se existem dados para o local e data indicados.
- */
+// ── Apps Script ───────────────────────────────────────────────
 function apiVerificarDados(local, data, onSuccess, onFailure) {
   chamarAPI('verificarDados', { local, data })
     .then(onSuccess)
     .catch(err => onFailure({ message: err.message }));
 }
 
-/**
- * Guarda o registo completo no Google Sheets.
- */
 function apiGuardarRegisto(payload, onSuccess, onFailure) {
   chamarAPI('guardarRegisto', payload)
     .then(onSuccess)
