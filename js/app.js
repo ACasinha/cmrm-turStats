@@ -14,19 +14,21 @@ let unsubscribeAuth       = null;   // referência ao observador Firebase
 // ============================================================
 // OBSERVADOR DE AUTENTICAÇÃO FIREBASE
 //
-// Arranca imediatamente ao carregar a página.
-// O Firebase restaura a sessão automaticamente se o token
-// ainda for válido (persiste em localStorage por omissão).
+// Usado APENAS para restaurar sessão ao recarregar a página.
+// O login novo é tratado diretamente no onSuccess do fazerLogin().
+// Isto evita que o botão fique preso em "A autenticar..." caso
+// o observador dispare com delay ou não dispare.
 // ============================================================
+
+let sessaoRestaurada = false;   // evitar activarApp() duplo
 
 document.addEventListener('DOMContentLoaded', () => {
   unsubscribeAuth = apiObservarAuth(user => {
-    if (user) {
-      // Utilizador autenticado (login novo ou sessão restaurada)
+    if (user && !sessaoRestaurada) {
+      // Sessão existente restaurada pelo Firebase (reload da página)
       nomeFuncionarioAtual = user.displayName || user.email;
       activarApp();
-    } else {
-      // Sem sessão — mostrar ecrã de login
+    } else if (!user) {
       mostrarEcraLogin();
     }
   });
@@ -55,11 +57,14 @@ function fazerLogin() {
   apiAutenticar(
     email, pass,
     function onSuccess(resp) {
-      // O observador onAuthStateChanged acima trata do activarApp()
-      // automaticamente após login bem-sucedido.
-      // Aqui apenas repõe o botão em caso de delay.
+      // Activar a app diretamente aqui — não esperar pelo observador,
+      // que pode disparar com delay ou não disparar se o domínio
+      // não estiver ainda autorizado no Firebase.
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
+      sessaoRestaurada = true;   // impedir que o observador chame activarApp() de novo
+      nomeFuncionarioAtual = resp.nomeFuncionario || resp.email;
+      activarApp();
     },
     function onFailure(err) {
       btn.disabled    = false;
