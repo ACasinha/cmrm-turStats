@@ -160,9 +160,11 @@ function verificarDados() {
       }
     },
     function onFailure(err) {
+      // Reset do estado para permitir nova tentativa ao mudar local/data
+      ultimoLocalVerificado = '';
+      ultimaDataVerificada  = '';
       mostrarBanner('', '');
-      mostrarToast('Erro: ' + err.message, 'erro');
-      // Se a sessão expirou, o apiLogout já foi chamado em api.js
+      mostrarToast('Erro ao verificar dados: ' + err.message, 'erro');
     }
   );
 }
