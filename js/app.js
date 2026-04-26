@@ -23,9 +23,13 @@ let unsubscribeAuth       = null;   // referência ao observador Firebase
 let sessaoRestaurada = false;   // evitar activarApp() duplo
 
 document.addEventListener('DOMContentLoaded', () => {
-  unsubscribeAuth = apiObservarAuth(user => {
+  // Usar a firebaseAuthPronto definida em api.js — resolve uma única
+  // vez quando o Firebase termina de verificar o estado inicial.
+  // Evita o problema de onAuthStateChanged disparar com null antes
+  // de o estado estar pronto.
+  firebaseAuthPronto.then(user => {
     if (user && !sessaoRestaurada) {
-      // Sessão existente restaurada pelo Firebase (reload da página)
+      // Sessão existente restaurada (reload da página)
       nomeFuncionarioAtual = user.displayName || user.email;
       activarApp();
     } else if (!user) {
