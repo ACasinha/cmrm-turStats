@@ -1,7 +1,7 @@
 // ============================================================
 // app.js — Lógica principal da aplicação
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-// ============================================================
+/// ============================================================
 
 'use strict';
 
