@@ -27,156 +27,180 @@ var FIREBASE_CONFIG = {
 var SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
 var REQUEST_TIMEOUT_MS = 20000;
 var CHAVE_LOGIN_TS     = 'rmz_login_ts';
-
+ 
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================================
-
+ 
 if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
-
+ 
 var firebaseAuth = firebase.auth();
-
-// Aguardar setPersistence antes de qualquer login.
-// LOCAL: sessão sobrevive a reloads da página (gerimos nós a expiração de 10h).
+ 
+// setPersistence é assíncrono. Guardamos a Promise para que
+// apiAutenticar aguarde antes de fazer signIn — evita a falha
+// silenciosa na primeira tentativa de login.
 var _persistenciaPronte = firebaseAuth
   .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
   .catch(function(err) {
     console.warn('[Firebase] Erro ao definir persistência:', err);
   });
-
+ 
 // ============================================================
 // GESTÃO DE SESSÃO — 10 horas
 // ============================================================
-
+ 
 function registarInicioSessao() {
   localStorage.setItem(CHAVE_LOGIN_TS, Date.now().toString());
 }
-
+ 
 function sessaoValida() {
   var ts = localStorage.getItem(CHAVE_LOGIN_TS);
   if (!ts) return false;
   return (Date.now() - parseInt(ts, 10)) < SESSAO_MAX_MS;
 }
-
+ 
 function limparSessao() {
   localStorage.removeItem(CHAVE_LOGIN_TS);
 }
-
+ 
 // ============================================================
 // OBTER TOKEN JWT
+//
+// Devolve uma Promise<string> com o token, ou rejeita com erro.
 // ============================================================
-
+ 
 function obterIdToken() {
   if (!sessaoValida()) {
     limparSessao();
     return firebaseAuth.signOut().then(function() {
-      throw new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.');
+      return Promise.reject(new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.'));
     });
   }
-
+ 
   var user = firebaseAuth.currentUser;
   if (!user) {
     limparSessao();
     return Promise.reject(new Error('Sessão terminada. Por favor, faça login novamente.'));
   }
-
-  // 🔥 proteção contra bloqueio
-  return Promise.race([
-    user.getIdToken(true),
-    new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout ao obter token')), 5000)
-    )
-  ]);
+ 
+  return user.getIdToken(false).catch(function() {
+    return user.getIdToken(true);
+  });
 }
-
+ 
 // ============================================================
 // FETCH PARA O APPS SCRIPT
-//
-// O Apps Script /exec responde directamente ao POST sem redirect
-// quando publicado correctamente com "Execute as: Me / Anyone".
-// Se mesmo assim houver redirect, o body é preservado com
-// redirect:'follow' e Content-Type:text/plain (sem preflight).
 // ============================================================
-
+ 
 function chamarAPI(action, payload) {
   payload = payload || {};
-
-  return obterIdToken().then(function(idToken) {
-    var corpo = JSON.stringify({ action: action, payload: payload, idToken: idToken });
-
-    console.log('[API] →', action, '| token:', idToken.substring(0, 20) + '...');
-
-    var controller = new AbortController();
-    var timeoutId  = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
-
-    return fetch(APPS_SCRIPT_URL, {
-      method:   'POST',
-      redirect: 'follow',
-      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
-      body:     corpo,
-      signal:   controller.signal
+ 
+  if (APPS_SCRIPT_URL.includes('SEU_ID_AQUI')) {
+    console.warn('[API] APPS_SCRIPT_URL não configurado — modo demo.');
+    return Promise.resolve(modoDemo(action, payload));
+  }
+ 
+  // Todas as variáveis de controlo declaradas no scope desta função
+  // para que o handler de erro lhes tenha sempre acesso.
+  var timeoutId  = null;
+  var controller = new AbortController();
+ 
+  function limparTimeout() {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  }
+ 
+  return obterIdToken()
+    .then(function(idToken) {
+      var corpo = JSON.stringify({ action: action, payload: payload, idToken: idToken });
+      console.log('[API] →', action, '| token:', idToken.substring(0, 20) + '...');
+ 
+      timeoutId = setTimeout(function() {
+        controller.abort();
+      }, REQUEST_TIMEOUT_MS);
+ 
+      return fetch(APPS_SCRIPT_URL, {
+        method:   'POST',
+        redirect: 'follow',
+        headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
+        body:     corpo,
+        signal:   controller.signal
+      });
     })
     .then(function(response) {
-      clearTimeout(timeoutId);
+      limparTimeout();
       console.log('[API] ← HTTP', response.status, '| url:', response.url);
       return response.text();
     })
     .then(function(text) {
-      console.log('[API] resposta raw:', text.substring(0, 200));
-
+      console.log('[API] resposta:', text.substring(0, 200));
+ 
       if (!text || text.trim() === '') {
-        // Resposta vazia = o POST foi convertido em GET pelo redirect
-        // e o doGet devolveu algo diferente, ou não devolveu nada.
         throw new Error(
-          'Resposta vazia do servidor. ' +
-          'Verifique se o URL do Apps Script termina em /exec (não /dev) ' +
-          'e se o Web App está publicado com "Execute as: Me / Anyone".'
+          'Resposta vazia do servidor. Confirme que o URL termina em /exec ' +
+          'e que o Web App está publicado com "Execute as: Me / Who has access: Anyone".'
         );
       }
-
+ 
       var data;
       try {
         data = JSON.parse(text);
       } catch (_) {
         console.error('[API] resposta não-JSON:', text.substring(0, 300));
-        throw new Error('Resposta inesperada do servidor (não é JSON).');
+        throw new Error('Resposta inesperada do servidor (não é JSON). Verifique os logs do Apps Script.');
       }
-
+ 
       if (data.codigo === 401) {
         limparSessao();
-        return firebaseAuth.signOut().then(function() {
-          throw new Error('Sessão rejeitada pelo servidor. Por favor, faça login novamente.');
-        });
+        // Não fazer signOut aqui — deixar o app.js decidir o que fazer
+        throw new Error('Não autorizado pelo servidor. Faça login novamente.');
       }
-
+ 
       return data;
     })
     .catch(function(err) {
-      clearTimeout(timeoutId);
+      limparTimeout();
       if (err.name === 'AbortError') {
         throw new Error('Tempo limite excedido (' + (REQUEST_TIMEOUT_MS / 1000) + 's). Verifique a ligação.');
       }
       throw err;
     });
-  });
 }
-
+ 
 // ============================================================
-// AUTENTICAÇÃO
+// MODO DEMO — ativo enquanto APPS_SCRIPT_URL não estiver configurado
 // ============================================================
-
+ 
+function modoDemo(action, payload) {
+  console.log('[Demo]', action, payload);
+  switch (action) {
+    case 'verificarDados':
+      return { sucesso: true, existe: false, paises: {}, operadores: [], sugestoes: [] };
+    case 'guardarRegisto':
+      return { sucesso: true, mensagem: '[Demo] Dados prontos.' };
+    default:
+      return { sucesso: false, mensagem: 'Ação desconhecida.' };
+  }
+}
+ 
+// ============================================================
+// AUTENTICAÇÃO — funções públicas usadas por app.js
+// ============================================================
+ 
 function apiAutenticar(email, password, onSuccess, onFailure) {
   var respondido = false;
-
+ 
   var timeoutId = setTimeout(function() {
     if (respondido) return;
     respondido = true;
-    console.error('[Firebase] Timeout 15s.');
+    console.error('[Firebase] Timeout 15s. Verifique authDomain e domínios autorizados.');
     onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação à internet.' });
   }, 15000);
-
+ 
   _persistenciaPronte
     .then(function() {
       return firebaseAuth.signInWithEmailAndPassword(email, password);
@@ -214,12 +238,12 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
       onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
     });
 }
-
+ 
 function apiLogout() {
   limparSessao();
   return firebaseAuth.signOut();
 }
-
+ 
 function apiObservarAuth(callback) {
   return firebaseAuth.onAuthStateChanged(function(user) {
     if (user && !sessaoValida()) {
@@ -230,17 +254,17 @@ function apiObservarAuth(callback) {
     callback(user);
   });
 }
-
+ 
 // ============================================================
 // FUNÇÕES PARA O APPS SCRIPT
 // ============================================================
-
+ 
 function apiVerificarDados(local, data, onSuccess, onFailure) {
   chamarAPI('verificarDados', { local: local, data: data })
     .then(onSuccess)
     .catch(function(err) { onFailure({ message: err.message }); });
 }
-
+ 
 function apiGuardarRegisto(payload, onSuccess, onFailure) {
   chamarAPI('guardarRegisto', payload)
     .then(onSuccess)
