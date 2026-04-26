@@ -68,12 +68,18 @@ const firebaseAuth = firebase.auth();
 // ============================================================
 
 async function obterIdToken() {
-  const user = firebaseAuth.currentUser;
-  if (!user) throw new Error('Sem sessão ativa. Por favor, faça login.');
+  // Não usar firebaseAuth.currentUser diretamente — pode ser null
+  // nos primeiros instantes após login enquanto o Firebase ainda
+  // propaga o estado. Aguardamos pelo estado real via Promise.
+  const user = await new Promise((resolve, reject) => {
+    const unsub = firebaseAuth.onAuthStateChanged(
+      u   => { unsub(); resolve(u); },
+      err => { unsub(); reject(err); }
+    );
+  });
 
-  // forceRefresh: true garante que o token está sempre fresco
-  // (evita rejeições por expiração no backend)
-  return await user.getIdToken(/* forceRefresh */ false);
+  if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.');
+  return await user.getIdToken(false);
 }
 
 // ============================================================
