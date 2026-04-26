@@ -5,7 +5,7 @@
 
 'use strict';
 
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBwXXtMYm8AOCL1Gl3jBYUF1E1tEQpKb1ibDdiEe4iMZR3odHtSUYNK_TXtyz_s8rwAw/exec';
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
@@ -16,9 +16,6 @@ const FIREBASE_CONFIG = {
   appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
 
-const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
-const REQUEST_TIMEOUT_MS = 20000;
- 
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================================
