@@ -87,11 +87,6 @@ async function obterIdToken() {
 // ============================================================
 
 async function chamarAPI(action, payload = {}) {
-  // Verificar configuração
-  if (APPS_SCRIPT_URL.includes('AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ')) {
-    console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
-    return modoDemo(action, payload);
-  }
 
   // Obter token Firebase (lança erro se não houver sessão)
   const idToken = await obterIdToken();
