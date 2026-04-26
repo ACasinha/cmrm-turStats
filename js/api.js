@@ -16,6 +16,9 @@ const FIREBASE_CONFIG = {
   appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
 
+const SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
+const REQUEST_TIMEOUT_MS = 20000;
+
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================================
