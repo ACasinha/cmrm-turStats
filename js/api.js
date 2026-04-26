@@ -1,11 +1,11 @@
 // ============================================================
 // api.js — Ligação ao Apps Script com segurança via Firebase Auth
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-//
+///
 // SEGURANÇA — como funciona:
 //   Este ficheiro é público no GitHub. Isso é intencional e seguro.
 //   O segredo não está no código — está na autenticação.
-//
+///
 //   Fluxo por pedido:
 //     1. Firebase SDK autentica o utilizador (email + password)
 //     2. Firebase devolve um ID Token JWT assinado pela Google
