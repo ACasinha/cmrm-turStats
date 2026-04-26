@@ -21,7 +21,7 @@
 // CONFIGURAÇÃO:
 //   Substitua os valores em FIREBASE_CONFIG com os do seu projeto.
 //   Firebase Console → Definições do projeto → As suas apps → Web app
-//   Substitua APPS_SCRIPT_URL com o URL do Web App publicado. .
+//   Substitua APPS_SCRIPT_URL com o URL do Web App publicado.
 // ============================================================
 
 'use strict';
@@ -36,7 +36,7 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyklAQz02jcUj7W
 // Veja: https://firebase.google.com/docs/web/setup#available-libraries
 // A segurança real é garantida pelas Firebase Security Rules
 // e pela verificação do ID Token no Apps Script.
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
   authDomain: "stats-tur.firebaseapp.com",
   projectId: "stats-tur",
@@ -81,6 +81,11 @@ async function obterIdToken() {
 // ============================================================
 
 async function chamarAPI(action, payload = {}) {
+  // Verificar configuração
+  if (APPS_SCRIPT_URL.includes('AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ')) {
+    console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
+    return modoDemo(action, payload);
+  }
 
   // Obter token Firebase (lança erro se não houver sessão)
   const idToken = await obterIdToken();
@@ -159,9 +164,36 @@ function modoDemo(action, payload) {
  * @param {Function} onFailure — ({ message })
  */
 function apiAutenticar(email, password, onSuccess, onFailure) {
+  // Verificar se o Firebase foi inicializado corretamente
+  if (!firebase.apps.length) {
+    onFailure({ message: 'Firebase não inicializado. Verifique a FIREBASE_CONFIG em api.js.' });
+    return;
+  }
+
+  // Timeout de segurança — se o Firebase não responder em 15s
+  // (ex: domínio não autorizado, rede bloqueada), garantir que o
+  // utilizador vê um erro em vez de ficar preso no "A autenticar..."
+  let resolvido = false;
+  const timeoutId = setTimeout(() => {
+    if (!resolvido) {
+      resolvido = true;
+      console.error('[Firebase] Timeout na autenticação. Verifique:',
+        '1) authDomain no FIREBASE_CONFIG',
+        '2) Domínio autorizado no Firebase Console → Authentication → Settings → Authorized domains',
+        '3) Ligação à internet'
+      );
+      onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação ou contacte o administrador.' });
+    }
+  }, 15000);
+
   firebaseAuth.signInWithEmailAndPassword(email, password)
     .then(credencial => {
+      if (resolvido) return;   // timeout já disparou — ignorar
+      resolvido = true;
+      clearTimeout(timeoutId);
+
       const user = credencial.user;
+      console.log('[Firebase] Login bem-sucedido:', user.email);
       onSuccess({
         sucesso:         true,
         nomeFuncionario: user.displayName || user.email,
@@ -170,17 +202,25 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
       });
     })
     .catch(err => {
-      // Traduzir erros do Firebase para português
+      if (resolvido) return;
+      resolvido = true;
+      clearTimeout(timeoutId);
+
+      // Log completo para diagnóstico
+      console.error('[Firebase] Erro de autenticação:', err.code, err.message);
+
       const mensagens = {
-        'auth/invalid-email':      'Endereço de email inválido.',
-        'auth/user-disabled':      'Esta conta foi desativada.',
-        'auth/user-not-found':     'Utilizador não encontrado.',
-        'auth/wrong-password':     'Password incorreta.',
-        'auth/invalid-credential': 'Email ou password incorretos.',
-        'auth/too-many-requests':  'Demasiadas tentativas. Tente mais tarde.',
-        'auth/network-request-failed': 'Sem ligação à internet.'
+        'auth/invalid-email':          'Endereço de email inválido.',
+        'auth/user-disabled':          'Esta conta foi desativada.',
+        'auth/user-not-found':         'Utilizador não encontrado.',
+        'auth/wrong-password':         'Password incorreta.',
+        'auth/invalid-credential':     'Email ou password incorretos.',
+        'auth/too-many-requests':      'Demasiadas tentativas falhadas. Tente mais tarde.',
+        'auth/network-request-failed': 'Sem ligação à internet.',
+        'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase.',
+        'auth/unauthorized-domain':    'Domínio não autorizado. Adicione-o no Firebase Console → Authentication → Authorized domains.'
       };
-      const mensagem = mensagens[err.code] || 'Erro de autenticação: ' + err.message;
+      const mensagem = mensagens[err.code] || ('Erro (' + err.code + '): ' + err.message);
       onFailure({ message: mensagem });
     });
 }
