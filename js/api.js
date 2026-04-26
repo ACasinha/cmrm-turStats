@@ -3,14 +3,16 @@
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 //
 // CONFIGURAÇÃO:
-//   1. Substitua FIREBASE_CONFIG com os valores do seu projeto
+//   1. Substitua FIREBASE_CONFIG com os valores do seu projecto
 //      Firebase Console → Definições → As suas apps → Web app
-//   2. Substitua APPS_SCRIPT_URL com o URL do Web App publicado
+//   2. Substitua APPS_SCRIPT_URL com o URL /exec do Web App publicado
+//      (nunca o URL /dev — esse faz redirect diferente)
 // ============================================================
 
 'use strict';
 
-var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBwXXtMYm8AOCL1Gl3jBYUF1E1tEQpKb1ibDdiEe4iMZR3odHtSUYNK_TXtyz_s8rwAw/exec';
+// ▼ EDITAR ESTES DOIS VALORES ▼
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqN-2l6Hr4_fuUHM---iONi24wl3B2SCmpY-V3jAf0J9OKZFsDcit1VJ5_WktFXMTmsA/exec';
 
 var FIREBASE_CONFIG = {
   apiKey: "AIzaSyDk6jfWQC2C-5SEblLRZ5euNU6OHUusopU",
@@ -20,9 +22,11 @@ var FIREBASE_CONFIG = {
   messagingSenderId: "146563538068",
   appId: "1:146563538068:web:429757296c7ce85d64e881"
 };
+// ▲ EDITAR ESTES DOIS VALORES ▲
 
-var SESSAO_MAX_MS = 10 * 60 * 60 * 1000;  // 10 horas
+var SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
 var REQUEST_TIMEOUT_MS = 20000;
+var CHAVE_LOGIN_TS     = 'rmz_login_ts';
 
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
@@ -32,37 +36,26 @@ if (!firebase.apps.length) {
   firebase.initializeApp(FIREBASE_CONFIG);
 }
 
-const firebaseAuth = firebase.auth();
+var firebaseAuth = firebase.auth();
 
-// setPersistence é assíncrono. Guardamos a Promise para que
-// apiAutenticar aguarde a sua conclusão antes de fazer login.
-// Sem isto, o primeiro signInWithEmailAndPassword pode falhar
-// silenciosamente enquanto a persistência ainda não está definida.
-//
-// Usamos LOCAL (localStorage) em vez de SESSION para que o
-// timestamp de 10h sobreviva a reloads da página — gerimos
-// nós próprios a expiração de sessão em vez de depender do
-// Firebase para isso.
-const _persistenciaPronte = firebaseAuth
+// Aguardar setPersistence antes de qualquer login.
+// LOCAL: sessão sobrevive a reloads da página (gerimos nós a expiração de 10h).
+var _persistenciaPronte = firebaseAuth
   .setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-  .catch(err => console.warn('[Firebase] Erro ao definir persistência:', err));
+  .catch(function(err) {
+    console.warn('[Firebase] Erro ao definir persistência:', err);
+  });
 
 // ============================================================
 // GESTÃO DE SESSÃO — 10 horas
-//
-// Usamos localStorage (não sessionStorage) para que o timestamp
-// sobreviva a reloads. A expiração de 10h é verificada por nós
-// antes de cada pedido ao servidor.
 // ============================================================
-
-var CHAVE_LOGIN_TS = 'rmz_login_ts';
 
 function registarInicioSessao() {
   localStorage.setItem(CHAVE_LOGIN_TS, Date.now().toString());
 }
 
 function sessaoValida() {
-  const ts = localStorage.getItem(CHAVE_LOGIN_TS);
+  var ts = localStorage.getItem(CHAVE_LOGIN_TS);
   if (!ts) return false;
   return (Date.now() - parseInt(ts, 10)) < SESSAO_MAX_MS;
 }
@@ -73,110 +66,129 @@ function limparSessao() {
 
 // ============================================================
 // OBTER TOKEN JWT
-//
-// Chamado antes de cada pedido ao Apps Script.
-// firebaseAuth.currentUser está sempre disponível após login
-// completo — não é necessário aguardar por observadores.
-// getIdToken() renova automaticamente o JWT de 1h quando
-// este está prestes a expirar.
 // ============================================================
 
-async function obterIdToken() {
-  // Verificar expiração de 10h
+function obterIdToken() {
   if (!sessaoValida()) {
     limparSessao();
-    await firebaseAuth.signOut();
-    throw new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.');
+    return firebaseAuth.signOut().then(function() {
+      throw new Error('A sessão expirou após 10 horas. Por favor, faça login novamente.');
+    });
   }
 
-  const user = firebaseAuth.currentUser;
+  var user = firebaseAuth.currentUser;
   if (!user) {
-    // Pode acontecer após reload se o token Firebase tiver expirado
-    // (distinto da nossa expiração de 10h)
     limparSessao();
-    throw new Error('Sessão terminada. Por favor, faça login novamente.');
+    return Promise.reject(new Error('Sessão terminada. Por favor, faça login novamente.'));
   }
 
-  // false = usar cache se válido; SDK renova automaticamente se necessário
-  return await user.getIdToken(false);
+  return user.getIdToken(false)
+    .catch(function() {
+      return user.getIdToken(true); // forçar refresh se falhar
+    });
 }
 
 // ============================================================
 // FETCH PARA O APPS SCRIPT
+//
+// O Apps Script /exec responde directamente ao POST sem redirect
+// quando publicado correctamente com "Execute as: Me / Anyone".
+// Se mesmo assim houver redirect, o body é preservado com
+// redirect:'follow' e Content-Type:text/plain (sem preflight).
 // ============================================================
 
-async function chamarAPI(action, payload = {}) {
-  if (APPS_SCRIPT_URL.includes('AKfycbwBwXXtMYm8AOCL1Gl3jBYUF1E1tEQpKb1ibDdiEe4iMZR3odHtSUYNK_TXtyz_s8rwAw')) {
+function chamarAPI(action, payload) {
+  payload = payload || {};
+
+  if (APPS_SCRIPT_URL.includes('AKfycbwqN-2l6Hr4_fuUHM---iONi24wl3B2SCmpY-V3jAf0J9OKZFsDcit1VJ5_WktFXMTmsA')) {
     console.warn('[API] APPS_SCRIPT_URL não configurado — modo demo.');
-    return modoDemo(action, payload);
+    return Promise.resolve(modoDemo(action, payload));
   }
 
-  const idToken = await obterIdToken();
+  return obterIdToken().then(function(idToken) {
+    var corpo = JSON.stringify({ action: action, payload: payload, idToken: idToken });
 
-  const controller = new AbortController();
-  const timeoutId  = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    console.log('[API] →', action, '| token:', idToken.substring(0, 20) + '...');
 
-  try {
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method:  'POST',
-      // text/plain evita preflight CORS que o Apps Script não suporta
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body:    JSON.stringify({ action, payload, idToken }),
-      signal:  controller.signal
+    var controller = new AbortController();
+    var timeoutId  = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
+
+    return fetch(APPS_SCRIPT_URL, {
+      method:   'POST',
+      redirect: 'follow',
+      headers:  { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:     corpo,
+      signal:   controller.signal
+    })
+    .then(function(response) {
+      clearTimeout(timeoutId);
+      console.log('[API] ← HTTP', response.status, '| url:', response.url);
+      return response.text();
+    })
+    .then(function(text) {
+      console.log('[API] resposta raw:', text.substring(0, 200));
+
+      if (!text || text.trim() === '') {
+        // Resposta vazia = o POST foi convertido em GET pelo redirect
+        // e o doGet devolveu algo diferente, ou não devolveu nada.
+        throw new Error(
+          'Resposta vazia do servidor. ' +
+          'Verifique se o URL do Apps Script termina em /exec (não /dev) ' +
+          'e se o Web App está publicado com "Execute as: Me / Anyone".'
+        );
+      }
+
+      var data;
+      try {
+        data = JSON.parse(text);
+      } catch (_) {
+        console.error('[API] resposta não-JSON:', text.substring(0, 300));
+        throw new Error('Resposta inesperada do servidor (não é JSON).');
+      }
+
+      if (data.codigo === 401) {
+        limparSessao();
+        return firebaseAuth.signOut().then(function() {
+          throw new Error('Sessão rejeitada pelo servidor. Por favor, faça login novamente.');
+        });
+      }
+
+      return data;
+    })
+    .catch(function(err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Tempo limite excedido (' + (REQUEST_TIMEOUT_MS / 1000) + 's). Verifique a ligação.');
+      }
+      throw err;
     });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) throw new Error('Erro de servidor: HTTP ' + response.status);
-
-    const data = await response.json();
-
-    // Backend rejeitou token (revogado, projeto errado, etc.)
-    if (data.codigo === 401) {
-      limparSessao();
-      await firebaseAuth.signOut();
-      throw new Error('Sessão rejeitada pelo servidor. Por favor, faça login novamente.');
-    }
-
-    return data;
-
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('Tempo limite excedido (' + (REQUEST_TIMEOUT_MS / 1000) + 's). Verifique a ligação.');
-    }
-    throw err;
-  }
+  });
 }
 
 // ============================================================
-// AUTENTICAÇÃO — funções públicas usadas por app.js
+// AUTENTICAÇÃO
 // ============================================================
 
-/**
- * Login com email + password.
- * Aguarda _persistenciaPronte antes de tentar o login — garante
- * que a primeira tentativa não falha silenciosamente.
- */
 function apiAutenticar(email, password, onSuccess, onFailure) {
-  let respondido = false;
+  var respondido = false;
 
-  const timeoutId = setTimeout(() => {
+  var timeoutId = setTimeout(function() {
     if (respondido) return;
     respondido = true;
-    console.error('[Firebase] Timeout 15s. Verifique authDomain, domínios autorizados e ligação.');
+    console.error('[Firebase] Timeout 15s.');
     onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação à internet.' });
   }, 15000);
 
-  // Aguardar persistência antes do login — corrige o bug da 1ª tentativa
   _persistenciaPronte
-    .then(() => firebaseAuth.signInWithEmailAndPassword(email, password))
-    .then(credencial => {
+    .then(function() {
+      return firebaseAuth.signInWithEmailAndPassword(email, password);
+    })
+    .then(function(credencial) {
       if (respondido) return;
       respondido = true;
       clearTimeout(timeoutId);
       registarInicioSessao();
-      const user = credencial.user;
+      var user = credencial.user;
       console.log('[Firebase] Login:', user.email);
       onSuccess({
         sucesso:         true,
@@ -185,12 +197,12 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
         uid:             user.uid
       });
     })
-    .catch(err => {
+    .catch(function(err) {
       if (respondido) return;
       respondido = true;
       clearTimeout(timeoutId);
       console.error('[Firebase] Erro:', err.code, err.message);
-      const msgs = {
+      var msgs = {
         'auth/invalid-email':          'Endereço de email inválido.',
         'auth/user-disabled':          'Esta conta foi desativada.',
         'auth/user-not-found':         'Utilizador não encontrado.',
@@ -199,30 +211,23 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
         'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
         'auth/network-request-failed': 'Sem ligação à internet.',
         'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
-        'auth/unauthorized-domain':    'Domínio não autorizado — adicione-o em Firebase Console → Authentication → Authorized domains.'
+        'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
       };
       onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
     });
 }
 
-/**
- * Logout explícito.
- */
 function apiLogout() {
   limparSessao();
   return firebaseAuth.signOut();
 }
 
-/**
- * Observador de estado de autenticação.
- * Verifica expiração de 10h sempre que o estado muda.
- */
 function apiObservarAuth(callback) {
-  return firebaseAuth.onAuthStateChanged(user => {
+  return firebaseAuth.onAuthStateChanged(function(user) {
     if (user && !sessaoValida()) {
       console.log('[Sessão] 10 horas ultrapassadas — a terminar sessão.');
       apiLogout();
-      return; // callback será chamado de novo com null pelo signOut
+      return;
     }
     callback(user);
   });
@@ -233,13 +238,13 @@ function apiObservarAuth(callback) {
 // ============================================================
 
 function apiVerificarDados(local, data, onSuccess, onFailure) {
-  chamarAPI('verificarDados', { local, data })
+  chamarAPI('verificarDados', { local: local, data: data })
     .then(onSuccess)
-    .catch(err => onFailure({ message: err.message }));
+    .catch(function(err) { onFailure({ message: err.message }); });
 }
 
 function apiGuardarRegisto(payload, onSuccess, onFailure) {
   chamarAPI('guardarRegisto', payload)
     .then(onSuccess)
-    .catch(err => onFailure({ message: err.message }));
+    .catch(function(err) { onFailure({ message: err.message }); });
 }
