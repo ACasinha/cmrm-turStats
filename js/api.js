@@ -60,25 +60,34 @@ if (!firebase.apps.length) {
 const firebaseAuth = firebase.auth();
 
 // ============================================================
-// OBTER TOKEN ATUAL
+// ESTADO DE AUTENTICAÇÃO
 //
-// Obtém o ID Token do utilizador autenticado.
-// Usa forceRefresh=true se o token tiver menos de 5 min de vida.
-// O Firebase renova automaticamente tokens expirados.
+// O Firebase resolve o estado inicial de forma assíncrona
+// (lê o token guardado no localStorage e valida-o).
+// Guardamos uma Promise que resolve UMA VEZ quando esse
+// processo termina — depois disso firebaseAuth.currentUser
+// é sempre fiável e usamo-lo diretamente.
 // ============================================================
 
-async function obterIdToken() {
-  // Não usar firebaseAuth.currentUser diretamente — pode ser null
-  // nos primeiros instantes após login enquanto o Firebase ainda
-  // propaga o estado. Aguardamos pelo estado real via Promise.
-  const user = await new Promise((resolve, reject) => {
-    const unsub = firebaseAuth.onAuthStateChanged(
-      u   => { unsub(); resolve(u); },
-      err => { unsub(); reject(err); }
-    );
+// Promise que resolve com o utilizador (ou null) assim que
+// o Firebase termina de verificar o estado inicial.
+const firebaseAuthPronto = new Promise(resolve => {
+  const unsub = firebaseAuth.onAuthStateChanged(user => {
+    unsub();        // desligar após o primeiro disparo
+    resolve(user);  // null se não há sessão, user se há
   });
+});
 
+async function obterIdToken() {
+  // Garantir que o estado inicial do Firebase foi resolvido
+  await firebaseAuthPronto;
+
+  // Agora currentUser é fiável
+  const user = firebaseAuth.currentUser;
   if (!user) throw new Error('Sessão expirada. Por favor, faça login novamente.');
+
+  // getIdToken(false) usa o token em cache se ainda for válido;
+  // renova automaticamente se estiver prestes a expirar.
   return await user.getIdToken(false);
 }
 
@@ -87,6 +96,11 @@ async function obterIdToken() {
 // ============================================================
 
 async function chamarAPI(action, payload = {}) {
+  // Verificar configuração
+  if (APPS_SCRIPT_URL.includes('AKfycbyklAQz02jcUj7W2H9hjzwUYpycSNl8OMBjkl4wmA6Xqw4aLh-FBWXFnf1R2khjMyk8mQ')) {
+    console.warn('[API] APPS_SCRIPT_URL não configurado. A usar modo demo.');
+    return modoDemo(action, payload);
+  }
 
   // Obter token Firebase (lança erro se não houver sessão)
   const idToken = await obterIdToken();
