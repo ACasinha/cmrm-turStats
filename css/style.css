@@ -372,6 +372,50 @@ body {
   box-shadow:0 0 0 3px rgba(201,149,42,0.15);
 }
 
+/* Stepper +/- para mobile */
+.num-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-stepper {
+  width:  36px;
+  height: 36px;
+  border: 1.5px solid var(--cinza-claro);
+  border-radius: 7px;
+  background: var(--branco);
+  color: var(--terra);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+  /* Área de toque mínima recomendada para mobile */
+  min-width: 44px;
+  min-height: 44px;
+}
+.btn-stepper:active {
+  background: var(--terra-pale);
+  border-color: var(--terra-light);
+}
+.btn-menos { color: #c0392b; }
+.btn-mais  { color: var(--verde); }
+
+/* Em desktop, esconder os botões e deixar só o input */
+@media (min-width: 768px) {
+  .btn-stepper { display: none; }
+  .num-stepper { gap: 0; }
+  .num-input   { width: clamp(64px,18vw,90px); }
+}
+
 .row-destaque td { background:rgba(201,149,42,0.07); }
 .row-destaque td:first-child { color:var(--terra); font-weight:700; }
 
