@@ -1,41 +1,105 @@
 // ============================================================
-// pwa.js — Service Worker e banner de instalação
+// pwa.js — Service Worker, instalação e actualizações
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 // ============================================================
 
 'use strict';
+
+var _swRegistration          = null;
+var _deferredPrompt          = null;
+var CHAVE_BANNER_DISPENSADO  = 'rmz_banner_dispensado';
+
+// ── Versão (lida do sw.js via fetch) ─────────────────────────
+function mostrarVersao() {
+  fetch('sw.js', { cache: 'no-store' })
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      var match = txt.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
+      if (match) {
+        var versao = match[1].replace('rmz-nacionalidades-', 'v');
+        var el = document.getElementById('rodapeVersao');
+        if (el) el.textContent = versao;
+      }
+    })
+    .catch(function() {});
+}
 
 // ============================================================
 // SERVICE WORKER
 // ============================================================
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./sw.js')
-      .then(reg => {
-        console.log('[PWA] Service Worker registado. Scope:', reg.scope);
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) {
+        _swRegistration = reg;
+        console.log('[PWA] SW registado. Scope:', reg.scope);
+        mostrarVersao();
 
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
+        reg.addEventListener('updatefound', function() {
+          var newWorker = reg.installing;
           if (!newWorker) return;
-          newWorker.addEventListener('statechange', () => {
+          newWorker.addEventListener('statechange', function() {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              mostrarToast('🔄 Nova versão disponível. Recarregue a página.', 'info');
+              // Nova versão disponível
+              mostrarToast('🔄 Nova versão disponível! Guarde os dados e clique em "Verificar atualização".', 'info');
             }
           });
         });
       })
-      .catch(err => console.warn('[PWA] Falha no registo do SW:', err));
+      .catch(function(err) {
+        console.warn('[PWA] Falha no registo do SW:', err);
+      });
+
+    // Recarregar quando novo SW toma controlo
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      window.location.reload();
+    });
   });
 }
 
 // ============================================================
-// BANNER DE INSTALAÇÃO
+// VERIFICAR ATUALIZAÇÃO (botão no rodapé)
 // ============================================================
 
-let deferredPrompt = null;
-const CHAVE_BANNER_DISPENSADO = 'rmz_banner_dispensado';
+function verificarAtualizacao() {
+  var btn = document.getElementById('btnVerificarUpdate');
+  btn.disabled    = true;
+  btn.textContent = '⏳ A verificar...';
+
+  if (!_swRegistration) {
+    mostrarToast('Service Worker não disponível.', 'info');
+    btn.disabled    = false;
+    btn.textContent = '🔄 Verificar atualização';
+    return;
+  }
+
+  _swRegistration.update()
+    .then(function() {
+      var temNovo = _swRegistration.waiting || _swRegistration.installing;
+      if (temNovo) {
+        mostrarToast('🔄 Nova versão encontrada! Guarde os dados — a app irá atualizar.', 'info');
+        setTimeout(function() {
+          if (_swRegistration.waiting) {
+            _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }, 3000);
+      } else {
+        mostrarToast('✓ A app está atualizada.', 'sucesso');
+      }
+    })
+    .catch(function(err) {
+      mostrarToast('Erro ao verificar: ' + err.message, 'erro');
+    })
+    .finally(function() {
+      btn.disabled    = false;
+      btn.textContent = '🔄 Verificar atualização';
+    });
+}
+
+// ============================================================
+// BANNER DE INSTALAÇÃO (topo — primeira abertura)
+// ============================================================
 
 function bannerFoiDispensado() {
   return localStorage.getItem(CHAVE_BANNER_DISPENSADO) === '1';
@@ -46,73 +110,62 @@ function dispensarBanner() {
   document.getElementById('installBanner').classList.remove('visivel');
 }
 
-window.addEventListener('beforeinstallprompt', e => {
+window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
-  deferredPrompt = e;
-  // Não mostrar se: já instalada, já em standalone, ou utilizador já dispensou
-  const jaInstalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  _deferredPrompt = e;
+
+  // Banner topo — só se não dispensado e não em standalone
+  var jaInstalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if (!jaInstalada && !bannerFoiDispensado()) {
     document.getElementById('installBanner').classList.add('visivel');
   }
+
+  // Botão no rodapé — sempre visível se instalável
+  var btnRodape = document.getElementById('btnInstalarRodape');
+  if (btnRodape) btnRodape.style.display = '';
 });
 
-document.getElementById('btnInstalar').addEventListener('click', () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(choice => {
+window.addEventListener('appinstalled', function() {
+  _deferredPrompt = null;
+  dispensarBanner();
+  var btnRodape = document.getElementById('btnInstalarRodape');
+  if (btnRodape) btnRodape.style.display = 'none';
+  mostrarToast('✓ App instalada com sucesso!', 'sucesso');
+});
+
+// Botão instalar — topo
+var btnInstalar = document.getElementById('btnInstalar');
+if (btnInstalar) {
+  btnInstalar.addEventListener('click', function() { instalarApp(); });
+}
+
+// Botão fechar — topo
+var btnFechar = document.getElementById('btnInstalarFechar');
+if (btnFechar) {
+  btnFechar.addEventListener('click', function() { dispensarBanner(); });
+}
+
+// ============================================================
+// INSTALAR APP (usado pelo botão do rodapé e do banner)
+// ============================================================
+
+function instalarApp() {
+  if (!_deferredPrompt) {
+    mostrarToast('A instalação não está disponível neste momento ou a app já está instalada.', 'info');
+    return;
+  }
+  _deferredPrompt.prompt();
+  _deferredPrompt.userChoice.then(function(choice) {
     console.log('[PWA] Resposta:', choice.outcome);
-    deferredPrompt = null;
+    _deferredPrompt = null;
     dispensarBanner();
+    var btnRodape = document.getElementById('btnInstalarRodape');
+    if (btnRodape) btnRodape.style.display = 'none';
   });
-});
+}
 
-// Botão fechar (✕) — dispensar e não voltar a mostrar
-document.getElementById('installBanner')
-  .querySelector('.btn-instalar-fechar')
-  .addEventListener('click', () => dispensarBanner());
-
-// Ocultar imediatamente se já instalada
+// Ocultar banner topo se já em standalone
 if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
-  document.getElementById('installBanner').classList.remove('visivel');
-}
-
-// ============================================================
-// RODAPÉ — INSTALAÇÃO E ATUALIZAÇÃO
-// ============================================================
-
-function instalarDoRodape() {
-  if (!deferredPrompt) {
-    mostrarToast('ℹ️ A app já está instalada ou o instalador não está disponível.', 'info');
-    return;
-  }
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(choice => {
-    console.log('[PWA] Instalação via rodapé:', choice.outcome);
-    deferredPrompt = null;
-  });
-}
-
-function verificarAtualizacao() {
-  if (!('serviceWorker' in navigator)) {
-    mostrarToast('⚠️ Service Worker não disponível.', 'aviso');
-    return;
-  }
-  navigator.serviceWorker.getRegistration().then(reg => {
-    if (!reg) {
-      mostrarToast('⚠️ Nenhum Service Worker registado.', 'aviso');
-      return;
-    }
-    reg.update().then(() => {
-      mostrarToast('✅ A verificar atualizações...', 'sucesso');
-      // O Service Worker vai emitir o evento updatefound se houver nova versão
-    }).catch(err => {
-      mostrarToast('❌ Erro ao verificar atualização: ' + err.message, 'erro');
-    });
-  });
-}
-
-// Ocultar botão instalar no rodapé se já instalada
-if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
-  const btnInstalarFooter = document.getElementById('btnInstalarFooter');
-  if (btnInstalarFooter) btnInstalarFooter.style.display = 'none';
+  var b = document.getElementById('installBanner');
+  if (b) b.classList.remove('visivel');
 }
