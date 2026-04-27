@@ -273,22 +273,12 @@ function guardarDados() {
 // ============================================================
 
 function bloquearFormulario(bloquear) {
-  var disabled = bloquear;
-  // Países
-  document.querySelectorAll('.pais-input').forEach(function(inp) {
-    inp.disabled = disabled;
-  });
-  document.querySelectorAll('.btn-stepper').forEach(function(btn) {
-    btn.disabled = disabled;
-  });
-  // Operadores
-  document.querySelectorAll('.op-nome, .op-nac, .op-total').forEach(function(inp) {
-    inp.disabled = disabled;
-  });
-  // Sugestões
-  document.querySelectorAll('.sug-texto, .sug-nac').forEach(function(inp) {
-    inp.disabled = disabled;
-  });
-  // Observações
-  document.getElementById('observacoes').disabled = disabled;
+  var d = bloquear;
+  document.querySelectorAll('.pais-input').forEach(function(i){ i.disabled = d; });
+  document.querySelectorAll('.btn-stepper').forEach(function(b){ b.disabled = d; });
+  document.querySelectorAll('.op-nome, .op-total').forEach(function(i){ i.disabled = d; });
+  document.querySelectorAll('.op-nac-select, .op-nac-num').forEach(function(i){ i.disabled = d; });
+  document.querySelectorAll('.btn-add-nac, .btn-rem-nac').forEach(function(b){ b.disabled = d; });
+  document.querySelectorAll('.sug-texto, .sug-nac').forEach(function(i){ i.disabled = d; });
+  document.getElementById('observacoes').disabled = d;
 }
