@@ -31,12 +31,26 @@ function construirTabelaPaises() {
     tr.innerHTML = `
       <td>${esc(pais.nome)}</td>
       <td class="num-cell">
-        <input type="number" inputmode="numeric" class="num-input pais-input"
-               min="0" placeholder="0" data-pais="${esc(pais.nome)}"
-               oninput="atualizarTotais(this)">
+        <div class="num-stepper">
+          <button type="button" class="btn-stepper btn-menos"
+                  onclick="stepPais(this,-1)" aria-label="Menos">−</button>
+          <input type="number" inputmode="numeric" class="num-input pais-input"
+                 min="0" placeholder="0" data-pais="${esc(pais.nome)}"
+                 oninput="atualizarTotais(this)">
+          <button type="button" class="btn-stepper btn-mais"
+                  onclick="stepPais(this,1)" aria-label="Mais">+</button>
+        </div>
       </td>`;
     tbody.appendChild(tr);
   });
+}
+
+function stepPais(btn, delta) {
+  const input = btn.closest('.num-stepper').querySelector('.pais-input');
+  const atual = parseInt(input.value, 10) || 0;
+  const novo  = Math.max(0, atual + delta);
+  input.value = novo;
+  atualizarTotais(input);
 }
 
 function construirTabelaOperadores(n, dados) {
@@ -201,6 +215,9 @@ function carregarDados(resp) {
   const nSug = Math.max(NUM_LINHAS_SUG, (resp.sugestoes  || []).length + 1);
   construirTabelaOperadores(nOp,  resp.operadores || []);
   construirTabelaSugestoes(nSug,  resp.sugestoes  || []);
-  document.getElementById('observacoes').value = resp.observacoes || '';
+  // Carregar observações
+  if (resp.observacoes) {
+    document.getElementById('observacoes').value = resp.observacoes;
+  }
   recalcularTotais();
 }
