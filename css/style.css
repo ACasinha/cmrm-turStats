@@ -409,12 +409,7 @@ body {
 .btn-menos { color: #c0392b; }
 .btn-mais  { color: var(--verde); }
 
-/* Em desktop, esconder os botões e deixar só o input */
-@media (min-width: 768px) {
-  .btn-stepper { display: none; }
-  .num-stepper { gap: 0; }
-  .num-input   { width: clamp(64px,18vw,90px); }
-}
+/* Botões visíveis em todos os tamanhos de ecrã */
 
 .row-destaque td { background:rgba(201,149,42,0.07); }
 .row-destaque td:first-child { color:var(--terra); font-weight:700; }
