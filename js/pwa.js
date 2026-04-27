@@ -1,5 +1,5 @@
 // ============================================================
-// pwa.js — Registo do Service Worker e banner de instalação
+// pwa.js — Service Worker e banner de instalação
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 // ============================================================
 
@@ -14,82 +14,64 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('./sw.js')
       .then(reg => {
-        console.log('[PWA] Service Worker registado com sucesso. Scope:', reg.scope);
+        console.log('[PWA] Service Worker registado. Scope:', reg.scope);
 
-        // Verificar se existe uma nova versão disponível
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (!newWorker) return;
-
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Existe uma atualização — informar o utilizador
               mostrarToast('🔄 Nova versão disponível. Recarregue a página.', 'info');
             }
           });
         });
       })
-      .catch(err => {
-        console.warn('[PWA] Falha no registo do Service Worker:', err);
-      });
-
-    // Recarregar automaticamente quando um novo SW toma controlo
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        // Não forçar reload automático — deixar o utilizador decidir
-      }
-    });
+      .catch(err => console.warn('[PWA] Falha no registo do SW:', err));
   });
 }
 
 // ============================================================
-// BANNER DE INSTALAÇÃO (Add to Home Screen)
+// BANNER DE INSTALAÇÃO
 // ============================================================
 
 let deferredPrompt = null;
+const CHAVE_BANNER_DISPENSADO = 'rmz_banner_dispensado';
 
-/**
- * Captura o evento beforeinstallprompt e mostra o banner de instalação.
- */
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('installBanner').classList.add('visivel');
-});
+function bannerFoiDispensado() {
+  return localStorage.getItem(CHAVE_BANNER_DISPENSADO) === '1';
+}
 
-/**
- * Ao clicar no botão "Instalar", abre o diálogo nativo do browser.
- */
-document.getElementById('btnInstalar').addEventListener('click', () => {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-
-  deferredPrompt.userChoice.then(choice => {
-    console.log('[PWA] Resposta do utilizador:', choice.outcome);
-    deferredPrompt = null;
-    document.getElementById('installBanner').classList.remove('visivel');
-  });
-});
-
-/**
- * Esconde o banner ao clicar em "✕" (definido inline no HTML).
- * O handler está no atributo onclick do botão no index.html.
- */
-
-/**
- * Ocultar o banner se a app já foi instalada (standalone mode).
- */
-if (window.matchMedia('(display-mode: standalone)').matches) {
+function dispensarBanner() {
+  localStorage.setItem(CHAVE_BANNER_DISPENSADO, '1');
   document.getElementById('installBanner').classList.remove('visivel');
 }
 
-/**
- * iOS Safari — verificar se já foi adicionada ao ecrã inicial.
- * (navigator.standalone é específico de Safari/iOS)
- */
-if (navigator.standalone === true) {
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Não mostrar se: já instalada, já em standalone, ou utilizador já dispensou
+  const jaInstalada = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (!jaInstalada && !bannerFoiDispensado()) {
+    document.getElementById('installBanner').classList.add('visivel');
+  }
+});
+
+document.getElementById('btnInstalar').addEventListener('click', () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    console.log('[PWA] Resposta:', choice.outcome);
+    deferredPrompt = null;
+    dispensarBanner();
+  });
+});
+
+// Botão fechar (✕) — dispensar e não voltar a mostrar
+document.getElementById('installBanner')
+  .querySelector('.btn-instalar-fechar')
+  .addEventListener('click', () => dispensarBanner());
+
+// Ocultar imediatamente se já instalada
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
   document.getElementById('installBanner').classList.remove('visivel');
 }
