@@ -3,8 +3,6 @@
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 // ============================================================
 
-'use strict';
-
 // ============================================================
 // UTILITÁRIOS
 // ============================================================
@@ -22,11 +20,11 @@ function esc(str) {
 // ============================================================
 
 function construirTabelaPaises() {
-  const tbody = document.getElementById('tabelaPaises');
+  var tbody = document.getElementById('tabelaPaises');
   tbody.innerHTML = '';
 
-  PAISES.forEach(pais => {
-    const tr = document.createElement('tr');
+  PAISES.forEach(function(pais) {
+    var tr = document.createElement('tr');
     if (pais.destaque) tr.classList.add('row-destaque');
     tr.innerHTML = `
       <td>${esc(pais.nome)}</td>
@@ -46,9 +44,9 @@ function construirTabelaPaises() {
 }
 
 function stepPais(btn, delta) {
-  const input = btn.closest('.num-stepper').querySelector('.pais-input');
-  const atual = parseInt(input.value, 10) || 0;
-  const novo  = Math.max(0, atual + delta);
+  var input = btn.closest('.num-stepper').querySelector('.pais-input');
+  var atual = parseInt(input.value, 10) || 0;
+  var novo  = Math.max(0, atual + delta);
   input.value = novo;
   atualizarTotais(input);
 }
@@ -56,7 +54,7 @@ function stepPais(btn, delta) {
 // Gera o HTML das <option> da lista de países
 function opcoesNacionalidades(selecionada) {
   return PAISES.map(function(p) {
-    const sel = p.nome === selecionada ? ' selected' : '';
+    var sel = p.nome === selecionada ? ' selected' : '';
     return '<option value="' + esc(p.nome) + '"' + sel + '>' + esc(p.nome) + '</option>';
   }).join('');
 }
@@ -66,17 +64,17 @@ function opcoesNacionalidades(selecionada) {
 // As entradas de nacionalidade são pares [select país] [input nº] com botão +.
 
 function construirTabelaOperadores(n, dados) {
-  const tbody = document.getElementById('tabelaOperadores');
+  var tbody = document.getElementById('tabelaOperadores');
   tbody.innerHTML = '';
 
-  for (let i = 0; i < n; i++) {
-    const op  = (dados && dados[i]) ? dados[i] : {};
-    const cls = op.operador ? 'input-carregado' : '';
+  for (var i = 0; i < n; i++) {
+    var op  = (dados && dados[i]) ? dados[i] : {};
+    var cls = op.operador ? 'input-carregado' : '';
 
     // Converter string guardada "Alemanha: 3, França: 2" em array de pares
-    const pares = parsearNacionalidades(op.nacionalidades || '');
+    var pares = parsearNacionalidades(op.nacionalidades || '');
 
-    const tr = document.createElement('tr');
+    var tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
         <input type="text" class="op-nome ${cls}" placeholder="Nome do operador..."
@@ -93,7 +91,7 @@ function construirTabelaOperadores(n, dados) {
     tbody.appendChild(tr);
 
     // Preencher pares existentes
-    const lista = tr.querySelector('.op-nac-lista');
+    var lista = tr.querySelector('.op-nac-lista');
     if (pares.length > 0) {
       pares.forEach(function(par) { adicionarLinhaOp(lista, par.pais, par.num); });
     } else {
@@ -106,13 +104,13 @@ function construirTabelaOperadores(n, dados) {
 function parsearNacionalidades(str) {
   if (!str) return [];
   return str.split(',').map(function(s) {
-    const partes = s.trim().split(':');
+    var partes = s.trim().split(':');
     return { pais: (partes[0] || '').trim(), num: (partes[1] || '').trim() };
   }).filter(function(p) { return p.pais; });
 }
 
 function adicionarLinhaOp(lista, paisSel, num) {
-  const div = document.createElement('div');
+  var div = document.createElement('div');
   div.className = 'op-nac-linha';
   div.innerHTML =
     '<select class="op-nac-select" onchange="recalcularTotalOpDeLista(this)">' +
@@ -127,13 +125,13 @@ function adicionarLinhaOp(lista, paisSel, num) {
 }
 
 function adicionarNacOp(btn) {
-  const lista = btn.previousElementSibling;
+  var lista = btn.previousElementSibling;
   adicionarLinhaOp(lista, '', '');
 }
 
 function removerLinhaOp(btn) {
-  const lista = btn.closest('.op-nac-lista');
-  const tr    = btn.closest('tr');
+  var lista = btn.closest('.op-nac-lista');
+  var tr    = btn.closest('tr');
   btn.closest('.op-nac-linha').remove();
   recalcularTotalOp(tr);
 }
@@ -143,7 +141,7 @@ function recalcularTotalOpDeLista(el) {
 }
 
 function recalcularTotalOp(tr) {
-  let total = 0;
+  var total = 0;
   tr.querySelectorAll('.op-nac-num').forEach(function(inp) {
     total += parseInt(inp.value, 10) || 0;
   });
@@ -152,23 +150,23 @@ function recalcularTotalOp(tr) {
 
 // Serializar as linhas de nacionalidade para guardar (formato "País: N, País: N")
 function serializarNacOp(tr) {
-  const pares = [];
+  var pares = [];
   tr.querySelectorAll('.op-nac-linha').forEach(function(linha) {
-    const pais = linha.querySelector('.op-nac-select').value;
-    const num  = parseInt(linha.querySelector('.op-nac-num').value, 10) || 0;
+    var pais = linha.querySelector('.op-nac-select').value;
+    var num  = parseInt(linha.querySelector('.op-nac-num').value, 10) || 0;
     if (pais && num > 0) pares.push(pais + ': ' + num);
   });
   return pares.join(', ');
 }
 
 function construirTabelaSugestoes(n, dados) {
-  const tbody = document.getElementById('tabelaSugestoes');
+  var tbody = document.getElementById('tabelaSugestoes');
   tbody.innerHTML = '';
 
-  for (let i = 0; i < n; i++) {
-    const s   = (dados && dados[i]) ? dados[i] : {};
-    const cls = s.sugestao ? 'input-carregado' : '';
-    const tr  = document.createElement('tr');
+  for (var i = 0; i < n; i++) {
+    var s   = (dados && dados[i]) ? dados[i] : {};
+    var cls = s.sugestao ? 'input-carregado' : '';
+    var tr  = document.createElement('tr');
     tr.innerHTML =
       '<td><input type="text" class="sug-texto ' + cls + '" placeholder="Escreva aqui..."' +
            ' value="' + esc(s.sugestao || '') + '"></td>' +
@@ -187,7 +185,7 @@ function construirTabelaSugestoes(n, dados) {
 // ============================================================
 
 function atualizarTotais(input) {
-  const val = parseInt(input.value, 10) || 0;
+  var val = parseInt(input.value, 10) || 0;
   if (val > 0) {
     input.style.borderColor = 'var(--verde-light)';
     input.style.background  = 'rgba(61,90,62,0.05)';
@@ -200,9 +198,9 @@ function atualizarTotais(input) {
 }
 
 function recalcularTotais() {
-  let total = 0, count = 0;
-  document.querySelectorAll('.pais-input').forEach(inp => {
-    const v = parseInt(inp.value, 10) || 0;
+  var total = 0, count = 0;
+  document.querySelectorAll('.pais-input').forEach(function(inp) {
+    var v = parseInt(inp.value, 10) || 0;
     total += v;
     if (v > 0) count++;
   });
@@ -217,9 +215,9 @@ function recalcularTotais() {
 // ============================================================
 
 function mostrarBanner(tipo, texto) {
-  const banner  = document.getElementById('estadoBanner');
-  const spinner = document.getElementById('estadoSpinner');
-  const textoEl = document.getElementById('estadoTexto');
+  var banner  = document.getElementById('estadoBanner');
+  var spinner = document.getElementById('estadoSpinner');
+  var textoEl = document.getElementById('estadoTexto');
   banner.className      = 'estado-banner' + (tipo ? ' ' + tipo : '');
   spinner.style.display = tipo === 'verificando' ? 'block' : 'none';
   textoEl.textContent   = texto;
@@ -230,10 +228,10 @@ function mostrarBanner(tipo, texto) {
 // ============================================================
 
 function mostrarToast(msg, tipo) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.className   = 'toast ' + tipo + ' show';
-  setTimeout(() => t.classList.remove('show'), 3800);
+  setTimeout(function() { t.classList.remove('show'); }, 3800);
 }
 
 // ============================================================
@@ -241,21 +239,21 @@ function mostrarToast(msg, tipo) {
 // ============================================================
 
 function recolherOperadores() {
-  const lista = [];
+  var lista = [];
   document.querySelectorAll('#tabelaOperadores tr').forEach(function(tr) {
-    const nome = tr.querySelector('.op-nome')?.value.trim() || '';
-    const nac  = serializarNacOp(tr);
-    const tot  = parseInt(tr.querySelector('.op-total')?.value, 10) || 0;
+    var nome = tr.querySelector('.op-nome')?.value.trim() || '';
+    var nac  = serializarNacOp(tr);
+    var tot  = parseInt(tr.querySelector('.op-total')?.value, 10) || 0;
     if (nome) lista.push({ operador: nome, nacionalidades: nac, total: tot });
   });
   return lista;
 }
 
 function recolherSugestoes() {
-  const lista = [];
+  var lista = [];
   document.querySelectorAll('#tabelaSugestoes tr').forEach(function(tr) {
-    const sug = tr.querySelector('.sug-texto')?.value.trim() || '';
-    const nac = tr.querySelector('.sug-nac')?.value        || '';
+    var sug = tr.querySelector('.sug-texto')?.value.trim() || '';
+    var nac = tr.querySelector('.sug-nac')?.value        || '';
     if (sug) lista.push({ sugestao: sug, nacionalidade: nac });
   });
   return lista;
@@ -266,7 +264,7 @@ function recolherSugestoes() {
 // ============================================================
 
 function limparFormularioParcial() {
-  document.querySelectorAll('.pais-input').forEach(inp => {
+  document.querySelectorAll('.pais-input').forEach(function(inp) {
     inp.value = ''; inp.style.cssText = ''; inp.classList.remove('input-carregado');
   });
   document.getElementById('totalDiario').textContent = '0';
@@ -293,8 +291,8 @@ function limparFormulario() {
 // ============================================================
 
 function carregarDados(resp) {
-  document.querySelectorAll('.pais-input').forEach(inp => {
-    const v = resp.paises[inp.dataset.pais];
+  document.querySelectorAll('.pais-input').forEach(function(inp) {
+    var v = resp.paises[inp.dataset.pais];
     if (v && v > 0) {
       inp.value = v;
       inp.classList.add('input-carregado');
@@ -304,8 +302,8 @@ function carregarDados(resp) {
       inp.style.fontWeight  = '600';
     }
   });
-  const nOp  = Math.max(NUM_LINHAS_OP,  (resp.operadores || []).length + 1);
-  const nSug = Math.max(NUM_LINHAS_SUG, (resp.sugestoes  || []).length + 1);
+  var nOp  = Math.max(NUM_LINHAS_OP,  (resp.operadores || []).length + 1);
+  var nSug = Math.max(NUM_LINHAS_SUG, (resp.sugestoes  || []).length + 1);
   construirTabelaOperadores(nOp,  resp.operadores || []);
   construirTabelaSugestoes(nSug,  resp.sugestoes  || []);
   // Carregar observações
