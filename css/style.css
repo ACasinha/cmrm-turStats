@@ -649,77 +649,6 @@ body {
 .toast.sucesso { background:var(--verde); }
 .toast.erro    { background:#c0392b; }
 .toast.info    { background:var(--azul); }
-.toast.aviso   { background:#d35400; }
-
-/* ============================================================
-   RODAPÉ
-============================================================ */
-.site-footer {
-  background: linear-gradient(180deg, var(--cinza-claro) 0%, #d4ccc0 100%);
-  border-top: 1px solid rgba(139,74,43,0.15);
-  padding: clamp(16px, 4vw, 28px) clamp(12px, 3vw, 24px);
-  margin-top: auto;
-}
-
-.footer-content {
-  max-width: 800px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(10px, 2.5vw, 16px);
-  text-align: center;
-}
-
-.footer-logo img {
-  height: clamp(36px, 8vw, 52px);
-  width: auto;
-  object-fit: contain;
-}
-
-.footer-text {
-  font-size: var(--text-xs);
-  color: var(--cinza);
-  line-height: 1.4;
-  max-width: 480px;
-}
-
-.footer-actions {
-  display: flex;
-  gap: clamp(8px, 2vw, 14px);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.footer-btn {
-  background: transparent;
-  border: 1px solid rgba(139,74,43,0.3);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  font-size: var(--text-xs);
-  color: var(--cinza);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.footer-btn:hover {
-  background: rgba(139,74,43,0.08);
-  border-color: var(--terra);
-  color: var(--terra);
-}
-
-.footer-btn-check {
-  opacity: 0.7;
-}
-
-.footer-version {
-  font-size: var(--text-xs);
-  color: var(--cinza);
-  opacity: 0.6;
-  margin-top: 4px;
-}
-
-#btnInstalarFooter { display: inline-block; }
 
 /* ============================================================
    BREAKPOINTS EXTRA — ecrãs grandes (≥1024px)
@@ -737,4 +666,177 @@ body {
   .login-overlay, .actions, .estado-banner, .install-banner { display:none !important; }
   .header { background:#8B4A2B !important; -webkit-print-color-adjust:exact; position:static !important; }
   .section-header { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
+/* ============================================================
+   HEADER — ajustes para novo logótipo e mobile
+============================================================ */
+.logo-circle {
+  width: clamp(44px, 10vw, 80px);
+}
+.header-text p { display: none; } /* removida frase município */
+
+/* Badge total — visível sempre, incluindo mobile */
+.header-badge-total {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+.header-badge-total .badge-num {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--ouro-light);
+  display: block;
+  line-height: 1;
+}
+.header-badge-total .badge-label {
+  font-size: var(--text-xs);
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Email visível em mobile (user-name já mostra o email) */
+.user-name {
+  font-size: clamp(0.6rem, 1.8vw, 0.85rem) !important;
+  max-width: clamp(80px, 22vw, 180px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+/* ============================================================
+   AVISO SEM LIGAÇÃO
+============================================================ */
+.offline-banner {
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  color: white;
+  padding: clamp(12px, 2.5vw, 18px) clamp(14px, 3vw, 24px);
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vw, 20px);
+  flex-wrap: wrap;
+  z-index: 99;
+  box-shadow: 0 4px 16px rgba(192,57,43,0.4);
+  animation: slideIn 0.3s ease;
+}
+.offline-icone { font-size: 2rem; flex-shrink: 0; }
+.offline-texto {
+  flex: 1; min-width: 180px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.offline-texto strong { font-size: var(--text-base); }
+.offline-texto span   { font-size: var(--text-sm); opacity: 0.9; }
+.offline-acoes {
+  display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0;
+}
+.btn-reconectar, .btn-imprimir-pdf {
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: white;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  min-height: 40px;
+  transition: background 0.2s;
+}
+.btn-reconectar:hover, .btn-imprimir-pdf:hover {
+  background: rgba(255,255,255,0.35);
+}
+.btn-reconectar:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+.btn-imprimir-pdf {
+  background: rgba(255,255,255,0.9);
+  color: #c0392b;
+  font-weight: 700;
+}
+.btn-imprimir-pdf:hover { background: white; }
+
+/* ============================================================
+   RODAPÉ
+============================================================ */
+.rodape {
+  background: linear-gradient(135deg, var(--cinza-escuro) 0%, #3a3a3a 100%);
+  color: rgba(255,255,255,0.8);
+  padding: clamp(14px, 3vw, 22px) clamp(14px, 3vw, 28px);
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 24px);
+  flex-wrap: wrap;
+  margin-top: clamp(20px, 4vw, 32px);
+}
+.rodape-logo img {
+  height: clamp(36px, 8vw, 56px);
+  opacity: 0.9;
+  object-fit: contain;
+}
+.rodape-texto {
+  flex: 1; min-width: 200px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.rodape-dev {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+  line-height: 1.4;
+}
+.rodape-pwa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rodape-versao {
+  font-size: var(--text-xs);
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-family: monospace;
+  opacity: 0.7;
+}
+.btn-rodape {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.75);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  touch-action: manipulation;
+  min-height: 30px;
+  white-space: nowrap;
+}
+.btn-rodape:hover { background: rgba(255,255,255,0.18); color: white; }
+.btn-rodape:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-rodape-instalar {
+  border-color: rgba(240,201,106,0.4);
+  color: var(--ouro-light);
+}
+.btn-rodape-instalar:hover {
+  background: rgba(240,201,106,0.15);
+  color: var(--ouro-light);
+}
+
+/* ============================================================
+   PRINT — ocultar elementos desnecessários
+============================================================ */
+@media print {
+  .login-overlay, .actions, .estado-banner,
+  .install-banner, .offline-banner, .rodape,
+  .header-badge-total, .btn-logout { display: none !important; }
+  .header { position: static !important; background: #8B4A2B !important; }
 }
