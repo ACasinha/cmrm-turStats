@@ -649,6 +649,77 @@ body {
 .toast.sucesso { background:var(--verde); }
 .toast.erro    { background:#c0392b; }
 .toast.info    { background:var(--azul); }
+.toast.aviso   { background:#d35400; }
+
+/* ============================================================
+   RODAPÉ
+============================================================ */
+.site-footer {
+  background: linear-gradient(180deg, var(--cinza-claro) 0%, #d4ccc0 100%);
+  border-top: 1px solid rgba(139,74,43,0.15);
+  padding: clamp(16px, 4vw, 28px) clamp(12px, 3vw, 24px);
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2.5vw, 16px);
+  text-align: center;
+}
+
+.footer-logo img {
+  height: clamp(36px, 8vw, 52px);
+  width: auto;
+  object-fit: contain;
+}
+
+.footer-text {
+  font-size: var(--text-xs);
+  color: var(--cinza);
+  line-height: 1.4;
+  max-width: 480px;
+}
+
+.footer-actions {
+  display: flex;
+  gap: clamp(8px, 2vw, 14px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-btn {
+  background: transparent;
+  border: 1px solid rgba(139,74,43,0.3);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: var(--text-xs);
+  color: var(--cinza);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.footer-btn:hover {
+  background: rgba(139,74,43,0.08);
+  border-color: var(--terra);
+  color: var(--terra);
+}
+
+.footer-btn-check {
+  opacity: 0.7;
+}
+
+.footer-version {
+  font-size: var(--text-xs);
+  color: var(--cinza);
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+#btnInstalarFooter { display: inline-block; }
 
 /* ============================================================
    BREAKPOINTS EXTRA — ecrãs grandes (≥1024px)
