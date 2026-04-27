@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Nacionalidades">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="img/logo.png">
 <title>Registo Diário de Nacionalidades</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -20,7 +21,7 @@
 <div class="login-overlay" id="loginOverlay">
   <div class="login-card">
     <div class="login-logo">
-      <img src="img/logo.png" alt="Logo Município">
+      <img src="img/logo.png" alt="Logo Município de Reguengos de Monsaraz">
     </div>
     <div class="login-titulo">Bem-vindo(a)</div>
     <div class="login-sub">Registo Diário de Nacionalidades</div>
@@ -28,8 +29,7 @@
     <div class="login-field">
       <label>Email</label>
       <input type="email" id="loginUser" placeholder="nome@exemplo.pt"
-             autocomplete="username"
-             inputmode="email"
+             autocomplete="username" inputmode="email"
              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
     </div>
     <div class="login-field">
@@ -42,33 +42,43 @@
   </div>
 </div>
 
-<!-- BANNER PWA -->
+<!-- BANNER PWA (topo — primeira abertura) -->
 <div class="install-banner" id="installBanner">
   <span>📱 Instale esta app no seu dispositivo para acesso rápido</span>
   <button class="btn-instalar" id="btnInstalar">Instalar</button>
-  <button class="btn-instalar-fechar"
-          onclick="document.getElementById('installBanner').classList.remove('visivel')">✕</button>
+  <button class="btn-instalar-fechar" id="btnInstalarFechar">✕</button>
+</div>
+
+<!-- AVISO SEM LIGAÇÃO -->
+<div class="offline-banner" id="offlineBanner" style="display:none">
+  <div class="offline-icone">📡</div>
+  <div class="offline-texto">
+    <strong>Sem ligação à Internet</strong>
+    <span>A inserção de dados está bloqueada. Pode preencher o formulário e imprimir para registo manual.</span>
+  </div>
+  <div class="offline-acoes">
+    <button class="btn-reconectar" id="btnReconectar" onclick="tentarReconectar()">🔄 Verificar ligação</button>
+    <button class="btn-imprimir-pdf" onclick="imprimirPDF()">🖨 Imprimir formulário</button>
+  </div>
 </div>
 
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
     <div class="logo-circle">
-      <img src="img/logo.png" alt="Logo">
+      <img src="img/logo.png" alt="Logo Município">
     </div>
     <div class="header-text">
       <h1>Registo Diário de Nacionalidades</h1>
-      <p>Município de Reguengos de Monsaraz</p>
     </div>
   </div>
   <div class="header-right">
-    <div class="header-badge">
+    <div class="header-badge-total">
       <span class="badge-num" id="totalGeral">0</span>
       <span class="badge-label">Visitantes</span>
     </div>
     <div class="user-info">
       <span class="user-name" id="headerNomeFuncionario">—</span>
-      <span>Funcionário(a)</span>
       <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
     </div>
   </div>
@@ -186,40 +196,37 @@
 
 </div>
 
-<div class="toast" id="toast"></div>
-
 <!-- RODAPÉ -->
-<footer class="site-footer">
-  <div class="footer-content">
-    <div class="footer-logo">
-      <img src="img/logo-turismo.png" alt="Serviços de Turismo">
-    </div>
-    <div class="footer-text">
-      Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz
-    </div>
-    <div class="footer-actions">
-      <button class="footer-btn" id="btnInstalarFooter" onclick="instalarDoRodape()">
-        📲 Instalar app
-      </button>
-      <button class="footer-btn footer-btn-check" onclick="verificarAtualizacao()">
+<footer class="rodape">
+  <div class="rodape-logo">
+    <img src="img/logo-turismo.png" alt="Serviços de Turismo">
+  </div>
+  <div class="rodape-texto">
+    <span class="rodape-dev">Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz</span>
+    <div class="rodape-pwa">
+      <span class="rodape-versao" id="rodapeVersao">v1</span>
+      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">
         🔄 Verificar atualização
       </button>
-    </div>
-    <div class="footer-version">
-      <span>v3.2.0.8</span>
+      <button class="btn-rodape btn-rodape-instalar" id="btnInstalarRodape" style="display:none" onclick="instalarApp()" title="Instalar app">
+        📲 Instalar app
+      </button>
     </div>
   </div>
 </footer>
 
-<!-- Firebase SDK (compat — compatível com todos os browsers modernos) -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <!-- Aplicação -->
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
-<script src="js/api.js"></script>   <!-- inicializa Firebase e define funções api* -->
-<script src="js/app.js"></script>   <!-- usa as funções api* e arranca o observador -->
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/offline.js"></script>
 </body>
 </html>
