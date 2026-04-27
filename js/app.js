@@ -106,8 +106,10 @@ function fazerLogout() {
 
 function activarApp() {
   document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('headerNomeFuncionario').textContent  = nomeFuncionarioAtual;
-  document.getElementById('nomeFuncionarioDisplay').textContent = nomeFuncionarioAtual;
+  document.getElementById('headerNomeFuncionario').textContent = nomeFuncionarioAtual;
+  // nomeFuncionarioDisplay foi removido do HTML — ignorar se não existir
+  var displayEl = document.getElementById('nomeFuncionarioDisplay');
+  if (displayEl) displayEl.textContent = nomeFuncionarioAtual;
   if (!appInicializada) {
     inicializarApp();
     appInicializada = true;
