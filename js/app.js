@@ -10,6 +10,11 @@ var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
 var appInicializada       = false;
+// Estado de edição:
+//   null  → sem dados existentes (novo registo)
+//   false → dados existentes mas de outro dia (bloqueado)
+//   true  → dados existentes do próprio dia (permitido editar)
+var edicaoPermitida       = null;
 
 // ============================================================
 // ARRANQUE
@@ -147,6 +152,9 @@ function verificarDados() {
 
   ultimoLocalVerificado = local;
   ultimaDataVerificada  = data;
+  edicaoPermitida = null;
+  bloquearFormulario(false);
+  document.getElementById('btnGuardar').disabled = false;
   mostrarBanner('verificando', '⏳ A verificar dados existentes...');
 
   apiVerificarDados(local, data,
@@ -158,11 +166,31 @@ function verificarDados() {
       }
       if (resp.existe) {
         carregarDados(resp);
-        mostrarBanner('carregado', '🔄 Dados anteriores carregados. Alterações serão atualizadas ao guardar.');
-        mostrarToast('✓ Dados anteriores carregados.', 'info');
+
+        // Comparar a data do registo com a data de hoje
+        var hoje       = new Date();
+        var hojeStr    = hoje.getFullYear() + '-' +
+                         String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(hoje.getDate()).padStart(2, '0');
+        var dataRegisto = document.getElementById('data').value;
+        edicaoPermitida = (dataRegisto === hojeStr);
+
+        if (edicaoPermitida) {
+          mostrarBanner('carregado', '🔄 Dados de hoje carregados. Pode editar e guardar.');
+          mostrarToast('✓ Dados carregados. Edição permitida.', 'info');
+          document.getElementById('btnGuardar').disabled = false;
+        } else {
+          mostrarBanner('bloqueado', '🔒 Dados de ' + dataRegisto + ' carregados. Não é possível editar registos de dias anteriores.');
+          mostrarToast('Edição bloqueada — registo de dia anterior.', 'erro');
+          document.getElementById('btnGuardar').disabled = true;
+          bloquearFormulario(true);
+        }
       } else {
+        edicaoPermitida = null;
         limparFormularioParcial();
         mostrarBanner('novo', '✨ Nenhum registo encontrado. Novo registo.');
+        document.getElementById('btnGuardar').disabled = false;
+        bloquearFormulario(false);
       }
     },
     function onFailure(err) {
@@ -190,6 +218,11 @@ function guardarDados() {
   }
   if (!data) {
     mostrarToast('Por favor, selecione a data.', 'erro');
+    return;
+  }
+  // Bloquear edição de registos de dias anteriores
+  if (edicaoPermitida === false) {
+    mostrarToast('Não é possível editar registos de dias anteriores.', 'erro');
     return;
   }
 
@@ -233,4 +266,29 @@ function guardarDados() {
       mostrarToast('Erro: ' + err.message, 'erro');
     }
   );
+}
+
+// ============================================================
+// BLOQUEAR / DESBLOQUEAR FORMULÁRIO
+// ============================================================
+
+function bloquearFormulario(bloquear) {
+  var disabled = bloquear;
+  // Países
+  document.querySelectorAll('.pais-input').forEach(function(inp) {
+    inp.disabled = disabled;
+  });
+  document.querySelectorAll('.btn-stepper').forEach(function(btn) {
+    btn.disabled = disabled;
+  });
+  // Operadores
+  document.querySelectorAll('.op-nome, .op-nac, .op-total').forEach(function(inp) {
+    inp.disabled = disabled;
+  });
+  // Sugestões
+  document.querySelectorAll('.sug-texto, .sug-nac').forEach(function(inp) {
+    inp.disabled = disabled;
+  });
+  // Observações
+  document.getElementById('observacoes').disabled = disabled;
 }
