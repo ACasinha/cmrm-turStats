@@ -10,6 +10,16 @@ var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
 var appInicializada       = false;
+var dadosAlterados        = false;  // true se houver dados não guardados
+
+// Lembrete ao fechar/sair da página com dados por guardar
+window.addEventListener('beforeunload', function(e) {
+  if (dadosAlterados) {
+    e.preventDefault();
+    e.returnValue = 'Tem dados por guardar. Tem a certeza que quer sair?';
+    return e.returnValue;
+  }
+});
 // Estado de edição:
 //   null  → sem dados existentes (novo registo)
 //   false → dados existentes mas de outro dia (bloqueado)
@@ -132,6 +142,17 @@ function inicializarApp() {
   construirTabelaPaises();
   construirTabelaOperadores(NUM_LINHAS_OP);
   construirTabelaSugestoes(NUM_LINHAS_SUG);
+  // Observar alterações na textarea de observações
+  document.getElementById('observacoes').addEventListener('input', function() {
+    dadosAlterados = true;
+  });
+  // Observar o formulário completo para qualquer input/change
+  document.getElementById('local').addEventListener('change', function() {
+    dadosAlterados = false; // ao mudar local, os dados são recarregados — reset
+  });
+  document.getElementById('data').addEventListener('change', function() {
+    dadosAlterados = false; // ao mudar data, idem
+  });
 }
 
 // ============================================================
@@ -141,6 +162,18 @@ function inicializarApp() {
 function agendarVerificacao() {
   clearTimeout(verificacaoTimer);
   verificacaoTimer = setTimeout(verificarDados, 600);
+}
+
+// Verificar se local foi escolhido antes de permitir edição
+// Chamada pelos inputs da tabela de países e demais campos via oninput/onclick
+function verificarLocalEscolhido() {
+  var local = document.getElementById('local').value.trim();
+  if (!local) {
+    mostrarToast('Por favor escolha primeiro o Local / Posto.', 'erro');
+    document.getElementById('local').focus();
+    return false;
+  }
+  return true;
 }
 
 function verificarDados() {
@@ -205,6 +238,11 @@ function verificarDados() {
 // GUARDAR REGISTO
 // ============================================================
 
+// Chamada pelo ui.js para sinalizar alterações
+function sinalizarAlteracao() {
+  dadosAlterados = true;
+}
+
 function guardarDados() {
   var local       = document.getElementById('local').value.trim();
   var data        = document.getElementById('data').value;
@@ -250,6 +288,7 @@ function guardarDados() {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
       if (resp.sucesso) {
+        dadosAlterados = false;
         mostrarToast('✓ ' + resp.mensagem, 'sucesso');
         mostrarBanner('carregado', '✅ Registo guardado com sucesso.');
         document.querySelectorAll('.pais-input').forEach(function(inp) {
