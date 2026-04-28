@@ -6,8 +6,8 @@
 // O pwa.js lê esta constante para mostrar a versão no rodapé.
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v2.0.1';
-const CACHE_STATIC = 'rmz-static-v2.0.1';
+const CACHE_NAME   = 'rmz-nacionalidades-v2.0.2';
+const CACHE_STATIC = 'rmz-static-v2.0.2';
 
 // Todos os assets necessários para a app funcionar offline.
 // Adicionar aqui qualquer novo ficheiro que seja criado.
