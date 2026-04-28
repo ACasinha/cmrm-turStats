@@ -144,11 +144,28 @@ function inicializarApp() {
   construirTabelaSugestoes(NUM_LINHAS_SUG);
   // Observar alterações na textarea de observações
   document.getElementById('observacoes').addEventListener('input', function() {
+    if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+      this.value = '';
+      return;
+    }
     dadosAlterados = true;
   });
   // Observar o formulário completo para qualquer input/change
   document.getElementById('local').addEventListener('change', function() {
     dadosAlterados = false; // ao mudar local, os dados são recarregados — reset
+  });
+  // Obrigatoriedade de local em campos de texto livres (operadores e sugestões)
+  // via delegação no contentor principal
+  document.querySelector('.container').addEventListener('input', function(e) {
+    var alvo = e.target;
+    // Apenas inputs de texto que não são já guardados pelo atualizarTotais/guardaLocalERecalcula
+    if (alvo.classList.contains('op-nome') || alvo.classList.contains('sug-nac')) {
+      if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+        alvo.value = '';
+      } else if (typeof sinalizarAlteracao === 'function') {
+        sinalizarAlteracao();
+      }
+    }
   });
   document.getElementById('data').addEventListener('change', function() {
     dadosAlterados = false; // ao mudar data, idem
@@ -160,6 +177,8 @@ function inicializarApp() {
 // ============================================================
 
 function agendarVerificacao() {
+  // Reconstruir tabela de países ao mudar local (adapta modo detalhado/simplificado)
+  if (typeof construirTabelaPaises === 'function') construirTabelaPaises();
   clearTimeout(verificacaoTimer);
   verificacaoTimer = setTimeout(verificarDados, 600);
 }
