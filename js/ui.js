@@ -20,25 +20,37 @@ function esc(str) {
 // ============================================================
 
 function construirTabelaPaises() {
+  var local  = (document.getElementById('local') || {}).value || '';
+  var lista  = (typeof listaPaises === 'function') ? listaPaises(local) : PAISES;
+  var simples = (typeof modoSimplificado === 'function') && modoSimplificado(local);
+
+  // Actualizar título da secção
+  var titulo = document.getElementById('tituloPaises');
+  if (titulo) {
+    titulo.textContent = simples
+      ? 'Nacionais / Estrangeiros'
+      : 'Paises — Turistas e Visitantes';
+  }
+
   var tbody = document.getElementById('tabelaPaises');
   tbody.innerHTML = '';
 
-  PAISES.forEach(function(pais) {
+  lista.forEach(function(pais) {
     var tr = document.createElement('tr');
     if (pais.destaque) tr.classList.add('row-destaque');
-    tr.innerHTML = `
-      <td>${esc(pais.nome)}</td>
-      <td class="num-cell">
-        <div class="num-stepper">
-          <button type="button" class="btn-stepper btn-menos"
-                  onclick="stepPais(this,-1)" aria-label="Menos">−</button>
-          <input type="number" inputmode="numeric" class="num-input pais-input"
-                 min="0" placeholder="0" data-pais="${esc(pais.nome)}"
-                 oninput="atualizarTotais(this)">
-          <button type="button" class="btn-stepper btn-mais"
-                  onclick="stepPais(this,1)" aria-label="Mais">+</button>
-        </div>
-      </td>`;
+    tr.innerHTML =
+      '<td>' + esc(pais.nome) + '</td>' +
+      '<td class="num-cell">' +
+        '<div class="num-stepper">' +
+          '<button type="button" class="btn-stepper btn-menos"' +
+                  ' onclick="stepPais(this,-1)" aria-label="Menos">−</button>' +
+          '<input type="number" inputmode="numeric" class="num-input pais-input"' +
+                 ' min="0" placeholder="0" data-pais="' + esc(pais.nome) + '"' +
+                 ' oninput="atualizarTotais(this)">' +
+          '<button type="button" class="btn-stepper btn-mais"' +
+                  ' onclick="stepPais(this,1)" aria-label="Mais">+</button>' +
+        '</div>' +
+      '</td>';
     tbody.appendChild(tr);
   });
 }
@@ -114,18 +126,29 @@ function adicionarLinhaOp(lista, paisSel, num) {
   var div = document.createElement('div');
   div.className = 'op-nac-linha';
   div.innerHTML =
-    '<select class="op-nac-select" onchange="recalcularTotalOpDeLista(this)">' +
+    '<select class="op-nac-select" onchange="guardaLocalERecalcula(this)">' +
       '<option value="">— País —</option>' +
       opcoesNacionalidades(paisSel) +
     '</select>' +
     '<input type="number" inputmode="numeric" class="op-nac-num" min="0" placeholder="0"' +
       ' value="' + esc(String(num || '')) + '"' +
-      ' oninput="recalcularTotalOpDeLista(this)">' +
+      ' oninput="guardaLocalERecalcula(this)">' +
     '<button type="button" class="btn-rem-nac" onclick="removerLinhaOp(this)" aria-label="Remover">✕</button>';
   lista.appendChild(div);
 }
 
+// Guard usado em todos os inputs de operadores — verifica local antes de aceitar
+function guardaLocalERecalcula(el) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+    el.value = (el.tagName === 'SELECT') ? '' : '';
+    return;
+  }
+  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
+  recalcularTotalOp(el.closest('tr'));
+}
+
 function adicionarNacOp(btn) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) return;
   var lista = btn.previousElementSibling;
   adicionarLinhaOp(lista, '', '');
 }
@@ -137,10 +160,7 @@ function removerLinhaOp(btn) {
   recalcularTotalOp(tr);
 }
 
-function recalcularTotalOpDeLista(el) {
-  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
-  recalcularTotalOp(el.closest('tr'));
-}
+// recalcularTotalOpDeLista substituído por guardaLocalERecalcula
 
 function recalcularTotalOp(tr) {
   var total = 0;
@@ -171,7 +191,8 @@ function construirTabelaSugestoes(n, dados) {
     var tr  = document.createElement('tr');
     tr.innerHTML =
       '<td><input type="text" class="sug-texto ' + cls + '" placeholder="Escreva aqui..."' +
-           ' value="' + esc(s.sugestao || '') + '"></td>' +
+           ' value="' + esc(s.sugestao || '') + '"' +
+           ' oninput="if(typeof verificarLocalEscolhido==='function'&&!verificarLocalEscolhido()){this.value='';return;}if(typeof sinalizarAlteracao==='function')sinalizarAlteracao();"></td>' +
       '<td>' +
         '<select class="sug-nac ' + cls + '">' +
           '<option value="">— País —</option>' +
