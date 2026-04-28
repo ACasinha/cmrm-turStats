@@ -192,7 +192,7 @@ function construirTabelaSugestoes(n, dados) {
     tr.innerHTML =
       '<td><input type="text" class="sug-texto ' + cls + '" placeholder="Escreva aqui..."' +
            ' value="' + esc(s.sugestao || '') + '"' +
-           ' oninput="if(typeof verificarLocalEscolhido==='function'&&!verificarLocalEscolhido()){this.value='';return;}if(typeof sinalizarAlteracao==='function')sinalizarAlteracao();"></td>' +
+           ' oninput="if(typeof verificarLocalEscolhido===\'function\'&&!verificarLocalEscolhido()){this.value=\'\';return;}if(typeof sinalizarAlteracao===\'function\')sinalizarAlteracao();"></td>' +
       '<td>' +
         '<select class="sug-nac ' + cls + '">' +
           '<option value="">— País —</option>' +
