@@ -51,10 +51,7 @@ if ('serviceWorker' in navigator) {
         console.warn('[PWA] Falha no registo do SW:', err);
       });
 
-    // Recarregar quando novo SW toma controlo
-    navigator.serviceWorker.addEventListener('controllerchange', function() {
-      window.location.reload();
-    });
+    // Não recarregar automaticamente — o utilizador controla quando actualizar
   });
 }
 
@@ -78,23 +75,40 @@ function verificarAtualizacao() {
     .then(function() {
       var temNovo = _swRegistration.waiting || _swRegistration.installing;
       if (temNovo) {
-        mostrarToast('🔄 Nova versão encontrada! Guarde os dados — a app irá atualizar.', 'info');
-        setTimeout(function() {
-          if (_swRegistration.waiting) {
-            _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-        }, 3000);
+        // Mostrar botão de actualização manual — não actualizar automaticamente
+        btn.textContent = '✅ Atualizar agora';
+        btn.disabled    = false;
+        btn.onclick     = function() { aplicarAtualizacao(); };
+        mostrarToast('Nova versão disponível. Guarde os dados e clique em "Atualizar agora".', 'info');
       } else {
         mostrarToast('✓ A app está atualizada.', 'sucesso');
+        btn.disabled    = false;
+        btn.textContent = '🔄 Verificar atualização';
       }
     })
     .catch(function(err) {
       mostrarToast('Erro ao verificar: ' + err.message, 'erro');
-    })
-    .finally(function() {
       btn.disabled    = false;
       btn.textContent = '🔄 Verificar atualização';
     });
+}
+
+// ============================================================
+// APLICAR ATUALIZAÇÃO — chamado pelo utilizador após guardar dados
+// ============================================================
+
+function aplicarAtualizacao() {
+  if (_swRegistration && _swRegistration.waiting) {
+    // Dizer ao SW em espera para tomar controlo
+    _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Recarregar após o SW activar (ouvimos o controllerchange)
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      window.location.reload();
+    }, { once: true });
+  } else {
+    // Sem SW em espera — recarregar directamente
+    window.location.reload();
+  }
 }
 
 // ============================================================
