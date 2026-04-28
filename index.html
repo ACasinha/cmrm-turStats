@@ -99,11 +99,20 @@
       <label>📍 Local / Posto</label>
       <select onchange="agendarVerificacao()" id="local">
         <option value="" disabled selected>Escolha uma opção...</option>
-        <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
-        <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
-        <option value="Casa do Barro">Casa do Barro</option>
-        <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
-        <option value="Auditório António Marcelino">Auditório António Marcelino</option>
+        <optgroup label="Lista completa de países">
+          <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
+          <option value="Museu do Fresco">Museu do Fresco</option>
+          <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
+          <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
+          <option value="Casa do Barro">Casa do Barro</option>
+        </optgroup>
+        <optgroup label="Nacionais / Estrangeiros">
+          <option value="Casa da Inquisição">Casa da Inquisição</option>
+          <option value="Igreja de Santiago">Igreja de Santiago</option>
+          <option value="Igreja da Misericórdia">Igreja da Misericórdia</option>
+          <option value="Arte Contemporânea">Arte Contemporânea</option>
+          <option value="Auditório António Marcelino">Auditório António Marcelino</option>
+        </optgroup>
       </select>
     </div>
     <div class="field-group">
@@ -115,7 +124,7 @@
   <!-- PAÍSES -->
   <div class="section-card">
     <div class="section-header">
-      <h2>Países — Turistas e Visitantes</h2>
+      <h2 id="tituloPaises">Países — Turistas e Visitantes</h2>
       <span class="section-count" id="contadorPaises">0 entradas</span>
     </div>
     <div class="table-scroll">
