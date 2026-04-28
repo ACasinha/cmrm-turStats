@@ -16,7 +16,7 @@ function mostrarVersao() {
     .then(function(txt) {
       var match = txt.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
       if (match) {
-        var versao = match[1].replace('rmz-nacionalidades-', 'v');
+        var versao = match[1].replace('rmz-nacionalidades-', '');
         var el = document.getElementById('rodapeVersao');
         if (el) el.textContent = versao;
       }
