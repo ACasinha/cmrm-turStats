@@ -44,6 +44,7 @@ function construirTabelaPaises() {
 }
 
 function stepPais(btn, delta) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) return;
   var input = btn.closest('.num-stepper').querySelector('.pais-input');
   var atual = parseInt(input.value, 10) || 0;
   var novo  = Math.max(0, atual + delta);
@@ -137,6 +138,7 @@ function removerLinhaOp(btn) {
 }
 
 function recalcularTotalOpDeLista(el) {
+  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
   recalcularTotalOp(el.closest('tr'));
 }
 
@@ -185,6 +187,11 @@ function construirTabelaSugestoes(n, dados) {
 // ============================================================
 
 function atualizarTotais(input) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+    input.value = '';
+    return;
+  }
+  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
   var val = parseInt(input.value, 10) || 0;
   if (val > 0) {
     input.style.borderColor = 'var(--verde-light)';
