@@ -221,6 +221,7 @@ function verificarDados() {
         edicaoPermitida = null;
         limparFormularioParcial();
         mostrarBanner('novo', '✨ Nenhum registo encontrado. Novo registo.');
+        mostrarToast('✨ Novo registo.', 'sucesso');
         document.getElementById('btnGuardar').disabled = false;
         bloquearFormulario(false);
       }
