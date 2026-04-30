@@ -138,32 +138,29 @@ function fecharModalPDF() {
 // ============================================================
 
 var CSS_PDF =
-  'body{font-family:Arial,sans-serif;font-size:10.5pt;color:#1a1a1a;margin:0}' +
-  '.pagina{padding:14mm 13mm;box-sizing:border-box;page-break-after:always}' +
+  'body{font-family:Arial,sans-serif;font-size:8.5pt;color:#1a1a1a;margin:0}' +
+  '.pagina{padding:10mm 12mm;box-sizing:border-box;page-break-after:always}' +
   '.pagina:last-child{page-break-after:auto}' +
-  '.cabecalho{border-bottom:2.5px solid #8B4A2B;padding-bottom:9px;margin-bottom:12px}' +
-  '.cabecalho h1{font-size:13pt;color:#8B4A2B;margin:0 0 2px}' +
-  '.cabecalho p{font-size:8.5pt;color:#666;margin:0}' +
-  '.meta{display:flex;flex-wrap:wrap;gap:16px;background:#f5ebe0;border-radius:5px;padding:7px 11px;margin-bottom:12px;font-size:9.5pt}' +
-  '.meta strong{color:#8B4A2B}' +
-  '.meta-campo{display:flex;flex-direction:column;gap:2px}' +
-  '.meta-campo label{font-size:7.5pt;text-transform:uppercase;letter-spacing:0.8px;color:#8B4A2B;font-weight:bold}' +
-  '.meta-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:10pt;padding:2px 4px;min-width:120px;outline:none}' +
-  'h2{font-size:10.5pt;color:#8B4A2B;border-bottom:1px solid #e8e0d5;padding-bottom:3px;margin:12px 0 7px}' +
-  'table{width:100%;border-collapse:collapse;font-size:9.5pt}' +
-  'th{background:#8B4A2B;color:white;padding:4px 7px;text-align:left;font-weight:600}' +
-  'td{padding:3px 7px;border-bottom:1px solid #e8e0d5;vertical-align:middle}' +
+  '.cabecalho{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #8B4A2B;padding-bottom:6px;margin-bottom:8px}' +
+  '.cabecalho h1{font-size:11pt;color:#8B4A2B;margin:0;white-space:nowrap}' +
+  '.cabecalho-meta{display:flex;gap:20px;flex:1;align-items:baseline}' +
+  '.cab-campo{display:flex;align-items:baseline;gap:5px;font-size:8pt}' +
+  '.cab-campo label{color:#8B4A2B;font-weight:700;text-transform:uppercase;font-size:7pt;letter-spacing:0.5px;white-space:nowrap}' +
+  '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:8.5pt;padding:1px 3px;width:120px;outline:none}' +
+  '.aviso-topo{background:#fff8e1;border-left:3px solid #c0392b;padding:4px 8px;margin-bottom:8px;font-size:7.5pt;color:#c0392b;font-weight:600}' +
+  'h2{font-size:9pt;color:#8B4A2B;border-bottom:1px solid #e8e0d5;padding-bottom:2px;margin:10px 0 5px}' +
+  'table{width:100%;border-collapse:collapse;font-size:8pt}' +
+  'th{background:#8B4A2B;color:white;padding:3px 5px;text-align:left;font-weight:600}' +
+  'td{padding:1.5px 5px;border-bottom:1px solid #e8e0d5;vertical-align:middle;line-height:1.3}' +
   'tr:nth-child(even) td{background:#faf5ef}' +
-  '.num{text-align:right;font-weight:600;width:55px}' +
-  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:9.5pt;padding:1px 2px}' +
-  '.total-linha td{background:#8B4A2B!important;color:white;font-weight:700;border:none}' +
-  '.vazio{color:#999;font-style:italic;text-align:center;padding:8px}' +
-  '.aviso{border:2px solid #c0392b;border-radius:5px;padding:8px 12px;margin-top:14px;background:#fdf0ee}' +
-  '.aviso strong{color:#c0392b;display:block;margin-bottom:3px;font-size:9.5pt}' +
-  '.aviso p{font-size:9pt;color:#444;margin:0}' +
-  '.obs-area{border:1px solid #e8e0d5;border-radius:5px;padding:8px 10px;min-height:55px;font-size:9.5pt;background:#fafafa}' +
-  '.rodape-pdf{margin-top:14px;font-size:7.5pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:6px}' +
-  '@media print{@page{size:A4;margin:12mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+  '.num{text-align:right;font-weight:600;width:50px}' +
+  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:8pt;padding:1px 2px;outline:none}' +
+  '.total-linha td{background:#f5ebe0!important;color:#8B4A2B;font-weight:700;border-top:2px solid #8B4A2B}' +
+  '.total-linha .input-cel{font-weight:700;color:#8B4A2B;font-size:9pt}' +
+  '.vazio{color:#999;font-style:italic;text-align:center;padding:6px}' +
+  '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:6px 8px;min-height:45px;font-size:8.5pt;background:#fafafa}' +
+  '.rodape-pdf{margin-top:10px;font-size:7pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:5px}' +
+  '@media print{@page{size:A4;margin:8mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
 
 function gerarPDF(tipo) {
   var dataHoje  = new Date().toLocaleDateString('pt-PT');
@@ -187,31 +184,21 @@ function gerarPDF(tipo) {
   var linhasSug = recolherLinhasSugParaPDF();
 
   // ── Cabecalho comum ──────────────────────────────────────
-  function cabecalho(pagina, total) {
+  function cabecalho(pagina) {
     return '<div class="cabecalho">' +
       '<h1>Registo Diário de Nacionalidades</h1>' +
-      '<p>Município de Reguengos de Monsaraz · Serviços de Turismo' +
-        (pagina === 2 && localPag ? ' · ' + localPag : '') + '</p>' +
-    '</div>' +
-    (pagina === 1 ?
-      '<div class="meta">' +
-        '<div class="meta-campo"><label>Local / Posto</label>' +
-          '<input class="input-cel" value="' + esc2(localPag) + '" placeholder="Preencher manualmente"></div>' +
-        '<div class="meta-campo"><label>Data</label>' +
-          '<input class="input-cel" value="' + esc2(dataPag) + '" placeholder="aaaa-mm-dd"></div>' +
-        '<div class="meta-campo"><label>Impresso em</label>' +
-          '<input class="input-cel" value="' + dataHoje + ' ' + horaAgora + '" readonly></div>' +
-        (tipo === 'paises' && total !== undefined ?
-          '<div class="meta-campo"><label>Total</label>' +
-          '<input class="input-cel" value="' + total + '" style="font-weight:700;color:#8B4A2B"></div>' : '') +
-      '</div>' : '');
+      '<div class="cabecalho-meta">' +
+        '<div class="cab-campo"><label>Local</label>' +
+          '<input class="input-cel" value="" placeholder=""></div>' +
+        '<div class="cab-campo"><label>Data</label>' +
+          '<input class="input-cel" value="" placeholder="" style="width:80px"></div>' +
+      '</div>' +
+    '</div>';
   }
 
   var aviso =
-    '<div class="aviso">' +
-      '<strong>⚠ Lembrete — inserir dados na aplicação</strong>' +
-      '<p>Após restabelecimento da Internet, aceda a <strong>' + host + '</strong> e registe ' +
-      'estes dados na aplicação para garantir o correcto registo na base de dados.</p>' +
+    '<div class="aviso-topo">' +
+      '⚠ Após restabelecimento da Internet inserir dados na aplicação.' +
     '</div>';
 
   var html;
@@ -244,15 +231,16 @@ function gerarPDF(tipo) {
 
     html = buildHTML(
       '<div class="pagina">' +
-        cabecalho(1, totalPaises) +
+        cabecalho(1) +
+        aviso +
         '<h2>Países — Turistas e Visitantes</h2>' +
         '<table>' +
-          '<thead><tr><th>País</th><th style="text-align:right;width:60px">Visitantes</th></tr></thead>' +
+          '<thead><tr><th>País</th><th style="text-align:right;width:55px">Visitantes</th></tr></thead>' +
           '<tbody>' + linhasPaisesHTML + '</tbody>' +
-          '<tfoot><tr class="total-linha"><td>TOTAL</td>' +
-            '<td class="num" id="totalPDF">' + (totalPaises || '') + '</td></tr></tfoot>' +
+          '<tfoot><tr class="total-linha"><td style="font-weight:700;color:#8B4A2B">TOTAL</td>' +
+            '<td class="num"><input class="input-cel" type="number" min="0" ' +
+              'value="" style="text-align:right;width:45px;font-weight:700;color:#8B4A2B"></td></tr></tfoot>' +
         '</table>' +
-        aviso +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 1/2</div>' +
       '</div>' +
 
@@ -268,7 +256,6 @@ function gerarPDF(tipo) {
           '<tbody>' + linhasSug + '</tbody></table>' +
         '<h2>Outras Observações</h2>' +
         '<div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div>' +
-        aviso +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 2/2</div>' +
       '</div>'
     );
@@ -285,6 +272,7 @@ function gerarPDF(tipo) {
     html = buildHTML(
       '<div class="pagina">' +
         cabecalho(1) +
+        aviso +
         '<h2>Visitantes</h2>' +
         '<table>' +
           '<thead><tr><th>Tipo</th><th style="text-align:right;width:80px">Visitantes</th></tr></thead>' +
@@ -300,10 +288,10 @@ function gerarPDF(tipo) {
                 'value="' + (vEst || '') + '" style="text-align:right;width:60px"></td>' +
             '</tr>' +
           '</tbody>' +
-          '<tfoot><tr class="total-linha"><td>TOTAL</td>' +
-            '<td class="num">' + (totalSimples || '') + '</td></tr></tfoot>' +
+          '<tfoot><tr class="total-linha"><td style="font-weight:700;color:#8B4A2B">TOTAL</td>' +
+            '<td class="num"><input class="input-cel" type="number" min="0" ' +
+              'style="text-align:right;width:50px;font-weight:700;color:#8B4A2B"></td></tr></tfoot>' +
         '</table>' +
-        aviso +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 1/2</div>' +
       '</div>' +
 
@@ -319,7 +307,6 @@ function gerarPDF(tipo) {
           '<tbody>' + linhasSug + '</tbody></table>' +
         '<h2>Outras Observações</h2>' +
         '<div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div>' +
-        aviso +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 2/2</div>' +
       '</div>'
     );
@@ -352,47 +339,27 @@ function esc2(str) {
 
 function recolherLinhasOpParaPDF() {
   var html = '';
-  // Linhas da tabela se existir
-  document.querySelectorAll('#tabelaOperadores tr').forEach(function(tr) {
-    var nome = (tr.querySelector('.op-nome') || {}).value || '';
-    var tot  = (tr.querySelector('.op-total') || {}).value || '';
-    var nacs = [];
-    tr.querySelectorAll('.op-nac-linha').forEach(function(l) {
-      var p = (l.querySelector('.op-nac-select') || {}).value || '';
-      var n = parseInt((l.querySelector('.op-nac-num') || {}).value, 10) || 0;
-      if (p && n > 0) nacs.push(p + ': ' + n);
-    });
-    if (nome) html += '<tr><td>' + esc2(nome) + '</td><td>' +
-      esc2(nacs.join(', ') || '—') + '</td><td class="num">' + esc2(tot || '0') + '</td></tr>';
-  });
-  // Linhas em branco editáveis (mínimo 4)
-  var nLinhas = 4;
+  var nLinhas = 6;
   for (var i = 0; i < nLinhas; i++) {
     html += '<tr>' +
-      '<td><input class="input-cel" placeholder="Operador..."></td>' +
-      '<td><input class="input-cel" placeholder="Ex: Portugal: 2, Espanha: 1..."></td>' +
+      '<td><input class="input-cel"></td>' +
+      '<td><input class="input-cel"></td>' +
       '<td class="num"><input class="input-cel" type="number" min="0" style="text-align:right;width:45px"></td>' +
     '</tr>';
   }
-  return html || '<tr><td colspan="3" class="vazio">Sem registos</td></tr>';
+  return html;
 }
 
 function recolherLinhasSugParaPDF() {
   var html = '';
-  document.querySelectorAll('#tabelaSugestoes tr').forEach(function(tr) {
-    var txt = (tr.querySelector('.sug-texto') || {}).value || '';
-    var nac = (tr.querySelector('.sug-nac') || {}).value   || '';
-    if (txt) html += '<tr><td>' + esc2(txt) + '</td><td>' + esc2(nac || '—') + '</td></tr>';
-  });
-  // Linhas em branco editáveis (mínimo 4)
-  var nLinhas = 4;
+  var nLinhas = 6;
   for (var i = 0; i < nLinhas; i++) {
     html += '<tr>' +
-      '<td><input class="input-cel" placeholder="Sugestão / Crítica..."></td>' +
-      '<td><input class="input-cel" placeholder="Nacionalidade..."></td>' +
+      '<td><input class="input-cel"></td>' +
+      '<td><input class="input-cel" style="width:120px"></td>' +
     '</tr>';
   }
-  return html || '<tr><td colspan="2" class="vazio">Sem registos</td></tr>';
+  return html;
 }
 
 // Compat: manter imprimirPDF para o botão do banner offline
