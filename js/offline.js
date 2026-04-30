@@ -151,7 +151,7 @@ var CSS_PDF =
   'h2{font-size:9pt;color:#8B4A2B;border-bottom:1px solid #e8e0d5;padding-bottom:2px;margin:10px 0 5px}' +
   'table{width:100%;border-collapse:collapse;font-size:8pt}' +
   'th{background:#8B4A2B;color:white;padding:3px 5px;text-align:left;font-weight:600}' +
-  'td{padding:0.5px 5px;border-bottom:1px solid #e8e0d5;vertical-align:middle;line-height:0.3}' +
+  'td{padding:0.2px 5px;border-bottom:1px solid #e8e0d5;vertical-align:middle;line-height:0.1}' +
   'tr:nth-child(even) td{background:#faf5ef}' +
   '.num{text-align:right;font-weight:600;width:50px}' +
   '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:8pt;padding:1px 2px;outline:none}' +
