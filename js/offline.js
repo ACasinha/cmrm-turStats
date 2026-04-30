@@ -96,6 +96,7 @@ function resetarBotaoReconectar() {
 // ============================================================
 
 function mostrarModalPDF() {
+  // Criar modal se não existir
   var modal = document.getElementById('modalEscolhaPDF');
   if (!modal) {
     modal = document.createElement('div');
@@ -106,23 +107,15 @@ function mostrarModalPDF() {
         '<div class="modal-pdf-titulo">📄 Gerar Formulário PDF</div>' +
         '<div class="modal-pdf-sub">Escolha o tipo de formulário a gerar:</div>' +
         '<div class="modal-pdf-opcoes">' +
-          '<button class="btn-pdf-opcao" onclick="gerarPDF(\'paises\',\'imprimir\');fecharModalPDF()">' +
+          '<button class="btn-pdf-opcao" onclick="gerarPDF(\'paises\');fecharModalPDF()">' +
             '<span class="pdf-opcao-icone">🌍</span>' +
             '<span class="pdf-opcao-titulo">Lista de Países</span>' +
             '<span class="pdf-opcao-desc">Formulário com todos os países<br>para registar visitantes por país</span>' +
           '</button>' +
-          '<button class="btn-pdf-opcao" onclick="gerarPDF(\'simples\',\'imprimir\');fecharModalPDF()">' +
+          '<button class="btn-pdf-opcao" onclick="gerarPDF(\'simples\');fecharModalPDF()">' +
             '<span class="pdf-opcao-icone">🏠</span>' +
             '<span class="pdf-opcao-titulo">Nacionais / Estrangeiros</span>' +
             '<span class="pdf-opcao-desc">Formulário simplificado<br>apenas com Nacionais e Estrangeiros</span>' +
-          '</button>' +
-        '</div>' +
-        '<div class="modal-pdf-acoes">' +
-          '<button class="btn-pdf-download" onclick="gerarPDF(\'paises\',\'download\');fecharModalPDF()">' +
-            '⬇ Descarregar Lista de Países' +
-          '</button>' +
-          '<button class="btn-pdf-download" onclick="gerarPDF(\'simples\',\'download\');fecharModalPDF()">' +
-            '⬇ Descarregar Nacionais / Estrangeiros' +
           '</button>' +
         '</div>' +
         '<button class="btn-pdf-fechar" onclick="fecharModalPDF()">Cancelar</button>' +
@@ -144,112 +137,99 @@ function fecharModalPDF() {
 // GERAÇÃO DE PDF
 // ============================================================
 
-// Estilos para a versão de lista de países (2 páginas, linhas compactas)
-var CSS_PDF_PAISES =
-  'body{font-family:Arial,sans-serif;font-size:7.5pt;color:#1a1a1a;margin:0}' +
-  '.pagina{padding:8mm 10mm;box-sizing:border-box;page-break-after:always}' +
+var CSS_PDF =
+  // Layout geral
+  'body{font-family:Arial,sans-serif;color:#1a1a1a;margin:0}' +
+  '.pagina{padding:9mm 11mm;box-sizing:border-box;page-break-after:always}' +
   '.pagina:last-child{page-break-after:auto}' +
-  '.cabecalho{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #8B4A2B;padding-bottom:5px;margin-bottom:7px}' +
-  '.cabecalho h1{font-size:10pt;color:#8B4A2B;margin:0;white-space:nowrap}' +
-  '.cabecalho-meta{display:flex;gap:20px;flex:1;align-items:baseline}' +
-  '.cab-campo{display:flex;align-items:baseline;gap:5px;font-size:7.5pt}' +
+  // Cabeçalho — uma linha
+  '.cabecalho{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid #8B4A2B;padding-bottom:5px;margin-bottom:6px}' +
+  '.cabecalho h1{font-size:10.5pt;color:#8B4A2B;margin:0;white-space:nowrap;font-weight:700}' +
+  '.cabecalho-meta{display:flex;gap:18px;flex:1;align-items:baseline}' +
+  '.cab-campo{display:flex;align-items:baseline;gap:4px;font-size:7.5pt}' +
   '.cab-campo label{color:#8B4A2B;font-weight:700;text-transform:uppercase;font-size:6.5pt;letter-spacing:0.5px;white-space:nowrap}' +
-  '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:7.5pt;padding:1px 3px;width:120px;outline:none}' +
-  'table{width:100%;border-collapse:collapse;font-size:7pt}' +
-  'th{background:#8B4A2B;color:white;padding:2px 5px;text-align:left;font-weight:600;font-size:7pt}' +
-  'td{padding:0px 5px;border-bottom:1px solid #e8e0d5;vertical-align:middle;line-height:1.1}' +
-  'tr:nth-child(even) td{background:#faf5ef}' +
-  '.num{text-align:right;font-weight:600;width:50px}' +
-  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:7pt;padding:0px 2px;outline:none;line-height:1.1}' +
+  '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:8pt;padding:1px 3px;width:110px;outline:none}' +
+  // Tabelas — cabeçalho integrado como primeira linha
+  'table{width:100%;border-collapse:collapse;margin-bottom:6px}' +
+  // Modo países: letra pequena, linhas muito compactas
+  '.tbl-paises{font-size:7.5pt}' +
+  '.tbl-paises th{background:#8B4A2B;color:white;padding:2.5px 5px;text-align:left;font-weight:600;font-size:7.5pt}' +
+  '.tbl-paises td{padding:1px 5px;border-bottom:1px solid #eee;line-height:1.2;vertical-align:middle}' +
+  '.tbl-paises tr:nth-child(even) td{background:#faf5ef}' +
+  // Tabelas normais (operadores, sugestões — modo simples inclui estas)
+  '.tbl-normal{font-size:8.5pt}' +
+  '.tbl-normal th{background:#8B4A2B;color:white;padding:4px 7px;text-align:left;font-weight:600}' +
+  '.tbl-normal td{padding:4px 7px;border-bottom:1px solid #e8e0d5;line-height:1.5;vertical-align:middle}' +
+  '.tbl-normal tr:nth-child(even) td{background:#faf5ef}' +
+  // Tabelas modo simples (visitantes) — espaçamento confortável
+  '.tbl-simples{font-size:11pt}' +
+  '.tbl-simples th{background:#8B4A2B;color:white;padding:8px 10px;text-align:left;font-weight:600}' +
+  '.tbl-simples td{padding:10px 10px;border-bottom:1px solid #e8e0d5;line-height:1.6;vertical-align:middle}' +
+  '.tbl-simples tr:nth-child(even) td{background:#faf5ef}' +
+  // Inputs editáveis
+  '.num{text-align:right;font-weight:600;width:55px}' +
+  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:inherit;padding:1px 2px;outline:none}' +
+  // Linha TOTAL
   '.total-linha td{background:#f5ebe0!important;color:#8B4A2B;font-weight:700;border-top:2px solid #8B4A2B}' +
-  '.total-linha .input-cel{font-weight:700;color:#8B4A2B;font-size:8pt}' +
-  '.vazio{color:#999;font-style:italic;text-align:center;padding:4px}' +
-  '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:5px 8px;min-height:40px;font-size:8pt;background:#fafafa}' +
-  '.assinatura-area{margin-top:14px;display:flex;align-items:flex-end;gap:30px}' +
-  '.assinatura-campo{flex:1}' +
-  '.assinatura-linha{border-bottom:1.5px solid #8B4A2B;height:28px;margin-bottom:3px}' +
-  '.assinatura-label{font-size:6.5pt;color:#8B4A2B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}' +
-  '.aviso-fundo{background:#fff8e1;border-left:3px solid #c0392b;padding:4px 8px;margin-top:10px;font-size:7pt;color:#c0392b;font-weight:600}' +
-  '.rodape-pdf{margin-top:7px;font-size:6.5pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:4px}' +
-  '@media print{@page{size:A4;margin:8mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+  '.total-linha .input-cel{font-weight:700;color:#8B4A2B}' +
+  // Área de observações
+  '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:6px 8px;min-height:38px;font-size:8.5pt;background:#fafafa;margin-bottom:6px}' +
+  // Assinatura
+  '.assinatura{margin-top:14px;padding-top:8px;display:flex;align-items:flex-end;gap:30px}' +
+  '.assinatura-linha{flex:1;border-bottom:1.5px solid #8B4A2B;padding-bottom:2px}' +
+  '.assinatura-label{font-size:7pt;color:#8B4A2B;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}' +
+  '.assinatura-data{width:100px}' +
+  // Aviso — final do documento
+  '.aviso-final{border-left:3px solid #c0392b;padding:4px 8px;margin-top:10px;font-size:7.5pt;color:#c0392b;font-weight:600;background:#fff8e1}' +
+  // Rodapé
+  '.rodape-pdf{margin-top:8px;font-size:6.5pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:4px}' +
+  // Secção título (substitui h2 — agora é o cabeçalho da tabela)
+  '@media print{@page{size:A4;margin:7mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
 
-// Estilos para a versão simplificada (tudo numa página)
-var CSS_PDF_SIMPLES =
-  'body{font-family:Arial,sans-serif;font-size:8.5pt;color:#1a1a1a;margin:0}' +
-  '.pagina{padding:10mm 14mm;box-sizing:border-box}' +
-  '.cabecalho{display:flex;align-items:baseline;gap:16px;border-bottom:2px solid #8B4A2B;padding-bottom:6px;margin-bottom:8px}' +
-  '.cabecalho h1{font-size:11pt;color:#8B4A2B;margin:0;white-space:nowrap}' +
-  '.cabecalho-meta{display:flex;gap:20px;flex:1;align-items:baseline}' +
-  '.cab-campo{display:flex;align-items:baseline;gap:5px;font-size:8pt}' +
-  '.cab-campo label{color:#8B4A2B;font-weight:700;text-transform:uppercase;font-size:7pt;letter-spacing:0.5px;white-space:nowrap}' +
-  '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:8.5pt;padding:1px 3px;width:120px;outline:none}' +
-  'table{width:100%;border-collapse:collapse;font-size:8.5pt}' +
-  'th{background:#8B4A2B;color:white;padding:4px 6px;text-align:left;font-weight:600}' +
-  'td{padding:3px 6px;border-bottom:1px solid #e8e0d5;vertical-align:middle;line-height:1.4}' +
-  'tr:nth-child(even) td{background:#faf5ef}' +
-  '.num{text-align:right;font-weight:600;width:80px}' +
-  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:8.5pt;padding:1px 2px;outline:none}' +
-  '.total-linha td{background:#f5ebe0!important;color:#8B4A2B;font-weight:700;border-top:2px solid #8B4A2B}' +
-  '.total-linha .input-cel{font-weight:700;color:#8B4A2B;font-size:9pt}' +
-  '.vazio{color:#999;font-style:italic;text-align:center;padding:6px}' +
-  '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:6px 8px;min-height:50px;font-size:8.5pt;background:#fafafa}' +
-  '.sec-titulo{font-size:7pt;color:#8B4A2B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 0;padding:3px 0;border-bottom:1px solid #e8e0d5}' +
-  '.assinatura-area{margin-top:16px;display:flex;align-items:flex-end;gap:30px}' +
-  '.assinatura-campo{flex:1}' +
-  '.assinatura-linha{border-bottom:1.5px solid #8B4A2B;height:32px;margin-bottom:4px}' +
-  '.assinatura-label{font-size:7pt;color:#8B4A2B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}' +
-  '.aviso-fundo{background:#fff8e1;border-left:3px solid #c0392b;padding:5px 10px;margin-top:12px;font-size:7.5pt;color:#c0392b;font-weight:600}' +
-  '.rodape-pdf{margin-top:10px;font-size:7pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:5px}' +
-  '@media print{@page{size:A4;margin:8mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
-
-// Bloco de assinatura comum
-var BLOCO_ASSINATURA =
-  '<div class="assinatura-area">' +
-    '<div class="assinatura-campo">' +
-      '<div class="assinatura-linha"></div>' +
-      '<div class="assinatura-label">Assinatura do(a) Funcionário(a)</div>' +
-    '</div>' +
-    '<div class="assinatura-campo" style="max-width:160px">' +
-      '<div class="assinatura-linha"></div>' +
-      '<div class="assinatura-label">Data</div>' +
-    '</div>' +
-  '</div>';
-
-// Aviso offline — aparece sempre no final, depois da assinatura
-var BLOCO_AVISO =
-  '<div class="aviso-fundo">' +
-    '⚠ Após restabelecimento da Internet, inserir os dados na aplicação.' +
-  '</div>';
-
-function gerarPDF(tipo, acao) {
-  acao = acao || 'imprimir';
+function gerarPDF(tipo) {
+  var dataHoje  = new Date().toLocaleDateString('pt-PT');
+  var horaAgora = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
   var obs = '';
   var obsEl = document.getElementById('observacoes');
   if (obsEl) obs = obsEl.value || '';
 
-  var linhasOp  = recolherLinhasOpParaPDF();
-  var linhasSug = recolherLinhasSugParaPDF();
-
-  // ── Cabeçalho comum ─────────────────────────────────────
-  function cabecalho() {
-    return '<div class="cabecalho">' +
+  // ── Cabeçalho comum (uma linha) ──────────────────────────
+  var cab =
+    '<div class="cabecalho">' +
       '<h1>Registo Diário de Nacionalidades</h1>' +
       '<div class="cabecalho-meta">' +
         '<div class="cab-campo"><label>Local</label>' +
-          '<input class="input-cel" value="" placeholder=""></div>' +
+          '<input class="input-cel" value="" style="width:140px"></div>' +
         '<div class="cab-campo"><label>Data</label>' +
-          '<input class="input-cel" value="" placeholder="" style="width:80px"></div>' +
+          '<input class="input-cel" value="" style="width:75px"></div>' +
       '</div>' +
     '</div>';
-  }
+
+  // ── Bloco de assinatura ───────────────────────────────────
+  var assinatura =
+    '<div class="assinatura">' +
+      '<div>' +
+        '<div class="assinatura-linha"></div>' +
+        '<div class="assinatura-label">Assinatura do(a) Funcionário(a)</div>' +
+      '</div>' +
+      '<div class="assinatura-data">' +
+        '<div class="assinatura-linha"></div>' +
+        '<div class="assinatura-label">Data</div>' +
+      '</div>' +
+    '</div>';
+
+  // ── Aviso final ───────────────────────────────────────────
+  var avisoFinal =
+    '<div class="aviso-final">' +
+      '⚠ Após restabelecimento da Internet inserir dados na aplicação.' +
+    '</div>';
 
   var html;
 
-  // ── MODO PAÍSES (2 páginas, linhas ultra-compactas) ──────
+  // ── MODO PAÍSES — 2 páginas ───────────────────────────────
   if (tipo === 'paises') {
     var listaPaisesCompleta = typeof PAISES !== 'undefined' ? PAISES : [];
-
     var valoresPaises = {};
     document.querySelectorAll('.pais-input').forEach(function(inp) {
       var v = parseInt(inp.value, 10) || 0;
@@ -259,67 +239,64 @@ function gerarPDF(tipo, acao) {
     var linhasPaisesHTML = '';
     listaPaisesCompleta.forEach(function(p) {
       var val = valoresPaises[p.nome] || '';
-      var destaque = p.destaque ? 'style="font-weight:700;color:#8B4A2B"' : '';
+      var dest = p.destaque ? 'style="font-weight:700;color:#8B4A2B"' : '';
       linhasPaisesHTML +=
-        '<tr>' +
-          '<td ' + destaque + '>' + esc2(p.nome) + '</td>' +
-          '<td class="num"><input class="input-cel" type="number" min="0" ' +
-            'value="' + esc2(String(val)) + '" style="text-align:right;width:50px"></td>' +
-        '</tr>';
+        '<tr><td ' + dest + '>' + esc2(p.nome) + '</td>' +
+        '<td class="num"><input class="input-cel" type="number" min="0" ' +
+          'value="' + esc2(String(val)) + '" style="text-align:right;width:48px"></td></tr>';
     });
 
-    // Tabelas de operadores e sugestões sem h2 — cabeçalho integrado na primeira linha da tabela
-    var tabelaOp =
-      '<table>' +
-        '<thead><tr>' +
-          '<th colspan="3" style="font-size:8pt;background:#6d3921">Operadores e Agências</th>' +
-        '</tr>' +
-        '<tr><th>Operador / Agência</th><th>Nacionalidades</th>' +
-          '<th style="text-align:right;width:55px">Total</th></tr></thead>' +
-        '<tbody>' + linhasOp + '</tbody>' +
-      '</table>';
-
-    var tabelaSug =
-      '<table style="margin-top:6px">' +
-        '<thead><tr>' +
-          '<th colspan="2" style="font-size:8pt;background:#6d3921">Sugestões e Críticas</th>' +
-        '</tr>' +
-        '<tr><th>Sugestão / Crítica</th>' +
-          '<th style="width:130px">Nacionalidade</th></tr></thead>' +
-        '<tbody>' + linhasSug + '</tbody>' +
-      '</table>';
+    var linhasOp  = recolherLinhasOpParaPDF('normal');
+    var linhasSug = recolherLinhasSugParaPDF('normal');
 
     html = buildHTML(
-      CSS_PDF_PAISES,
-      // Página 1 — Lista de países
+      // Página 1 — países
       '<div class="pagina">' +
-        cabecalho() +
-        '<table>' +
-          '<thead>' +
-            '<tr><th colspan="2" style="font-size:8pt;background:#6d3921">Países — Turistas e Visitantes</th></tr>' +
-            '<tr><th>País</th><th style="text-align:right;width:55px">Visitantes</th></tr>' +
-          '</thead>' +
+        cab +
+        '<table class="tbl-paises">' +
+          '<thead><tr>' +
+            '<th>País — Turistas e Visitantes</th>' +
+            '<th style="text-align:right;width:55px">Visitantes</th>' +
+          '</tr></thead>' +
           '<tbody>' + linhasPaisesHTML + '</tbody>' +
-          '<tfoot><tr class="total-linha"><td style="font-weight:700;color:#8B4A2B">TOTAL</td>' +
+          '<tfoot><tr class="total-linha">' +
+            '<td style="font-weight:700">TOTAL</td>' +
             '<td class="num"><input class="input-cel" type="number" min="0" ' +
-              'value="" style="text-align:right;width:45px;font-weight:700;color:#8B4A2B"></td></tr></tfoot>' +
+              'style="text-align:right;width:48px;font-weight:700"></td>' +
+          '</tr></tfoot>' +
         '</table>' +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 1/2</div>' +
       '</div>' +
-      // Página 2 — Operadores, Sugestões, Observações, Assinatura, Aviso
+
+      // Página 2 — operadores, sugestões, observações, assinatura, aviso
       '<div class="pagina">' +
-        cabecalho() +
-        tabelaOp +
-        tabelaSug +
-        '<div style="margin-top:8px;font-size:6.5pt;color:#8B4A2B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 0;border-bottom:1px solid #e8e0d5">Outras Observações</div>' +
-        '<div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div>' +
-        BLOCO_ASSINATURA +
-        BLOCO_AVISO +
+        cab +
+        '<table class="tbl-normal">' +
+          '<thead><tr>' +
+            '<th>Operador / Agência</th>' +
+            '<th>Nacionalidades</th>' +
+            '<th style="text-align:right;width:55px">Total</th>' +
+          '</tr></thead>' +
+          '<tbody>' + linhasOp + '</tbody>' +
+        '</table>' +
+        '<table class="tbl-normal">' +
+          '<thead><tr>' +
+            '<th>Sugestão / Crítica</th>' +
+            '<th style="width:130px">Nacionalidade</th>' +
+          '</tr></thead>' +
+          '<tbody>' + linhasSug + '</tbody>' +
+        '</table>' +
+        '<table class="tbl-normal">' +
+          '<thead><tr><th colspan="2">Outras Observações</th></tr></thead>' +
+          '<tbody><tr><td colspan="2"><div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div></td></tr></tbody>' +
+        '</table>' +
+        assinatura +
+        avisoFinal +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 2/2</div>' +
       '</div>'
     );
 
-  // ── MODO SIMPLES (tudo numa única página) ────────────────
+  // ── MODO SIMPLES — 1 página ───────────────────────────────
   } else {
     var vNac = 0, vEst = 0;
     document.querySelectorAll('.pais-input').forEach(function(inp) {
@@ -327,109 +304,134 @@ function gerarPDF(tipo, acao) {
       if (inp.dataset.pais === 'Estrangeiros') vEst = parseInt(inp.value, 10) || 0;
     });
 
-    var tabelaOp =
-      '<table>' +
-        '<thead><tr>' +
-          '<th colspan="3" style="font-size:8.5pt;background:#6d3921">Operadores e Agências</th>' +
-        '</tr>' +
-        '<tr><th>Operador / Agência</th><th>Nacionalidades</th>' +
-          '<th style="text-align:right;width:55px">Total</th></tr></thead>' +
-        '<tbody>' + linhasOp + '</tbody>' +
-      '</table>';
-
-    var tabelaSug =
-      '<table style="margin-top:6px">' +
-        '<thead><tr>' +
-          '<th colspan="2" style="font-size:8.5pt;background:#6d3921">Sugestões e Críticas</th>' +
-        '</tr>' +
-        '<tr><th>Sugestão / Crítica</th>' +
-          '<th style="width:130px">Nacionalidade</th></tr></thead>' +
-        '<tbody>' + linhasSug + '</tbody>' +
-      '</table>';
+    var linhasOp  = recolherLinhasOpParaPDF('simples');
+    var linhasSug = recolherLinhasSugParaPDF('simples');
 
     html = buildHTML(
-      CSS_PDF_SIMPLES,
       '<div class="pagina">' +
-        cabecalho() +
-        // Tabela visitantes com título integrado
-        '<table>' +
-          '<thead>' +
-            '<tr><th colspan="2" style="font-size:9pt;background:#6d3921">Visitantes</th></tr>' +
-            '<tr><th>Tipo</th><th style="text-align:right;width:80px">Visitantes</th></tr>' +
-          '</thead>' +
+        cab +
+        // Visitantes
+        '<table class="tbl-simples">' +
+          '<thead><tr>' +
+            '<th>Visitantes — Nacionais / Estrangeiros</th>' +
+            '<th style="text-align:right;width:80px">Nº</th>' +
+          '</tr></thead>' +
           '<tbody>' +
-            '<tr style="font-weight:700;color:#8B4A2B">' +
-              '<td>Nacionais</td>' +
+            '<tr><td style="font-weight:700;color:#8B4A2B">Nacionais</td>' +
               '<td class="num"><input class="input-cel" type="number" min="0" ' +
-                'value="' + (vNac || '') + '" style="text-align:right;width:60px"></td>' +
-            '</tr>' +
-            '<tr>' +
-              '<td>Estrangeiros</td>' +
+                'value="' + (vNac || '') + '" style="text-align:right;width:65px"></td></tr>' +
+            '<tr><td>Estrangeiros</td>' +
               '<td class="num"><input class="input-cel" type="number" min="0" ' +
-                'value="' + (vEst || '') + '" style="text-align:right;width:60px"></td>' +
-            '</tr>' +
+                'value="' + (vEst || '') + '" style="text-align:right;width:65px"></td></tr>' +
           '</tbody>' +
-          '<tfoot><tr class="total-linha"><td style="font-weight:700;color:#8B4A2B">TOTAL</td>' +
+          '<tfoot><tr class="total-linha">' +
+            '<td style="font-weight:700">TOTAL</td>' +
             '<td class="num"><input class="input-cel" type="number" min="0" ' +
-              'style="text-align:right;width:50px;font-weight:700;color:#8B4A2B"></td></tr></tfoot>' +
+              'style="text-align:right;width:65px;font-weight:700"></td>' +
+          '</tr></tfoot>' +
         '</table>' +
-        // Operadores e sugestões
-        '<div style="margin-top:8px">' + tabelaOp + '</div>' +
-        '<div style="margin-top:6px">' + tabelaSug + '</div>' +
+        // Operadores
+        '<table class="tbl-normal">' +
+          '<thead><tr>' +
+            '<th>Operador / Agência</th>' +
+            '<th>Nacionalidades</th>' +
+            '<th style="text-align:right;width:55px">Total</th>' +
+          '</tr></thead>' +
+          '<tbody>' + linhasOp + '</tbody>' +
+        '</table>' +
+        // Sugestões
+        '<table class="tbl-normal">' +
+          '<thead><tr>' +
+            '<th>Sugestão / Crítica</th>' +
+            '<th style="width:130px">Nacionalidade</th>' +
+          '</tr></thead>' +
+          '<tbody>' + linhasSug + '</tbody>' +
+        '</table>' +
         // Observações
-        '<div class="sec-titulo">Outras Observações</div>' +
-        '<div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div>' +
-        // Assinatura e aviso — no final
-        BLOCO_ASSINATURA +
-        BLOCO_AVISO +
+        '<table class="tbl-normal">' +
+          '<thead><tr><th colspan="2">Outras Observações</th></tr></thead>' +
+          '<tbody><tr><td colspan="2"><div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div></td></tr></tbody>' +
+        '</table>' +
+        assinatura +
+        avisoFinal +
         '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz</div>' +
       '</div>'
     );
   }
 
-  // ── Abrir janela e imprimir ou descarregar ───────────────
-  if (acao === 'download') {
-    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    var dataStr = new Date().toISOString().slice(0, 10);
-    a.href     = url;
-    a.download = 'registo-nacionalidades-' + tipo + '-' + dataStr + '.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
-  } else {
-    var janela = window.open('', '_blank');
-    if (!janela) {
-      alert('Por favor permita popups para este site para gerar o PDF.');
-      return;
-    }
-    janela.document.write(html);
-    janela.document.close();
-    janela.focus();
-    setTimeout(function() { janela.print(); }, 800);
+  // ── Abrir janela com opções de impressão e download ───────
+  var janela = window.open('', '_blank');
+  if (!janela) {
+    alert('Por favor permita popups para este site para gerar o PDF.');
+    return;
   }
-}
 
-function buildHTML(css, corpo) {
-  return '<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">' +
+  // Adicionar barra de acções no topo da janela gerada
+  var barraAcoes =
+    '<div style="position:fixed;top:0;left:0;right:0;background:#8B4A2B;color:white;' +
+      'padding:8px 16px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:Arial,sans-serif;font-size:10pt">' +
+      '<span style="flex:1;font-weight:700">Registo Diário de Nacionalidades</span>' +
+      '<button onclick="window.print()" ' +
+        'style="background:white;color:#8B4A2B;border:none;border-radius:5px;' +
+          'padding:6px 16px;font-weight:700;cursor:pointer;font-size:10pt">🖨 Imprimir</button>' +
+      '<button onclick="descarregarPDF()" ' +
+        'style="background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.4);' +
+          'border-radius:5px;padding:6px 16px;font-weight:700;cursor:pointer;font-size:10pt">⬇ Descarregar PDF</button>' +
+      '<button onclick="window.close()" ' +
+        'style="background:transparent;color:rgba(255,255,255,0.7);border:none;' +
+          'cursor:pointer;font-size:14pt;padding:0 4px;line-height:1">✕</button>' +
+    '</div>' +
+    '<div style="height:44px"></div>'; // espaço para a barra não cobrir o conteúdo
+
+  var scriptDownload =
+    '<script>' +
+    'function descarregarPDF() {' +
+      'var tipo = "' + tipo + '";' +
+      'var data = new Date().toISOString().slice(0,10);' +
+      'var nome = "Registo-Nacionalidades-" + tipo + "-" + data + ".pdf";' +
+      // Usar a API de impressão do browser para "Guardar como PDF"
+      'var instrucoes = document.createElement("div");' +
+      'instrucoes.style.cssText = "position:fixed;bottom:20px;right:20px;background:#333;color:white;' +
+        'padding:12px 18px;border-radius:8px;font-size:10pt;z-index:9999;max-width:280px;line-height:1.5";' +
+      'instrucoes.innerHTML = "Na caixa de diálogo de impressão:<br><strong>1.</strong> Escolha <strong>\\'Guardar como PDF\\'</strong> como destino<br><strong>2.</strong> Clique em <strong>\\'Guardar\\'</strong>";' +
+      'document.body.appendChild(instrucoes);' +
+      'setTimeout(function(){document.body.removeChild(instrucoes);},6000);' +
+      'window.print();' +
+    '}' +
+    '<\/script>';
+
+  janela.document.write(
+    '<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">' +
     '<title>Registo Diário de Nacionalidades</title>' +
-    '<style>' + css + '</style>' +
-    '</head><body>' + corpo + '</body></html>';
+    '<style>' + CSS_PDF +
+      // Esconder barra ao imprimir
+      '@media print{.barra-acoes{display:none!important}.espacador{display:none!important}}' +
+    '</style>' +
+    '</head><body>' +
+    '<div class="barra-acoes">' + barraAcoes + '</div>' +
+    '<div class="espacador" style="height:44px"></div>' +
+    (tipo === 'paises' ? html.replace('<div class="pagina">', '<div class="pagina" style="margin-top:0">') : html) +
+    scriptDownload +
+    '</body></html>'
+  );
+  janela.document.close();
+  janela.focus();
 }
 
-// Helper esc para o PDF (não depende do esc() do ui.js)
+function buildHTML(corpo) {
+  return corpo;
+}
+
 function esc2(str) {
   return String(str || '')
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
     .replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function recolherLinhasOpParaPDF() {
+function recolherLinhasOpParaPDF(modo) {
+  var n = (modo === 'simples') ? 4 : 5;
   var html = '';
-  var nLinhas = 6;
-  for (var i = 0; i < nLinhas; i++) {
+  for (var i = 0; i < n; i++) {
     html += '<tr>' +
       '<td><input class="input-cel"></td>' +
       '<td><input class="input-cel"></td>' +
@@ -439,10 +441,10 @@ function recolherLinhasOpParaPDF() {
   return html;
 }
 
-function recolherLinhasSugParaPDF() {
+function recolherLinhasSugParaPDF(modo) {
+  var n = (modo === 'simples') ? 4 : 5;
   var html = '';
-  var nLinhas = 6;
-  for (var i = 0; i < nLinhas; i++) {
+  for (var i = 0; i < n; i++) {
     html += '<tr>' +
       '<td><input class="input-cel"></td>' +
       '<td><input class="input-cel" style="width:120px"></td>' +
@@ -451,7 +453,5 @@ function recolherLinhasSugParaPDF() {
   return html;
 }
 
-// Compat: manter imprimirPDF para o botão do banner offline
-function imprimirPDF() {
-  mostrarModalPDF();
-}
+// Compat
+function imprimirPDF() { mostrarModalPDF(); }
