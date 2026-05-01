@@ -373,17 +373,12 @@ function gerarPDF(tipo) {
   var scriptDownload =
     '<script>' +
     'function descarregarPDF() {' +
-      'var tipo = "' + tipo + '";' +
-      'var data = new Date().toISOString().slice(0,10);' +
-      'var nome = "Registo-Nacionalidades-" + tipo + "-" + data + ".pdf";' +
-      // Usar a API de impressão do browser para "Guardar como PDF"
-      'var instrucoes = document.createElement("div");' +
-      'instrucoes.style.cssText = "position:fixed;bottom:20px;right:20px;background:#333;color:white;' +
-        'padding:12px 18px;border-radius:8px;font-size:10pt;z-index:9999;max-width:280px;line-height:1.5";' +
-      'instrucoes.innerHTML = "Na caixa de diálogo de impressão:<br><strong>1.</strong> Escolha <strong>\\'Guardar como PDF\\'</strong> como destino<br><strong>2.</strong> Clique em <strong>\\'Guardar\\'</strong>";' +
-      'document.body.appendChild(instrucoes);' +
-      'setTimeout(function(){document.body.removeChild(instrucoes);},6000);' +
-      'window.print();' +
+      '  var aviso = document.createElement("div");' +
+      '  aviso.style.cssText = "position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 16px;border-radius:8px;font-size:9.5pt;z-index:9999;max-width:260px;line-height:1.5";' +
+      '  aviso.textContent = "No dialogo de impressao: escolha Guardar como PDF e clique Guardar.";' +
+      '  document.body.appendChild(aviso);' +
+      '  setTimeout(function(){ document.body.removeChild(aviso); }, 5000);' +
+      '  window.print();' +
     '}' +
     '<\/script>';
 
