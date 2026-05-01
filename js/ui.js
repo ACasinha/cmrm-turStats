@@ -181,6 +181,14 @@ function serializarNacOp(tr) {
   return pares.join(', ');
 }
 
+
+// Guard para input de sugestões — evita inline com aspas problemáticas
+function onInputSugTexto(inp) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+    inp.value = ''; return;
+  }
+  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
+}
 function construirTabelaSugestoes(n, dados) {
   var tbody = document.getElementById('tabelaSugestoes');
   tbody.innerHTML = '';
@@ -192,7 +200,7 @@ function construirTabelaSugestoes(n, dados) {
     tr.innerHTML =
       '<td><input type="text" class="sug-texto ' + cls + '" placeholder="Escreva aqui..."' +
            ' value="' + esc(s.sugestao || '') + '"' +
-           ' oninput="if(typeof verificarLocalEscolhido===\'function\'&&!verificarLocalEscolhido()){this.value=\'\';return;}if(typeof sinalizarAlteracao===\'function\')sinalizarAlteracao();"></td>' +
+           ' oninput="onInputSugTexto(this)"></td>' +
       '<td>' +
         '<select class="sug-nac ' + cls + '">' +
           '<option value="">— País —</option>' +
