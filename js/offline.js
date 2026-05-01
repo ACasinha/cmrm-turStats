@@ -138,52 +138,39 @@ function fecharModalPDF() {
 // ============================================================
 
 var CSS_PDF =
-  // Layout geral
   'body{font-family:Arial,sans-serif;color:#1a1a1a;margin:0}' +
   '.pagina{padding:9mm 11mm;box-sizing:border-box;page-break-after:always}' +
   '.pagina:last-child{page-break-after:auto}' +
-  // Cabeçalho — uma linha
   '.cabecalho{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid #8B4A2B;padding-bottom:5px;margin-bottom:6px}' +
   '.cabecalho h1{font-size:10.5pt;color:#8B4A2B;margin:0;white-space:nowrap;font-weight:700}' +
   '.cabecalho-meta{display:flex;gap:18px;flex:1;align-items:baseline}' +
   '.cab-campo{display:flex;align-items:baseline;gap:4px;font-size:7.5pt}' +
   '.cab-campo label{color:#8B4A2B;font-weight:700;text-transform:uppercase;font-size:6.5pt;letter-spacing:0.5px;white-space:nowrap}' +
   '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:8pt;padding:1px 3px;width:110px;outline:none}' +
-  // Tabelas — cabeçalho integrado como primeira linha
   'table{width:100%;border-collapse:collapse;margin-bottom:6px}' +
-  // Modo países: letra pequena, linhas muito compactas
   '.tbl-paises{font-size:7.5pt}' +
   '.tbl-paises th{background:#8B4A2B;color:white;padding:2.5px 5px;text-align:left;font-weight:600;font-size:7.5pt}' +
   '.tbl-paises td{padding:1px 5px;border-bottom:1px solid #eee;line-height:1.2;vertical-align:middle}' +
   '.tbl-paises tr:nth-child(even) td{background:#faf5ef}' +
-  // Tabelas normais (operadores, sugestões — modo simples inclui estas)
   '.tbl-normal{font-size:8.5pt}' +
   '.tbl-normal th{background:#8B4A2B;color:white;padding:4px 7px;text-align:left;font-weight:600}' +
   '.tbl-normal td{padding:4px 7px;border-bottom:1px solid #e8e0d5;line-height:1.5;vertical-align:middle}' +
   '.tbl-normal tr:nth-child(even) td{background:#faf5ef}' +
-  // Tabelas modo simples (visitantes) — espaçamento confortável
   '.tbl-simples{font-size:11pt}' +
   '.tbl-simples th{background:#8B4A2B;color:white;padding:8px 10px;text-align:left;font-weight:600}' +
   '.tbl-simples td{padding:10px 10px;border-bottom:1px solid #e8e0d5;line-height:1.6;vertical-align:middle}' +
   '.tbl-simples tr:nth-child(even) td{background:#faf5ef}' +
-  // Inputs editáveis
   '.num{text-align:right;font-weight:600;width:55px}' +
   '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:inherit;padding:1px 2px;outline:none}' +
-  // Linha TOTAL
   '.total-linha td{background:#f5ebe0!important;color:#8B4A2B;font-weight:700;border-top:2px solid #8B4A2B}' +
   '.total-linha .input-cel{font-weight:700;color:#8B4A2B}' +
-  // Área de observações
   '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:6px 8px;min-height:38px;font-size:8.5pt;background:#fafafa;margin-bottom:6px}' +
-  // Assinatura
   '.assinatura{margin-top:14px;padding-top:8px;display:flex;align-items:flex-end;gap:30px}' +
   '.assinatura-linha{flex:1;border-bottom:1.5px solid #8B4A2B;padding-bottom:2px}' +
   '.assinatura-label{font-size:7pt;color:#8B4A2B;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}' +
   '.assinatura-data{width:100px}' +
-  // Aviso — final do documento
   '.aviso-final{border-left:3px solid #c0392b;padding:4px 8px;margin-top:10px;font-size:7.5pt;color:#c0392b;font-weight:600;background:#fff8e1}' +
-  // Rodapé
   '.rodape-pdf{margin-top:8px;font-size:6.5pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:4px}' +
-  // Secção título (substitui h2 — agora é o cabeçalho da tabela)
   '@media print{@page{size:A4;margin:7mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
 
 function gerarPDF(tipo) {
