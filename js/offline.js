@@ -265,6 +265,7 @@ function gerarPDF(tipo) {
       });
       if (nome) rows.push([nome, nacs.join(', '), tot || '0']);
     });
+    while (rows.length < 5) rows.push(['', '', '']);
     return rows;
   }
 
@@ -275,6 +276,7 @@ function gerarPDF(tipo) {
       var nac = (tr.querySelector('.sug-nac') || {}).value   || '';
       if (txt) rows.push([txt, nac]);
     });
+    while (rows.length < 5) rows.push(['', '']);
     return rows;
   }
 
@@ -310,7 +312,7 @@ function gerarPDF(tipo) {
         0: { cellWidth: 'auto' },
         1: { cellWidth: 22, halign: 'right' }
       },
-      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 1.2 }),
+      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 0.7 }),
       headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 8 }),
       didParseCell: function(data) {
         if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1)) {
@@ -349,7 +351,7 @@ function gerarPDF(tipo) {
       startY: y,
       head: [['Outras Observacoes']],
       body: [[obs || '']],
-      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 16 }),
+      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
     y = doc.lastAutoTable.finalY + 8;
 
@@ -409,7 +411,7 @@ function gerarPDF(tipo) {
       startY: y,
       head: [['Outras Observacoes']],
       body: [[obs || '']],
-      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 14 }),
+      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
     y = doc.lastAutoTable.finalY + 8;
 
