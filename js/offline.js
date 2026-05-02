@@ -312,7 +312,7 @@ function gerarPDF(tipo) {
         0: { cellWidth: 'auto' },
         1: { cellWidth: 22, halign: 'right' }
       },
-      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 0.1 }),
+      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 0.3 }),
       headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 8 }),
       didParseCell: function(data) {
         if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1)) {
