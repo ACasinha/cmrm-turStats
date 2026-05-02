@@ -134,306 +134,294 @@ function fecharModalPDF() {
 }
 
 // ============================================================
-// GERAÇÃO DE PDF
+// GERAÇÃO DE PDF — jsPDF + AutoTable
+// CDN carregado no index.html
 // ============================================================
 
-var CSS_PDF =
-  'body{font-family:Arial,sans-serif;color:#1a1a1a;margin:0}' +
-  '.pagina{padding:9mm 11mm;box-sizing:border-box;page-break-after:always}' +
-  '.pagina:last-child{page-break-after:auto}' +
-  '.cabecalho{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid #8B4A2B;padding-bottom:5px;margin-bottom:6px}' +
-  '.cabecalho h1{font-size:10.5pt;color:#8B4A2B;margin:0;white-space:nowrap;font-weight:700}' +
-  '.cabecalho-meta{display:flex;gap:18px;flex:1;align-items:baseline}' +
-  '.cab-campo{display:flex;align-items:baseline;gap:4px;font-size:7.5pt}' +
-  '.cab-campo label{color:#8B4A2B;font-weight:700;text-transform:uppercase;font-size:6.5pt;letter-spacing:0.5px;white-space:nowrap}' +
-  '.cab-campo input{border:none;border-bottom:1.5px solid #8B4A2B;background:transparent;font-size:8pt;padding:1px 3px;width:110px;outline:none}' +
-  'table{width:100%;border-collapse:collapse;margin-bottom:6px}' +
-  '.tbl-paises{font-size:7.5pt}' +
-  '.tbl-paises th{background:#8B4A2B;color:white;padding:2.5px 5px;text-align:left;font-weight:600;font-size:7.5pt}' +
-  '.tbl-paises td{padding:1px 5px;border-bottom:1px solid #eee;line-height:1.2;vertical-align:middle}' +
-  '.tbl-paises tr:nth-child(even) td{background:#faf5ef}' +
-  '.tbl-normal{font-size:8.5pt}' +
-  '.tbl-normal th{background:#8B4A2B;color:white;padding:4px 7px;text-align:left;font-weight:600}' +
-  '.tbl-normal td{padding:4px 7px;border-bottom:1px solid #e8e0d5;line-height:1.5;vertical-align:middle}' +
-  '.tbl-normal tr:nth-child(even) td{background:#faf5ef}' +
-  '.tbl-simples{font-size:11pt}' +
-  '.tbl-simples th{background:#8B4A2B;color:white;padding:8px 10px;text-align:left;font-weight:600}' +
-  '.tbl-simples td{padding:10px 10px;border-bottom:1px solid #e8e0d5;line-height:1.6;vertical-align:middle}' +
-  '.tbl-simples tr:nth-child(even) td{background:#faf5ef}' +
-  '.num{text-align:right;font-weight:600;width:55px}' +
-  '.input-cel{border:none;border-bottom:1px solid #ccc;width:100%;background:transparent;font-size:inherit;padding:1px 2px;outline:none}' +
-  '.total-linha td{background:#f5ebe0!important;color:#8B4A2B;font-weight:700;border-top:2px solid #8B4A2B}' +
-  '.total-linha .input-cel{font-weight:700;color:#8B4A2B}' +
-  '.obs-area{border:1px solid #e8e0d5;border-radius:4px;padding:6px 8px;min-height:38px;font-size:8.5pt;background:#fafafa;margin-bottom:6px}' +
-  '.assinatura{margin-top:14px;padding-top:8px;display:flex;align-items:flex-end;gap:30px}' +
-  '.assinatura-linha{flex:1;border-bottom:1.5px solid #8B4A2B;padding-bottom:2px}' +
-  '.assinatura-label{font-size:7pt;color:#8B4A2B;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px}' +
-  '.assinatura-data{width:100px}' +
-  '.aviso-final{border-left:3px solid #c0392b;padding:4px 8px;margin-top:10px;font-size:7.5pt;color:#c0392b;font-weight:600;background:#fff8e1}' +
-  '.rodape-pdf{margin-top:8px;font-size:6.5pt;color:#aaa;text-align:center;border-top:1px solid #e8e0d5;padding-top:4px}' +
-  '@media print{@page{size:A4;margin:7mm}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
-
 function gerarPDF(tipo) {
-  var dataHoje  = new Date().toLocaleDateString('pt-PT');
-  var horaAgora = new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+  var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  var COR_PRINCIPAL = [139, 74, 43];   // #8B4A2B
+  var COR_CLARO     = [245, 235, 224]; // #F5EBE0
+  var COR_TEXTO     = [44, 44, 44];
+  var MARGEM        = 12;
+  var LARGURA       = 210 - MARGEM * 2;
+  var y             = MARGEM;
 
-  var obs = '';
-  var obsEl = document.getElementById('observacoes');
-  if (obsEl) obs = obsEl.value || '';
+  // ── Cabeçalho ──────────────────────────────────────────────
+  function cabecalho(numPag) {
+    doc.setFillColor.apply(doc, COR_PRINCIPAL);
+    doc.rect(0, 0, 210, 18, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Registo Diario de Nacionalidades', MARGEM, 7);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.text('Municipio de Reguengos de Monsaraz  ·  Servicos de Turismo', MARGEM, 12);
+    if (numPag) {
+      doc.text('Pag. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
+    }
+    doc.setTextColor.apply(doc, COR_TEXTO);
+    return 23;
+  }
 
-  // ── Cabeçalho comum (uma linha) ──────────────────────────
-  var cab =
-    '<div class="cabecalho">' +
-      '<h1>Registo Diário de Nacionalidades</h1>' +
-      '<div class="cabecalho-meta">' +
-        '<div class="cab-campo"><label>Local</label>' +
-          '<input class="input-cel" value="" style="width:140px"></div>' +
-        '<div class="cab-campo"><label>Data</label>' +
-          '<input class="input-cel" value="" style="width:75px"></div>' +
-      '</div>' +
-    '</div>';
+  // ── Campos Local / Data ─────────────────────────────────────
+  function camposLocalData(y) {
+    doc.setFillColor.apply(doc, COR_CLARO);
+    doc.roundedRect(MARGEM, y, LARGURA, 9, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, COR_PRINCIPAL);
+    doc.text('LOCAL / POSTO:', MARGEM + 2, y + 3.5);
+    doc.text('DATA:', MARGEM + 100, y + 3.5);
+    doc.setDrawColor.apply(doc, COR_PRINCIPAL);
+    doc.setLineWidth(0.3);
+    doc.line(MARGEM + 28, y + 6.5, MARGEM + 95, y + 6.5);
+    doc.line(MARGEM + 110, y + 6.5, MARGEM + 140, y + 6.5);
+    doc.setTextColor.apply(doc, COR_TEXTO);
+    return y + 13;
+  }
 
-  // ── Bloco de assinatura ───────────────────────────────────
-  var assinatura =
-    '<div class="assinatura">' +
-      '<div>' +
-        '<div class="assinatura-linha"></div>' +
-        '<div class="assinatura-label">Assinatura do(a) Funcionário(a)</div>' +
-      '</div>' +
-      '<div class="assinatura-data">' +
-        '<div class="assinatura-linha"></div>' +
-        '<div class="assinatura-label">Data</div>' +
-      '</div>' +
-    '</div>';
+  // ── Título de secção ────────────────────────────────────────
+  function tituloSecao(y, texto) {
+    doc.setFillColor.apply(doc, COR_PRINCIPAL);
+    doc.rect(MARGEM, y, LARGURA, 5.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text(texto, MARGEM + 2, y + 3.8);
+    doc.setTextColor.apply(doc, COR_TEXTO);
+    return y + 5.5;
+  }
 
-  // ── Aviso final ───────────────────────────────────────────
-  var avisoFinal =
-    '<div class="aviso-final">' +
-      '⚠ Após restabelecimento da Internet inserir dados na aplicação.' +
-    '</div>';
+  // ── Rodapé ──────────────────────────────────────────────────
+  function rodape(numPag, total) {
+    var yR = 297 - 10;
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.2);
+    doc.line(MARGEM, yR, 210 - MARGEM, yR);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Registo Diario de Nacionalidades  ·  Municipio de Reguengos de Monsaraz', MARGEM, yR + 3.5);
+    if (total !== undefined) {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor.apply(doc, COR_PRINCIPAL);
+      doc.text('Total: ' + total, 210 - MARGEM, yR + 3.5, { align: 'right' });
+    }
+    doc.setTextColor.apply(doc, COR_TEXTO);
+  }
 
-  var html;
+  // ── Assinatura ──────────────────────────────────────────────
+  function assinatura(y) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, COR_PRINCIPAL);
+    doc.text('Assinatura do(a) Funcionario(a):', MARGEM, y);
+    doc.text('Data:', MARGEM + 120, y);
+    doc.setDrawColor.apply(doc, COR_PRINCIPAL);
+    doc.setLineWidth(0.4);
+    doc.line(MARGEM, y + 7, MARGEM + 112, y + 7);
+    doc.line(MARGEM + 124, y + 7, MARGEM + 152, y + 7);
+    doc.setTextColor.apply(doc, COR_TEXTO);
+    return y + 12;
+  }
 
-  // ── MODO PAÍSES — 2 páginas ───────────────────────────────
+  // ── Aviso final ─────────────────────────────────────────────
+  function avisoFinal(y) {
+    doc.setFillColor(255, 248, 225);
+    doc.setDrawColor(192, 57, 43);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(MARGEM, y, LARGURA, 8, 1, 1, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(192, 57, 43);
+    doc.text('⚠  Apos restabelecimento da Internet inserir dados na aplicacao.', MARGEM + 3, y + 5);
+    doc.setTextColor.apply(doc, COR_TEXTO);
+    return y + 11;
+  }
+
+  // ── Recolher dados da página ─────────────────────────────────
+  function dadosPaises() {
+    var rows = [];
+    document.querySelectorAll('#tabelaPaises tr').forEach(function(tr) {
+      var inp = tr.querySelector('.pais-input');
+      if (!inp) return;
+      rows.push([inp.dataset.pais || '', parseInt(inp.value, 10) || 0]);
+    });
+    return rows;
+  }
+
+  function dadosOperadores() {
+    var rows = [];
+    document.querySelectorAll('#tabelaOperadores tr').forEach(function(tr) {
+      var nome = (tr.querySelector('.op-nome') || {}).value || '';
+      var tot  = (tr.querySelector('.op-total') || {}).value || '';
+      var nacs = [];
+      tr.querySelectorAll('.op-nac-linha').forEach(function(l) {
+        var p = (l.querySelector('.op-nac-select') || {}).value || '';
+        var n = parseInt((l.querySelector('.op-nac-num') || {}).value, 10) || 0;
+        if (p && n > 0) nacs.push(p + ': ' + n);
+      });
+      if (nome) rows.push([nome, nacs.join(', '), tot || '0']);
+    });
+    return rows;
+  }
+
+  function dadosSugestoes() {
+    var rows = [];
+    document.querySelectorAll('#tabelaSugestoes tr').forEach(function(tr) {
+      var txt = (tr.querySelector('.sug-texto') || {}).value || '';
+      var nac = (tr.querySelector('.sug-nac') || {}).value   || '';
+      if (txt) rows.push([txt, nac]);
+    });
+    return rows;
+  }
+
+  var obs = (document.getElementById('observacoes') || {}).value || '';
+
+  // ── Estilo base para tabelas autoTable ───────────────────────
+  var estiloBase = {
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 2, textColor: COR_TEXTO, lineColor: [220, 210, 200], lineWidth: 0.2 },
+    headStyles: { fillColor: COR_PRINCIPAL, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8, cellPadding: 2.5 },
+    alternateRowStyles: { fillColor: [250, 245, 239] },
+    margin: { left: MARGEM, right: MARGEM },
+  };
+
+  // ===========================================================
+  // MODO PAÍSES — 2 páginas
+  // ===========================================================
   if (tipo === 'paises') {
-    var listaPaisesCompleta = typeof PAISES !== 'undefined' ? PAISES : [];
-    var valoresPaises = {};
-    document.querySelectorAll('.pais-input').forEach(function(inp) {
-      var v = parseInt(inp.value, 10) || 0;
-      if (v > 0) valoresPaises[inp.dataset.pais] = v;
-    });
+    // Página 1 — tabela de países
+    y = cabecalho(1);
+    y = camposLocalData(y);
 
-    var linhasPaisesHTML = '';
-    listaPaisesCompleta.forEach(function(p) {
-      var val = valoresPaises[p.nome] || '';
-      var dest = p.destaque ? 'style="font-weight:700;color:#8B4A2B"' : '';
-      linhasPaisesHTML +=
-        '<tr><td ' + dest + '>' + esc2(p.nome) + '</td>' +
-        '<td class="num"><input class="input-cel" type="number" min="0" ' +
-          'value="' + esc2(String(val)) + '" style="text-align:right;width:48px"></td></tr>';
-    });
+    var paises = dadosPaises();
+    var totalPaises = paises.reduce(function(s, r) { return s + r[1]; }, 0);
 
-    var linhasOp  = recolherLinhasOpParaPDF('normal');
-    var linhasSug = recolherLinhasSugParaPDF('normal');
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Pais / Regiao de Origem', 'Visitantes']],
+      body: paises.map(function(r) { return [r[0], r[1] > 0 ? r[1] : '']; }),
+      foot: [['TOTAL', totalPaises > 0 ? totalPaises : '']],
+      footStyles: { fillColor: COR_CLARO, textColor: COR_PRINCIPAL, fontStyle: 'bold', fontSize: 8.5 },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 22, halign: 'right' }
+      },
+      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 1.2 }),
+      headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 8 }),
+      didParseCell: function(data) {
+        if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1)) {
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = COR_PRINCIPAL;
+        }
+      }
+    }));
 
-    html = buildHTML(
-      // Página 1 — países
-      '<div class="pagina">' +
-        cab +
-        '<table class="tbl-paises">' +
-          '<thead><tr>' +
-            '<th>País — Turistas e Visitantes</th>' +
-            '<th style="text-align:right;width:55px">Visitantes</th>' +
-          '</tr></thead>' +
-          '<tbody>' + linhasPaisesHTML + '</tbody>' +
-          '<tfoot><tr class="total-linha">' +
-            '<td style="font-weight:700">TOTAL</td>' +
-            '<td class="num"><input class="input-cel" type="number" min="0" ' +
-              'style="text-align:right;width:48px;font-weight:700"></td>' +
-          '</tr></tfoot>' +
-        '</table>' +
-        '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 1/2</div>' +
-      '</div>' +
+    rodape(1, totalPaises > 0 ? totalPaises : '—');
 
-      // Página 2 — operadores, sugestões, observações, assinatura, aviso
-      '<div class="pagina">' +
-        cab +
-        '<table class="tbl-normal">' +
-          '<thead><tr>' +
-            '<th>Operador / Agência</th>' +
-            '<th>Nacionalidades</th>' +
-            '<th style="text-align:right;width:55px">Total</th>' +
-          '</tr></thead>' +
-          '<tbody>' + linhasOp + '</tbody>' +
-        '</table>' +
-        '<table class="tbl-normal">' +
-          '<thead><tr>' +
-            '<th>Sugestão / Crítica</th>' +
-            '<th style="width:130px">Nacionalidade</th>' +
-          '</tr></thead>' +
-          '<tbody>' + linhasSug + '</tbody>' +
-        '</table>' +
-        '<table class="tbl-normal">' +
-          '<thead><tr><th colspan="2">Outras Observações</th></tr></thead>' +
-          '<tbody><tr><td colspan="2"><div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div></td></tr></tbody>' +
-        '</table>' +
-        assinatura +
-        avisoFinal +
-        '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz · Página 2/2</div>' +
-      '</div>'
-    );
+    // Página 2 — operadores, sugestões, obs
+    doc.addPage();
+    y = cabecalho(2);
 
-  // ── MODO SIMPLES — 1 página ───────────────────────────────
+    var ops  = dadosOperadores();
+    var sugs = dadosSugestoes();
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      body: ops.length ? ops : [['', '', '']],
+      columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
+    }));
+    y = doc.lastAutoTable.finalY + 5;
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Sugestao / Critica', 'Nacionalidade']],
+      body: sugs.length ? sugs : [['', '']],
+      columnStyles: { 1: { cellWidth: 38 } },
+    }));
+    y = doc.lastAutoTable.finalY + 5;
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Outras Observacoes']],
+      body: [[obs || '']],
+      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 16 }),
+    }));
+    y = doc.lastAutoTable.finalY + 8;
+
+    y = assinatura(y);
+    avisoFinal(y);
+    rodape(2);
+
+  // ===========================================================
+  // MODO SIMPLES — 1 página
+  // ===========================================================
   } else {
+    y = cabecalho();
+    y = camposLocalData(y);
+
     var vNac = 0, vEst = 0;
     document.querySelectorAll('.pais-input').forEach(function(inp) {
       if (inp.dataset.pais === 'Nacionais')    vNac = parseInt(inp.value, 10) || 0;
       if (inp.dataset.pais === 'Estrangeiros') vEst = parseInt(inp.value, 10) || 0;
     });
+    var totalSimples = vNac + vEst;
 
-    var linhasOp  = recolherLinhasOpParaPDF('simples');
-    var linhasSug = recolherLinhasSugParaPDF('simples');
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Tipo de Visitante', 'Numero']],
+      body: [
+        ['Nacionais',    vNac > 0 ? vNac : ''],
+        ['Estrangeiros', vEst > 0 ? vEst : ''],
+      ],
+      foot: [['TOTAL', totalSimples > 0 ? totalSimples : '']],
+      footStyles: { fillColor: COR_CLARO, textColor: COR_PRINCIPAL, fontStyle: 'bold', fontSize: 9 },
+      styles: Object.assign({}, estiloBase.styles, { fontSize: 11, cellPadding: 5 }),
+      headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 10 }),
+      columnStyles: { 1: { cellWidth: 30, halign: 'right' } },
+    }));
+    y = doc.lastAutoTable.finalY + 5;
 
-    html = buildHTML(
-      '<div class="pagina">' +
-        cab +
-        // Visitantes
-        '<table class="tbl-simples">' +
-          '<thead><tr>' +
-            '<th>Visitantes — Nacionais / Estrangeiros</th>' +
-            '<th style="text-align:right;width:80px">Nº</th>' +
-          '</tr></thead>' +
-          '<tbody>' +
-            '<tr><td style="font-weight:700;color:#8B4A2B">Nacionais</td>' +
-              '<td class="num"><input class="input-cel" type="number" min="0" ' +
-                'value="' + (vNac || '') + '" style="text-align:right;width:65px"></td></tr>' +
-            '<tr><td>Estrangeiros</td>' +
-              '<td class="num"><input class="input-cel" type="number" min="0" ' +
-                'value="' + (vEst || '') + '" style="text-align:right;width:65px"></td></tr>' +
-          '</tbody>' +
-          '<tfoot><tr class="total-linha">' +
-            '<td style="font-weight:700">TOTAL</td>' +
-            '<td class="num"><input class="input-cel" type="number" min="0" ' +
-              'style="text-align:right;width:65px;font-weight:700"></td>' +
-          '</tr></tfoot>' +
-        '</table>' +
-        // Operadores
-        '<table class="tbl-normal">' +
-          '<thead><tr>' +
-            '<th>Operador / Agência</th>' +
-            '<th>Nacionalidades</th>' +
-            '<th style="text-align:right;width:55px">Total</th>' +
-          '</tr></thead>' +
-          '<tbody>' + linhasOp + '</tbody>' +
-        '</table>' +
-        // Sugestões
-        '<table class="tbl-normal">' +
-          '<thead><tr>' +
-            '<th>Sugestão / Crítica</th>' +
-            '<th style="width:130px">Nacionalidade</th>' +
-          '</tr></thead>' +
-          '<tbody>' + linhasSug + '</tbody>' +
-        '</table>' +
-        // Observações
-        '<table class="tbl-normal">' +
-          '<thead><tr><th colspan="2">Outras Observações</th></tr></thead>' +
-          '<tbody><tr><td colspan="2"><div class="obs-area">' + (esc2(obs) || '&nbsp;') + '</div></td></tr></tbody>' +
-        '</table>' +
-        assinatura +
-        avisoFinal +
-        '<div class="rodape-pdf">Registo Diário de Nacionalidades · Município de Reguengos de Monsaraz</div>' +
-      '</div>'
-    );
+    var ops  = dadosOperadores();
+    var sugs = dadosSugestoes();
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      body: ops.length ? ops : [['', '', '']],
+      columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
+    }));
+    y = doc.lastAutoTable.finalY + 5;
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Sugestao / Critica', 'Nacionalidade']],
+      body: sugs.length ? sugs : [['', '']],
+      columnStyles: { 1: { cellWidth: 38 } },
+    }));
+    y = doc.lastAutoTable.finalY + 5;
+
+    doc.autoTable(Object.assign({}, estiloBase, {
+      startY: y,
+      head: [['Outras Observacoes']],
+      body: [[obs || '']],
+      styles: Object.assign({}, estiloBase.styles, { minCellHeight: 14 }),
+    }));
+    y = doc.lastAutoTable.finalY + 8;
+
+    y = assinatura(y);
+    avisoFinal(y);
+    rodape();
   }
 
-  // ── Abrir janela com opções de impressão e download ───────
-  var janela = window.open('', '_blank');
-  if (!janela) {
-    alert('Por favor permita popups para este site para gerar o PDF.');
-    return;
-  }
-
-  // Adicionar barra de acções no topo da janela gerada
-  var barraAcoes =
-    '<div style="position:fixed;top:0;left:0;right:0;background:#8B4A2B;color:white;' +
-      'padding:8px 16px;display:flex;align-items:center;gap:12px;z-index:9999;font-family:Arial,sans-serif;font-size:10pt">' +
-      '<span style="flex:1;font-weight:700">Registo Diário de Nacionalidades</span>' +
-      '<button onclick="window.print()" ' +
-        'style="background:white;color:#8B4A2B;border:none;border-radius:5px;' +
-          'padding:6px 16px;font-weight:700;cursor:pointer;font-size:10pt">🖨 Imprimir</button>' +
-      '<button onclick="descarregarPDF()" ' +
-        'style="background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.4);' +
-          'border-radius:5px;padding:6px 16px;font-weight:700;cursor:pointer;font-size:10pt">⬇ Descarregar PDF</button>' +
-      '<button onclick="window.close()" ' +
-        'style="background:transparent;color:rgba(255,255,255,0.7);border:none;' +
-          'cursor:pointer;font-size:14pt;padding:0 4px;line-height:1">✕</button>' +
-    '</div>' +
-    '<div style="height:44px"></div>'; // espaço para a barra não cobrir o conteúdo
-
-  var scriptDownload =
-    '<script>' +
-    'function descarregarPDF() {' +
-      '  var aviso = document.createElement("div");' +
-      '  aviso.style.cssText = "position:fixed;bottom:20px;right:20px;background:#333;color:white;padding:12px 16px;border-radius:8px;font-size:9.5pt;z-index:9999;max-width:260px;line-height:1.5";' +
-      '  aviso.textContent = "No dialogo de impressao: escolha Guardar como PDF e clique Guardar.";' +
-      '  document.body.appendChild(aviso);' +
-      '  setTimeout(function(){ document.body.removeChild(aviso); }, 5000);' +
-      '  window.print();' +
-    '}' +
-    '<\/script>';
-
-  janela.document.write(
-    '<!DOCTYPE html><html lang="pt"><head><meta charset="UTF-8">' +
-    '<title>Registo Diário de Nacionalidades</title>' +
-    '<style>' + CSS_PDF +
-      // Esconder barra ao imprimir
-      '@media print{.barra-acoes{display:none!important}.espacador{display:none!important}}' +
-    '</style>' +
-    '</head><body>' +
-    '<div class="barra-acoes">' + barraAcoes + '</div>' +
-    '<div class="espacador" style="height:44px"></div>' +
-    (tipo === 'paises' ? html.replace('<div class="pagina">', '<div class="pagina" style="margin-top:0">') : html) +
-    scriptDownload +
-    '</body></html>'
-  );
-  janela.document.close();
-  janela.focus();
+  // ── Guardar / descarregar ────────────────────────────────────
+  var data = new Date().toISOString().slice(0, 10);
+  var nome = 'Registo-Nacionalidades-' + tipo + '-' + data + '.pdf';
+  doc.save(nome);
 }
 
-function buildHTML(corpo) {
-  return corpo;
-}
-
-function esc2(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
-    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function recolherLinhasOpParaPDF(modo) {
-  var n = (modo === 'simples') ? 4 : 5;
-  var html = '';
-  for (var i = 0; i < n; i++) {
-    html += '<tr>' +
-      '<td><input class="input-cel"></td>' +
-      '<td><input class="input-cel"></td>' +
-      '<td class="num"><input class="input-cel" type="number" min="0" style="text-align:right;width:45px"></td>' +
-    '</tr>';
-  }
-  return html;
-}
-
-function recolherLinhasSugParaPDF(modo) {
-  var n = (modo === 'simples') ? 4 : 5;
-  var html = '';
-  for (var i = 0; i < n; i++) {
-    html += '<tr>' +
-      '<td><input class="input-cel"></td>' +
-      '<td><input class="input-cel" style="width:120px"></td>' +
-    '</tr>';
-  }
-  return html;
-}
-
-// Compat
 function imprimirPDF() { mostrarModalPDF(); }
