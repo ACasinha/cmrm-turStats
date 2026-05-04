@@ -120,6 +120,7 @@ function activarApp() {
   if (!appInicializada) {
     inicializarApp();
     appInicializada = true;
+    verificarRoleAdmin();
   }
 }
 
@@ -339,4 +340,213 @@ function bloquearFormulario(bloquear) {
   document.querySelectorAll('.btn-add-nac, .btn-rem-nac').forEach(function(b){ b.disabled = d; });
   document.querySelectorAll('.sug-texto, .sug-nac').forEach(function(i){ i.disabled = d; });
   document.getElementById('observacoes').disabled = d;
+}
+
+// ============================================================
+// SISTEMA DE ADMINISTRAÇÃO
+// ============================================================
+
+// Verificar role de admin após login bem-sucedido
+function verificarRoleAdmin() {
+  var user = firebaseAuth.currentUser;
+  if (!user) return;
+
+  utilizadorUid = user.uid;
+
+  verificarSeEhAdmin(user.uid).then(function(ehAdmin) {
+    if (ehAdmin) {
+      document.getElementById('btnAdmin').style.display = 'inline-block';
+      mostrarToast('Bem-vindo, Administrador!', 'sucesso');
+    } else {
+      document.getElementById('btnAdmin').style.display = 'none';
+    }
+  });
+}
+
+function abrirAreaAdmin() {
+  if (!utilizadorEhAdmin) {
+    mostrarToast('Acesso negado. Apenas administradores podem aceder.', 'erro');
+    return;
+  }
+  document.getElementById('adminPanel').style.display = 'block';
+  mudarAbaPainel('utilizadores');
+  recarregarListaUtilizadores();
+}
+
+function fecharAreaAdmin() {
+  document.getElementById('adminPanel').style.display = 'none';
+}
+
+function mudarAbaPainel(abaId) {
+  // Esconder todas as abas
+  document.querySelectorAll('.admin-tab-content').forEach(function(aba) {
+    aba.style.display = 'none';
+  });
+  
+  // Desativar todos os botões de aba
+  document.querySelectorAll('.admin-tab-btn').forEach(function(btn) {
+    btn.classList.remove('ativo');
+  });
+  
+  // Mostrar a aba selecionada e ativar o botão correspondente
+  var abaElement = document.getElementById('aba-' + abaId);
+  if (abaElement) {
+    abaElement.style.display = 'block';
+  }
+  
+  // Encontrar e ativar o botão clicado
+  event.target.classList.add('ativo');
+  
+  // Carregar dados quando muda de aba
+  if (abaId === 'dados') {
+    filtrarDadosPainel();
+  } else if (abaId === 'estatisticas') {
+    atualizarEstatisticas();
+  }
+}
+
+// ============================================================
+// GESTÃO DE UTILIZADORES
+// ============================================================
+
+function recarregarListaUtilizadores() {
+  var tbody = document.getElementById('tabelaUtilizadores');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">A carregar utilizadores...</td></tr>';
+
+  carregarListaUtilizadores().then(function(utilizadores) {
+    if (utilizadores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="loading">Nenhum utilizador registado.</td></tr>';
+      return;
+    }
+
+    var html = '';
+    utilizadores.forEach(function(util) {
+      var dataLogin = util.ultimoLogin ? 
+        new Date(util.ultimoLogin.seconds * 1000).toLocaleDateString('pt-PT') : 
+        '—';
+      var statusAdmin = util.isAdmin ? 
+        '<span class="badge badge-admin">Admin</span>' : 
+        '<span class="badge badge-user">Utilizador</span>';
+      
+      html += '<tr>' +
+        '<td>' + util.email + '</td>' +
+        '<td>' + util.nome + '</td>' +
+        '<td>' + statusAdmin + '</td>' +
+        '<td>' + dataLogin + '</td>' +
+        '<td class="acoes-cell">' +
+          '<button class="btn-acao btn-acao-pequeno" onclick="alternarAdminUtilizador(\'' + util.uid + '\', ' + !util.isAdmin + ')" title="' + (util.isAdmin ? 'Remover' : 'Promover') + '">' + (util.isAdmin ? '👤' : '⭐') + '</button>' +
+          '<button class="btn-acao btn-acao-pequeno btn-acao-perigo" onclick="eliminarUtilizadorAdmin(\'' + util.uid + '\', \'' + util.email + '\')" title="Eliminar">🗑</button>' +
+        '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = html;
+  }).catch(function(err) {
+    console.error('[Admin] Erro ao carregar utilizadores:', err);
+    tbody.innerHTML = '<tr><td colspan="5" class="loading">Erro ao carregar utilizadores. Tente novamente.</td></tr>';
+  });
+}
+
+function alternarAdminUtilizador(uid, ehAdmin) {
+  alterarRoleUtilizador(uid, ehAdmin).then(function() {
+    recarregarListaUtilizadores();
+  });
+}
+
+function eliminarUtilizadorAdmin(uid, email) {
+  eliminarUtilizador(uid, email).then(function() {
+    recarregarListaUtilizadores();
+  });
+}
+
+// ============================================================
+// GESTÃO DE DADOS
+// ============================================================
+
+function filtrarDadosPainel() {
+  var dataInicio = document.getElementById('filtroDataInicio').value;
+  var dataFim = document.getElementById('filtroDataFim').value;
+  var local = document.getElementById('filtroLocal').value;
+  
+  var tbody = document.getElementById('tabelaDados');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">A carregar dados...</td></tr>';
+
+  var filtros = {
+    local: local || null,
+    dataInicio: dataInicio || null,
+    dataFim: dataFim || null
+  };
+
+  carregarDadosInseridos(filtros).then(function(registos) {
+    if (registos.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="loading">Nenhum registo encontrado.</td></tr>';
+      return;
+    }
+
+    var html = '';
+    registos.forEach(function(registo) {
+      var totalVisitantes = 0;
+      Object.values(registo.paises || {}).forEach(function(v) {
+        totalVisitantes += parseInt(v, 10);
+      });
+
+      html += '<tr>' +
+        '<td>' + registo.data + '</td>' +
+        '<td>' + registo.local + '</td>' +
+        '<td>' + registo.funcionario + '</td>' +
+        '<td>' + totalVisitantes + '</td>' +
+        '<td class="acoes-cell">' +
+          '<button class="btn-acao btn-acao-pequeno" onclick="verDetalhesRegisto(\'' + registo.id + '\')">👁</button>' +
+          '<button class="btn-acao btn-acao-pequeno btn-acao-perigo" onclick="eliminarRegistoAdmin(\'' + registo.id + '\')">🗑</button>' +
+        '</td>' +
+      '</tr>';
+    });
+    tbody.innerHTML = html;
+  }).catch(function(err) {
+    console.error('[Admin] Erro ao carregar dados:', err);
+    tbody.innerHTML = '<tr><td colspan="5" class="loading">Erro ao carregar dados. Tente novamente.</td></tr>';
+  });
+}
+
+function exportarDadosPainel() {
+  var dataInicio = document.getElementById('filtroDataInicio').value;
+  var dataFim = document.getElementById('filtroDataFim').value;
+  var local = document.getElementById('filtroLocal').value;
+
+  var filtros = {
+    local: local || null,
+    dataInicio: dataInicio || null,
+    dataFim: dataFim || null
+  };
+
+  carregarDadosInseridos(filtros).then(function(registos) {
+    exportarDadosCSV(registos);
+  });
+}
+
+function eliminarRegistoAdmin(registoId) {
+  eliminarRegisto(registoId).then(function() {
+    filtrarDadosPainel();
+  });
+}
+
+function verDetalhesRegisto(registoId) {
+  mostrarToast('Funcionalidade de detalhes em desenvolvimento...', 'info');
+}
+
+// ============================================================
+// ESTATÍSTICAS
+// ============================================================
+
+function atualizarEstatisticas() {
+  carregarDadosInseridos({}).then(function(registos) {
+    var stats = obterEstatisticas(registos);
+    
+    document.getElementById('statTotalRegistos').textContent = stats.totalRegistos;
+    document.getElementById('statTotalVisitantes').textContent = stats.totalVisitantes;
+    document.getElementById('statDataRecente').textContent = stats.datasMaisRecenteEAntiga.recente || '—';
+    document.getElementById('statDataAntiga').textContent = stats.datasMaisRecenteEAntiga.antiga || '—';
+  }).catch(function(err) {
+    console.error('[Admin] Erro ao carregar estatísticas:', err);
+    mostrarToast('Erro ao carregar estatísticas.', 'erro');
+  });
 }

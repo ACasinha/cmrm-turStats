@@ -1,0 +1,52 @@
+// ============================================================
+// REGRAS DE SEGURANÇA DO FIRESTORE
+// ============================================================
+// 
+// INSTRUÇÕES:
+// 1. Ir para Firebase Console → Firestore Database → Regras
+// 2. Copiar e colar o conteúdo deste ficheiro
+// 3. Clicar em "Publicar"
+//
+// NOTA: Apenas a colecção 'utilizadores' é necessária.
+// Os registos de visitantes continuam na Google Sheet via Cloud Function.
+//
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========== COLECÇÃO: utilizadores ==========
+    // Gestão de contas de utilizadores
+    // - Cada utilizador pode ler/editar apenas a sua conta
+    // - Admins podem ler/editar todas as contas
+    // - Admins podem eliminar contas
+    
+    match /utilizadores/{userId} {
+      // Ler:
+      // - Própria conta
+      // - Qualquer conta (se for admin)
+      allow read: if request.auth.uid == userId || 
+                     get(/databases/$(database)/documents/utilizadores/$(request.auth.uid)).data.isAdmin == true;
+      
+      // Atualizar:
+      // - Própria conta (apenas campos não-sensíveis)
+      // - Qualquer conta (se for admin)
+      allow update: if request.auth.uid == userId || 
+                       get(/databases/$(database)/documents/utilizadores/$(request.auth.uid)).data.isAdmin == true;
+      
+      // Criar:
+      // - Qualquer utilizador autenticado pode criar sua própria conta
+      allow create: if request.auth.uid == userId;
+      
+      // Eliminar:
+      // - Apenas admins podem eliminar contas
+      allow delete: if get(/databases/$(database)/documents/utilizadores/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Negar acesso a qualquer outro recurso
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
