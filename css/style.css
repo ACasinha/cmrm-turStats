@@ -1052,62 +1052,113 @@ body {
   .users-table,
   .users-table thead,
   .users-table tbody,
-  .users-table th,
-  .users-table td,
   .users-table tr {
     display: block;
     width: 100%;
   }
 
   .users-table thead {
-    display: none; /* esconder cabeçalho */
+    display: none;
   }
 
   .users-table tbody tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+
     background: white;
     border-radius: var(--radius);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     padding: 12px;
     box-shadow: var(--sombra);
   }
 
+  /* BLOCO ESQUERDA (info) */
   .users-table td {
+    display: block;
+    padding: 0;
     border: none;
-    padding: 6px 0;
-    display: flex;
-    flex-direction: column; /* empilha label + valor */
-    align-items: flex-start; /* alinhar tudo à esquerda */
-    gap: 2px;
     font-size: var(--text-sm);
   }
 
-  .users-table td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    color: var(--terra);
-    font-size: var(--text-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.7;
+  /* agrupar info */
+  .users-table td:nth-child(1),
+  .users-table td:nth-child(2),
+  .users-table td:nth-child(3),
+  .users-table td:nth-child(4) {
+    width: 100%;
   }
 
-  /* ações ocupam linha inteira */
+  /* esconder labels automáticos */
+  .users-table td::before {
+    display: none;
+  }
+
+  /* criar bloco info */
+  .users-table tbody tr > td:not(:last-child) {
+    margin-bottom: 2px;
+  }
+
+  /* CONTAINER INFO */
+  .users-table tbody tr > td:not(:last-child) {
+    display: block;
+  }
+
+  /* AÇÕES À DIREITA */
   .users-table td:last-child {
-    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 90px;
+    align-items: stretch;
   }
 
   .user-actions {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
-    width: 100%;
+    gap: 6px;
   }
 
   .btn-action {
     width: 100%;
-    text-align: center;
-    padding: 8px;
-    font-size: var(--text-sm);
+    font-size: 0.75rem;
+    padding: 6px;
+    min-height: 32px;
   }
+
+  /* Nome mais destacado */
+  .users-table td:first-child strong {
+    font-size: var(--text-base);
+    color: var(--terra);
+  }
+
+  /* email mais discreto */
+  .users-table td:nth-child(2) {
+    font-size: var(--text-xs);
+    color: var(--cinza);
+  }
+
+.admin-actions {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .btn-novo-user {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    min-height: 38px;
+  }
+
+  /* opcional: reduzir ícones */
+  .btn-novo-user {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+  }
+
 }
 
 /* ============================================================
