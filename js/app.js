@@ -42,6 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (user && sessaoValida()) {
       nomeFuncionarioAtual = user.displayName || user.email;
+      
+      // Verificar role de admin (usa cache se disponível)
+      obterPerfilUtilizador()
+        .then(function(perfil) {
+          if (perfil.role === 'administrador') {
+            var btnAdmin = document.getElementById('btnAdmin');
+            if (btnAdmin) btnAdmin.style.display = '';
+          }
+        })
+        .catch(function(err) {
+          console.warn('[Perfil] Erro ao verificar role:', err);
+        });
+      
       activarApp();
     } else {
       if (user) apiLogout(); // sessão Firebase existe mas as 10h expiraram
@@ -100,6 +113,12 @@ function fazerLogin() {
             return;
           }
           
+          // Mostrar botão admin se for administrador
+          if (perfil.role === 'administrador') {
+            var btnAdmin = document.getElementById('btnAdmin');
+            if (btnAdmin) btnAdmin.style.display = '';
+          }
+          
           activarApp();
         })
         .catch(function(err) {
@@ -132,6 +151,14 @@ function fazerLogout() {
 }
 
 // ============================================================
+// NAVEGAÇÃO ADMIN
+// ============================================================
+
+function irParaAdmin() {
+  window.location.href = 'admin.html';
+}
+
+// ============================================================
 // ACTIVAR / MOSTRAR LOGIN
 // ============================================================
 
@@ -148,6 +175,11 @@ function mostrarEcraLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
   document.getElementById('loginErro').classList.remove('visivel');
   document.getElementById('loginPass').value = '';
+  
+  // Esconder botão admin
+  var btnAdmin = document.getElementById('btnAdmin');
+  if (btnAdmin) btnAdmin.style.display = 'none';
+  
   limparFormularioParcial();
   mostrarBanner('', '');
   ultimoLocalVerificado = '';
