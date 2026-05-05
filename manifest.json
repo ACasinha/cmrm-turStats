@@ -3,6 +3,7 @@
   "short_name": "Nacionalidades",
   "description": "Registo diário de turistas e visitantes por nacionalidade — Município de Reguengos de Monsaraz",
   "start_url": "./index.html",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#F5EBE0",
