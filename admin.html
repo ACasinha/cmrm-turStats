@@ -487,6 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (isAdmin) {
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('adminContainer').style.display = 'block';
+            nomeFuncionarioAtual = user.displayName || user.email;
             carregarUtilizadores();
           } else {
             apiLogout();
