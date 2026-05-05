@@ -37,6 +37,25 @@
   </div>
 </div>
 
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-circle">
+      <img src="img/logo.png" alt="Logo Município">
+    </div>
+    <div class="header-text">
+      <h1>Registo Diário de Nacionalidades</h1>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="user-info">
+      <span class="user-label">Funcionário(a)</span>
+      <span class="user-name" id="headerNomeFuncionario">—</span>
+      <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONTEÚDO ADMIN -->
 <div class="admin-container" id="adminContainer" style="display:none">
   
@@ -46,14 +65,11 @@
   </div>
   
   <div class="admin-actions">
-    <button class="btn-novo-user" onclick="abrirModalNovoUtilizador()">
-      ➕ Novo Utilizador
-    </button>
     <button class="btn-novo-user" onclick="voltarParaApp()" style="background: var(--marrom);">
       ← Voltar à Aplicação
     </button>
-    <button class="btn-novo-user" onclick="fazerLogout()" style="background: #e74c3c;">
-      ↩ Terminar Sessão
+    <button class="btn-novo-user" onclick="abrirModalNovoUtilizador()">
+      ➕ Novo Utilizador
     </button>
   </div>
   
@@ -149,6 +165,22 @@
     </div>
   </div>
 </div>
+
+<!-- RODAPÉ -->
+<footer class="rodape">
+  <div class="rodape-logo">
+    <img src="img/logo-turismo.png" alt="Serviços de Turismo">
+  </div>
+  <div class="rodape-texto">
+    <span class="rodape-dev">Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz</span>
+    <div class="rodape-pwa">
+      <span class="rodape-versao" id="rodapeVersao">v1</span>
+      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">
+        🔄 Verificar atualização
+      </button>
+    </div>
+  </div>
+</footer>
 
 <div class="toast" id="toast"></div>
 
