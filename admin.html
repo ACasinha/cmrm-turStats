@@ -198,6 +198,7 @@
 'use strict';
 
 var modoEdicao = false;
+var nomeFuncionarioAtual  = '';
 
 // ============================================================
 // LOGIN
@@ -481,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
-      nomeFuncionarioAtual = user.displayName || user.email;
+      nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
       
       verificarSeAdmin()
         .then(function(isAdmin) {
