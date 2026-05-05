@@ -309,11 +309,11 @@ function carregarUtilizadores() {
             '<button class="btn-action btn-ativar" onclick="toggleAtivo(\'' + user.uid + '\', true)">✅ Ativar</button>';
         
         tr.innerHTML = 
-          '<td><strong>' + esc(user.nome || '—') + '</strong></td>' +
-          '<td>' + esc(user.email) + '</td>' +
-          '<td>' + badgeRole + '</td>' +
-          '<td><span class="badge-status ' + statusClass + '"></span>' + statusTexto + '</td>' +
-          '<td><div class="user-actions">' + acoes + '</div></td>';
+          '<td data-label="Nome"><strong>' + esc(user.nome || '—') + '</strong></td>' +
+          '<td data-label="Email">' + esc(user.email) + '</td>' +
+          '<td data-label="Role">' + badgeRole + '</td>' +
+          '<td data-label="Estado"><span class="badge-status ' + statusClass + '"></span>' + statusTexto + '</td>' +
+          '<td data-label="Ações"><div class="user-actions">' + acoes + '</div></td>';
         
         tbody.appendChild(tr);
       });
