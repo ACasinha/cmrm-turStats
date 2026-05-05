@@ -86,8 +86,28 @@ function fazerLogin() {
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
-      nomeFuncionarioAtual = resp.nomeFuncionario;
-      activarApp();
+      
+      // Carregar perfil do utilizador do Firestore
+      obterPerfilUtilizador()
+        .then(function(perfil) {
+          nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
+          
+          // Verificar se está ativo
+          if (!perfil.ativo) {
+            erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
+            erro.classList.add('visivel');
+            apiLogout();
+            return;
+          }
+          
+          activarApp();
+        })
+        .catch(function(err) {
+          console.error('[Perfil] Erro ao carregar:', err);
+          // Mesmo com erro no perfil, permitir login (fallback)
+          nomeFuncionarioAtual = resp.nomeFuncionario;
+          activarApp();
+        });
     },
     function onFailure(err) {
       btn.disabled    = false;
@@ -107,6 +127,7 @@ function fazerLogin() {
 function fazerLogout() {
   if (!confirm('Deseja terminar a sessão?')) return;
   appInicializada = false;
+  limparCacheUtilizador(); // Limpar cache do Firestore
   apiLogout().then(function() { mostrarEcraLogin(); });
 }
 
