@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
-      nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
+      nomeFuncionarioAtual = user.nome || user.email;
       
       verificarSeAdmin()
         .then(function(isAdmin) {
