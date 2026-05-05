@@ -232,11 +232,9 @@ function fazerLogin() {
             apiLogout();
             return;
           }
-          
           document.getElementById('loginOverlay').classList.add('hidden');
           document.getElementById('adminContainer').style.display = 'block';
           carregarUtilizadores();
-          nomeFuncionarioAtual = user.displayName || user.email;
         })
         .catch(function(err) {
           btn.disabled = false;
@@ -483,6 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
+      nomeFuncionarioAtual = user.displayName || user.email;
+      
       verificarSeAdmin()
         .then(function(isAdmin) {
           if (isAdmin) {
