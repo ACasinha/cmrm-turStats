@@ -6,21 +6,25 @@
 // O pwa.js lê esta constante para mostrar a versão no rodapé.
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v1.1.1';
-const CACHE_STATIC = 'rmz-static-v1.1.1';
+const CACHE_NAME   = 'rmz-nacionalidades-v1.1.0';
+const CACHE_STATIC = 'rmz-static-v1.1.0';
 
 // Todos os assets necessários para a app funcionar offline.
 // Adicionar aqui qualquer novo ficheiro que seja criado.
 const STATIC_ASSETS = [
   './index.html',
+  './admin.html',
   './manifest.json',
   './css/style.css',
+  './css/style-admin.css',
   './js/data.js',
   './js/ui.js',
   './js/api.js',
   './js/app.js',
   './js/pwa.js',
   './js/offline.js',
+  './js/users.js',
+  './js/cloud-fuction-users.js',
   './img/logo.png',
   './img/logo-turismo.png',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap',
@@ -28,6 +32,7 @@ const STATIC_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
 ];
 
 // ── Pedidos que NUNCA devem ser interceptados pelo SW ────────
