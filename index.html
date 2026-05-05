@@ -80,9 +80,6 @@
     <div class="user-info">
       <span class="user-label">Funcionário(a)</span>
       <span class="user-name" id="headerNomeFuncionario">—</span>
-      <button class="btn-admin" id="btnAdmin" onclick="irParaAdmin()" style="display:none" title="Área de Administração">
-        🛡️ Admin
-      </button>
       <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
     </div>
   </div>
@@ -223,6 +220,9 @@
       </button>
       <button class="btn-rodape btn-rodape-pdf" onclick="mostrarModalPDF()" title="Gerar formulário PDF">
         📄 Gerar PDF
+      </button>
+      <button class="btn-rodape btn-rodape-admin" id="btnAdmin" onclick="irParaAdmin()" title="Área de Administração">
+        🛡️ Admin
       </button>
       <button class="btn-rodape btn-rodape-instalar" id="btnInstalarRodape" style="display:none" onclick="instalarApp()" title="Instalar app">
         📲 Instalar app
