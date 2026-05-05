@@ -80,7 +80,6 @@
     <div class="user-info">
       <span class="user-label">Funcionário(a)</span>
       <span class="user-name" id="headerNomeFuncionario">—</span>
-      <button class="btn-admin" id="btnAdmin" onclick="abrirAreaAdmin()" style="display:none" title="Painel de Administração">⚙️ Admin</button>
       <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
     </div>
   </div>
@@ -205,135 +204,6 @@
     <button class="btn btn-guardar" id="btnGuardar" onclick="guardarDados()">💾 Guardar Registo</button>
   </div>
 
-  <!-- PAINEL DE ADMINISTRAÇÃO (oculto por defeito) -->
-  <div class="admin-panel" id="adminPanel" style="display:none">
-    <div class="admin-header">
-      <h2>⚙️ Painel de Administração</h2>
-      <button class="btn-fechar-admin" onclick="fecharAreaAdmin()">✕</button>
-    </div>
-    
-    <div class="admin-tabs">
-      <button class="admin-tab-btn ativo" onclick="mudarAbaPainel('utilizadores')">👥 Utilizadores</button>
-      <button class="admin-tab-btn" onclick="mudarAbaPainel('dados')">📊 Dados Inseridos</button>
-      <button class="admin-tab-btn" onclick="mudarAbaPainel('estatisticas')">📈 Estatísticas</button>
-    </div>
-    
-    <!-- ABA 1: UTILIZADORES -->
-    <div class="admin-tab-content" id="aba-utilizadores" style="display:block">
-      <div class="admin-section">
-        <h3>Gestão de Utilizadores</h3>
-        <p class="admin-info">Aqui pode promover, despromover e eliminar utilizadores do sistema.</p>
-        
-        <div class="admin-actions">
-          <button class="btn btn-admin-primario" onclick="abrirModalNovoUtilizador()">➕ Adicionar Utilizador</button>
-          <button class="btn btn-admin-secundario" onclick="recarregarListaUtilizadores()">🔄 Recarregar</button>
-        </div>
-        
-        <div class="table-scroll">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Nome</th>
-                <th>Permissão</th>
-                <th>Último Login</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaUtilizadores">
-              <tr><td colspan="5" class="loading">A carregar utilizadores...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <!-- ABA 2: DADOS INSERIDOS -->
-    <div class="admin-tab-content" id="aba-dados" style="display:none">
-      <div class="admin-section">
-        <h3>Dados Inseridos</h3>
-        <p class="admin-info">Visualize, edite e elimine registos de dados de visitantes.</p>
-        
-        <div class="admin-filtros">
-          <div class="filtro-group">
-            <label>Período:</label>
-            <input type="date" id="filtroDataInicio" placeholder="Data início">
-            <span>até</span>
-            <input type="date" id="filtroDataFim" placeholder="Data fim">
-          </div>
-          <div class="filtro-group">
-            <label>Local:</label>
-            <select id="filtroLocal">
-              <option value="">Todos os locais</option>
-              <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
-              <option value="Museu do Fresco">Museu do Fresco</option>
-              <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
-              <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
-              <option value="Casa do Barro">Casa do Barro</option>
-              <option value="Casa da Inquisição">Casa da Inquisição</option>
-              <option value="Igreja de Santiago">Igreja de Santiago</option>
-              <option value="Igreja da Misericórdia">Igreja da Misericórdia</option>
-              <option value="Arte Contemporânea">Arte Contemporânea</option>
-              <option value="Auditório António Marcelino">Auditório António Marcelino</option>
-            </select>
-          </div>
-          <div class="filtro-group">
-            <button class="btn btn-admin-primario" onclick="filtrarDadosPainel()">🔍 Filtrar</button>
-            <button class="btn btn-admin-secundario" onclick="exportarDadosPainel()">📥 Exportar CSV</button>
-          </div>
-        </div>
-        
-        <div class="table-scroll">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Local</th>
-                <th>Funcionário</th>
-                <th>Total Visitantes</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaDados">
-              <tr><td colspan="5" class="loading">A carregar dados...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    
-    <!-- ABA 3: ESTATÍSTICAS -->
-    <div class="admin-tab-content" id="aba-estatisticas" style="display:none">
-      <div class="admin-section">
-        <h3>Estatísticas e Resumo</h3>
-        <p class="admin-info">Vista geral dos dados registados no sistema.</p>
-        
-        <div class="stats-container" id="statsContainer">
-          <div class="stat-card">
-            <div class="stat-label">Total de Registos</div>
-            <div class="stat-value" id="statTotalRegistos">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Total de Visitantes</div>
-            <div class="stat-value" id="statTotalVisitantes">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Data Mais Recente</div>
-            <div class="stat-value" id="statDataRecente">—</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Data Mais Antiga</div>
-            <div class="stat-value" id="statDataAntiga">—</div>
-          </div>
-        </div>
-        
-        <div class="admin-info" style="margin-top: 20px;">
-          <button class="btn btn-admin-primario" onclick="atualizarEstatisticas()">🔄 Atualizar Estatísticas</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <!-- RODAPÉ -->
@@ -367,13 +237,11 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- Aplicação -->
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/api.js"></script>
-<script src="js/admin.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
 <script src="js/offline.js"></script>

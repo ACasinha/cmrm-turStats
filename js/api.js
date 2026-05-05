@@ -160,12 +160,6 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
       clearTimeout(timeoutId);
       registarInicioSessao();
       var user = credencial.user;
-      
-      // Registar utilizador no Firestore se não existir
-      if (typeof registarUtilizadorNoFirestore === 'function') {
-        registarUtilizadorNoFirestore(user.uid, user.email, user.displayName);
-      }
-      
       onSuccess({
         sucesso:         true,
         nomeFuncionario: user.displayName || user.email,
