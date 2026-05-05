@@ -219,6 +219,5 @@ function apiGuardarRegisto(payload, onSuccess, onFailure) {
 
 function apiCriarUtilizador(payload, onSuccess, onFailure) {
   chamarAPI('criarUtilizador', payload)
-    .then(onSuccess)
     .catch(function(err) { onFailure({ message: err.message }); });
 }
