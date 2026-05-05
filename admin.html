@@ -193,12 +193,12 @@
 <script src="js/api.js"></script>
 <script src="js/users.js"></script>
 <script src="js/pwa.js"></script>
+<script src="js/app.js"></script>
 
 <script>
 'use strict';
 
 var modoEdicao = false;
-var nomeFuncionarioAtual  = '';
 
 // ============================================================
 // LOGIN
@@ -234,7 +234,6 @@ function fazerLogin() {
             return;
           }
           document.getElementById('loginOverlay').classList.add('hidden');
-          document.getElementById('headerNomeFuncionario').textContent = nomeFuncionarioAtual;
           document.getElementById('adminContainer').style.display = 'block';
           carregarUtilizadores();
         })
@@ -483,7 +482,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
-      nomeFuncionarioAtual = user.nome || user.email;
       
       verificarSeAdmin()
         .then(function(isAdmin) {
