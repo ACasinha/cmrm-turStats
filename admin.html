@@ -236,6 +236,7 @@ function fazerLogin() {
           document.getElementById('loginOverlay').classList.add('hidden');
           document.getElementById('adminContainer').style.display = 'block';
           carregarUtilizadores();
+          nomeFuncionarioAtual = user.displayName || user.email;
         })
         .catch(function(err) {
           btn.disabled = false;
@@ -487,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
           if (isAdmin) {
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('adminContainer').style.display = 'block';
-            nomeFuncionarioAtual = user.displayName || user.email;
             carregarUtilizadores();
           } else {
             apiLogout();
