@@ -1007,3 +1007,176 @@ body {
   .header { background: #8B4A2B !important; -webkit-print-color-adjust: exact; position: static !important; }
   .section-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ============================================================
+   ADMIN — RESPONSIVO MELHORADO (SMARTPHONE FIRST)
+============================================================ */
+
+/* Container mais fluido */
+.admin-container {
+  margin: clamp(12px, 4vw, 24px) auto;
+  padding: 0 clamp(10px, 3vw, 18px);
+}
+
+/* Header mais equilibrado */
+.admin-header {
+  padding: clamp(14px, 4vw, 24px);
+}
+
+.admin-header h1 {
+  font-size: var(--text-xl);
+}
+
+.admin-header p {
+  font-size: var(--text-sm);
+}
+
+/* Botões mais consistentes com app */
+.btn-novo-user {
+  font-size: var(--text-sm);
+  padding: 10px 14px;
+  min-height: 44px;
+}
+
+/* ============================================================
+   TABELA → MOBILE (stack)
+============================================================ */
+
+@media (max-width: 640px) {
+
+  .users-table-container {
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .users-table,
+  .users-table thead,
+  .users-table tbody,
+  .users-table th,
+  .users-table td,
+  .users-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .users-table thead {
+    display: none; /* esconder cabeçalho */
+  }
+
+  .users-table tbody tr {
+    background: white;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    padding: 12px;
+    box-shadow: var(--sombra);
+  }
+
+  .users-table td {
+    border: none;
+    padding: 6px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--text-sm);
+  }
+
+  .users-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--terra);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ações ocupam linha inteira */
+  .users-table td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .user-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-action {
+    width: 100%;
+    text-align: center;
+    padding: 8px;
+    font-size: var(--text-sm);
+  }
+}
+
+/* ============================================================
+   BADGES E TEXTO
+============================================================ */
+
+.badge-role {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+}
+
+.badge-status {
+  width: 7px;
+  height: 7px;
+}
+
+/* ============================================================
+   MODAIS — MOBILE
+============================================================ */
+
+@media (max-width: 480px) {
+
+  .modal-box {
+    border-radius: 16px;
+  }
+
+  .modal-body {
+    padding: 1.2rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-modal {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ============================================================
+   BOTÕES E AÇÕES
+============================================================ */
+
+.user-actions {
+  gap: 6px;
+}
+
+.btn-action {
+  min-height: 36px;
+}
+
+/* ============================================================
+   LOADING overlay melhor em mobile
+============================================================ */
+
+.loading-overlay {
+  border-radius: var(--radius);
+}
+
+/* ============================================================
+   EMPTY STATE ajuste
+============================================================ */
+
+.empty-state {
+  padding: 2rem 1rem;
+  font-size: var(--text-sm);
+}
+
+.empty-state-icon {
+  font-size: 2.2rem;
+}
