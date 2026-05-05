@@ -234,6 +234,7 @@ function fazerLogin() {
             return;
           }
           document.getElementById('loginOverlay').classList.add('hidden');
+          document.getElementById('headerNomeFuncionario').textContent = nomeFuncionarioAtual;
           document.getElementById('adminContainer').style.display = 'block';
           carregarUtilizadores();
         })
