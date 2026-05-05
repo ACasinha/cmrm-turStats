@@ -24,7 +24,7 @@ const STATIC_ASSETS = [
   './js/pwa.js',
   './js/offline.js',
   './js/users.js',
-  './js/cloud-fuction-users.js',
+  './js/cloud-function-users.js',
   './img/logo.png',
   './img/logo-turismo.png',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap',
