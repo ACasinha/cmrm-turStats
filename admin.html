@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8B4A2B">
+<link rel="icon" type="image/png" href="img/logo.png">
+<title>Administração - Gestão de Utilizadores</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="img/logo.png" alt="Logo Município">
+    </div>
+    <div class="login-titulo">Administração</div>
+    <div class="login-sub">Gestão de Utilizadores</div>
+    <div class="login-erro" id="loginErro"></div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="admin@exemplo.pt"
+             autocomplete="username" inputmode="email"
+             onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar →</button>
+  </div>
+</div>
+
+<!-- CONTEÚDO ADMIN -->
+<div class="admin-container" id="adminContainer" style="display:none">
+  
+  <div class="admin-header">
+    <h1>🛡️ Gestão de Utilizadores</h1>
+    <p>Administração do sistema de registo de nacionalidades</p>
+  </div>
+  
+  <div class="admin-actions">
+    <button class="btn-novo-user" onclick="abrirModalNovoUtilizador()">
+      ➕ Novo Utilizador
+    </button>
+    <button class="btn-novo-user" onclick="voltarParaApp()" style="background: var(--marrom);">
+      ← Voltar à Aplicação
+    </button>
+    <button class="btn-novo-user" onclick="fazerLogout()" style="background: #e74c3c;">
+      ↩ Terminar Sessão
+    </button>
+  </div>
+  
+  <div class="users-table-container" style="position:relative">
+    <div class="loading-overlay" id="loadingUsers">
+      <div class="spinner"></div>
+    </div>
+    
+    <table class="users-table" id="usersTable">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Estado</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody">
+        <tr>
+          <td colspan="5" class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <div>A carregar utilizadores...</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+</div>
+
+<!-- MODAL NOVO UTILIZADOR -->
+<div class="modal-overlay" id="modalNovoUser">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modalTitulo">Novo Utilizador</h2>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nome Completo *</label>
+        <input type="text" id="userNome" placeholder="João Silva" required>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="userEmail" placeholder="joao.silva@exemplo.pt" required>
+      </div>
+      <div class="form-group" id="passwordGroup">
+        <label>Password *</label>
+        <input type="password" id="userPassword" placeholder="Mínimo 6 caracteres" required>
+      </div>
+      <div class="form-group">
+        <label>Role *</label>
+        <select id="userRole">
+          <option value="utilizador">Utilizador</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancelar" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-modal btn-guardar" id="btnGuardarUser" onclick="guardarUtilizador()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR UTILIZADOR -->
+<div class="modal-overlay" id="modalEditarUser">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Editar Utilizador</h2>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editUserUid">
+      <div class="form-group">
+        <label>Nome Completo *</label>
+        <input type="text" id="editUserNome" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="editUserEmail" disabled style="opacity:0.6">
+      </div>
+      <div class="form-group">
+        <label>Role *</label>
+        <select id="editUserRole">
+          <option value="utilizador">Utilizador</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancelar" onclick="fecharModalEditar()">Cancelar</button>
+      <button class="btn-modal btn-guardar" onclick="guardarEdicaoUtilizador()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Aplicação -->
+<script src="js/api.js"></script>
+<script src="js/users.js"></script>
+<script src="js/pwa.js"></script>
+
+<script>
+'use strict';
+
+var modoEdicao = false;
+
+// ============================================================
+// LOGIN
+// ============================================================
+
+function fazerLogin() {
+  var email = document.getElementById('loginUser').value.trim();
+  var pass  = document.getElementById('loginPass').value;
+  var erro  = document.getElementById('loginErro');
+  var btn   = document.getElementById('btnLogin');
+
+  if (!email || !pass) {
+    erro.textContent = 'Por favor preencha todos os campos.';
+    erro.classList.add('visivel');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'A autenticar...';
+  erro.classList.remove('visivel');
+
+  apiAutenticar(email, pass,
+    function onSuccess(resp) {
+      // Verificar se é admin
+      verificarSeAdmin()
+        .then(function(isAdmin) {
+          if (!isAdmin) {
+            btn.disabled = false;
+            btn.textContent = 'Entrar →';
+            erro.textContent = 'Acesso negado. Apenas administradores podem aceder a esta área.';
+            erro.classList.add('visivel');
+            apiLogout();
+            return;
+          }
+          
+          document.getElementById('loginOverlay').classList.add('hidden');
+          document.getElementById('adminContainer').style.display = 'block';
+          carregarUtilizadores();
+        })
+        .catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Entrar →';
+          erro.textContent = 'Erro ao verificar permissões: ' + err.message;
+          erro.classList.add('visivel');
+          apiLogout();
+        });
+    },
+    function onFailure(err) {
+      btn.disabled = false;
+      btn.textContent = 'Entrar →';
+      erro.textContent = err.message;
+      erro.classList.add('visivel');
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  );
+}
+
+function fazerLogout() {
+  if (!confirm('Deseja terminar a sessão?')) return;
+  apiLogout().then(function() {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('adminContainer').style.display = 'none';
+    document.getElementById('loginPass').value = '';
+  });
+}
+
+function voltarParaApp() {
+  window.location.href = 'index.html';
+}
+
+// ============================================================
+// CARREGAR UTILIZADORES
+// ============================================================
+
+function carregarUtilizadores() {
+  var loading = document.getElementById('loadingUsers');
+  var tbody = document.getElementById('usersTableBody');
+  
+  loading.classList.add('show');
+  
+  listarUtilizadores()
+    .then(function(users) {
+      loading.classList.remove('show');
+      
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">' +
+          '<div class="empty-state-icon">👥</div>' +
+          '<div>Nenhum utilizador encontrado.</div>' +
+          '</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      users.forEach(function(user) {
+        var tr = document.createElement('tr');
+        
+        var badgeRole = user.role === 'administrador' 
+          ? '<span class="badge-role badge-admin">Admin</span>'
+          : '<span class="badge-role badge-user">Utilizador</span>';
+        
+        var statusClass = user.ativo ? 'ativo' : 'inativo';
+        var statusTexto = user.ativo ? 'Ativo' : 'Inativo';
+        
+        var acoes = user.ativo
+          ? '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + user.uid + '\')">✏️ Editar</button>' +
+            '<button class="btn-action btn-desativar" onclick="toggleAtivo(\'' + user.uid + '\', false)">🚫 Desativar</button>'
+          : '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + user.uid + '\')">✏️ Editar</button>' +
+            '<button class="btn-action btn-ativar" onclick="toggleAtivo(\'' + user.uid + '\', true)">✅ Ativar</button>';
+        
+        tr.innerHTML = 
+          '<td><strong>' + esc(user.nome || '—') + '</strong></td>' +
+          '<td>' + esc(user.email) + '</td>' +
+          '<td>' + badgeRole + '</td>' +
+          '<td><span class="badge-status ' + statusClass + '"></span>' + statusTexto + '</td>' +
+          '<td><div class="user-actions">' + acoes + '</div></td>';
+        
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(function(err) {
+      loading.classList.remove('show');
+      mostrarToast('Erro ao carregar utilizadores: ' + err.message, 'erro');
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">' +
+        '<div class="empty-state-icon">⚠️</div>' +
+        '<div>Erro ao carregar utilizadores.</div>' +
+        '</td></tr>';
+    });
+}
+
+// ============================================================
+// MODAL NOVO UTILIZADOR
+// ============================================================
+
+function abrirModalNovoUtilizador() {
+  modoEdicao = false;
+  document.getElementById('modalTitulo').textContent = 'Novo Utilizador';
+  document.getElementById('userNome').value = '';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('userPassword').value = '';
+  document.getElementById('userRole').value = 'utilizador';
+  document.getElementById('passwordGroup').style.display = 'block';
+  document.getElementById('modalNovoUser').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modalNovoUser').classList.remove('show');
+}
+
+function guardarUtilizador() {
+  var nome = document.getElementById('userNome').value.trim();
+  var email = document.getElementById('userEmail').value.trim();
+  var password = document.getElementById('userPassword').value;
+  var role = document.getElementById('userRole').value;
+  
+  if (!nome || !email || !password) {
+    mostrarToast('Por favor preencha todos os campos obrigatórios.', 'erro');
+    return;
+  }
+  
+  if (password.length < 6) {
+    mostrarToast('A password deve ter no mínimo 6 caracteres.', 'erro');
+    return;
+  }
+  
+  var btn = document.getElementById('btnGuardarUser');
+  btn.disabled = true;
+  btn.textContent = '⏳ A guardar...';
+  
+  criarUtilizador({ email: email, password: password, nome: nome, role: role })
+    .then(function(resp) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+      
+      if (resp.sucesso) {
+        mostrarToast('✓ ' + resp.mensagem, 'sucesso');
+        fecharModal();
+        carregarUtilizadores();
+      } else {
+        mostrarToast('✗ ' + resp.mensagem, 'erro');
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
+}
+
+// ============================================================
+// MODAL EDITAR UTILIZADOR
+// ============================================================
+
+function abrirModalEditar(uid) {
+  listarUtilizadores()
+    .then(function(users) {
+      var user = users.find(function(u) { return u.uid === uid; });
+      if (!user) {
+        mostrarToast('Utilizador não encontrado.', 'erro');
+        return;
+      }
+      
+      document.getElementById('editUserUid').value = uid;
+      document.getElementById('editUserNome').value = user.nome || '';
+      document.getElementById('editUserEmail').value = user.email;
+      document.getElementById('editUserRole').value = user.role;
+      document.getElementById('modalEditarUser').classList.add('show');
+    })
+    .catch(function(err) {
+      mostrarToast('Erro ao carregar utilizador: ' + err.message, 'erro');
+    });
+}
+
+function fecharModalEditar() {
+  document.getElementById('modalEditarUser').classList.remove('show');
+}
+
+function guardarEdicaoUtilizador() {
+  var uid = document.getElementById('editUserUid').value;
+  var nome = document.getElementById('editUserNome').value.trim();
+  var role = document.getElementById('editUserRole').value;
+  
+  if (!nome) {
+    mostrarToast('O nome não pode estar vazio.', 'erro');
+    return;
+  }
+  
+  atualizarUtilizador(uid, { nome: nome, role: role })
+    .then(function(resp) {
+      mostrarToast('✓ ' + resp.mensagem, 'sucesso');
+      fecharModalEditar();
+      carregarUtilizadores();
+    })
+    .catch(function(err) {
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
+}
+
+// ============================================================
+// ATIVAR/DESATIVAR
+// ============================================================
+
+function toggleAtivo(uid, ativar) {
+  var acao = ativar ? 'ativar' : 'desativar';
+  if (!confirm('Tem a certeza que deseja ' + acao + ' este utilizador?')) return;
+  
+  var fn = ativar ? ativarUtilizador : desativarUtilizador;
+  fn(uid)
+    .then(function(resp) {
+      mostrarToast('✓ ' + resp.mensagem, 'sucesso');
+      carregarUtilizadores();
+    })
+    .catch(function(err) {
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
+}
+
+// ============================================================
+// UTILITÁRIOS
+// ============================================================
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function mostrarToast(msg, tipo) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + tipo + ' show';
+  setTimeout(function() { t.classList.remove('show'); }, 3800);
+}
+
+// ============================================================
+// INICIALIZAÇÃO
+// ============================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Verificar se já está autenticado
+  firebaseAuth.onAuthStateChanged(function(user) {
+    if (user && sessaoValida()) {
+      verificarSeAdmin()
+        .then(function(isAdmin) {
+          if (isAdmin) {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('adminContainer').style.display = 'block';
+            carregarUtilizadores();
+          } else {
+            apiLogout();
+          }
+        })
+        .catch(function() {
+          apiLogout();
+        });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
