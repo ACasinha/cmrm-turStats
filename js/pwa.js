@@ -1,115 +1,16 @@
 // ============================================================
-// pwa.js — Service Worker, instalação e actualizações
+// pwa.js — Instalação da PWA (banner e botão)
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
+//
+// Exclusivo do index.html.
+// O registo do SW, versão e actualizações estão em sw-update.js,
+// partilhado também pelo admin.html.
 // ============================================================
 
 'use strict';
 
-var _swRegistration          = null;
-var _deferredPrompt          = null;
-var CHAVE_BANNER_DISPENSADO  = 'rmz_banner_dispensado';
-
-// ── Versão (lida do sw.js via fetch) ─────────────────────────
-function mostrarVersao() {
-  fetch('sw.js', { cache: 'no-store' })
-    .then(function(r) { return r.text(); })
-    .then(function(txt) {
-      var match = txt.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
-      if (match) {
-        var versao = match[1].replace('rmz-nacionalidades-', '');
-        var el = document.getElementById('rodapeVersao');
-        if (el) el.textContent = versao;
-      }
-    })
-    .catch(function() {});
-}
-
-// ============================================================
-// SERVICE WORKER
-// ============================================================
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js')
-      .then(function(reg) {
-        _swRegistration = reg;
-        console.log('[PWA] SW registado. Scope:', reg.scope);
-        mostrarVersao();
-
-        reg.addEventListener('updatefound', function() {
-          var newWorker = reg.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener('statechange', function() {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // Nova versão disponível
-              mostrarToast('🔄 Nova versão disponível! Guarde os dados e clique em "Verificar atualização".', 'info');
-            }
-          });
-        });
-      })
-      .catch(function(err) {
-        console.warn('[PWA] Falha no registo do SW:', err);
-      });
-
-    // Não recarregar automaticamente — o utilizador controla quando actualizar
-  });
-}
-
-// ============================================================
-// VERIFICAR ATUALIZAÇÃO (botão no rodapé)
-// ============================================================
-
-function verificarAtualizacao() {
-  var btn = document.getElementById('btnVerificarUpdate');
-  btn.disabled    = true;
-  btn.textContent = '⏳ A verificar...';
-
-  if (!_swRegistration) {
-    mostrarToast('Service Worker não disponível.', 'info');
-    btn.disabled    = false;
-    btn.textContent = '🔄 Verificar atualização';
-    return;
-  }
-
-  _swRegistration.update()
-    .then(function() {
-      var temNovo = _swRegistration.waiting || _swRegistration.installing;
-      if (temNovo) {
-        // Mostrar botão de actualização manual — não actualizar automaticamente
-        btn.textContent = '✅ Atualizar agora';
-        btn.disabled    = false;
-        btn.onclick     = function() { aplicarAtualizacao(); };
-        mostrarToast('Nova versão disponível. Guarde os dados e clique em "Atualizar agora".', 'info');
-      } else {
-        mostrarToast('✓ A app está atualizada.', 'sucesso');
-        btn.disabled    = false;
-        btn.textContent = '🔄 Verificar atualização';
-      }
-    })
-    .catch(function(err) {
-      mostrarToast('Erro ao verificar: ' + err.message, 'erro');
-      btn.disabled    = false;
-      btn.textContent = '🔄 Verificar atualização';
-    });
-}
-
-// ============================================================
-// APLICAR ATUALIZAÇÃO — chamado pelo utilizador após guardar dados
-// ============================================================
-
-function aplicarAtualizacao() {
-  if (_swRegistration && _swRegistration.waiting) {
-    // Dizer ao SW em espera para tomar controlo
-    _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    // Recarregar após o SW activar (ouvimos o controllerchange)
-    navigator.serviceWorker.addEventListener('controllerchange', function() {
-      window.location.reload();
-    }, { once: true });
-  } else {
-    // Sem SW em espera — recarregar directamente
-    window.location.reload();
-  }
-}
+var _deferredPrompt         = null;
+var CHAVE_BANNER_DISPENSADO = 'rmz_banner_dispensado';
 
 // ============================================================
 // BANNER DE INSTALAÇÃO (topo — primeira abertura)
