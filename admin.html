@@ -193,7 +193,6 @@
 <script src="js/api.js"></script>
 <script src="js/users.js"></script>
 <script src="js/pwa.js"></script>
-<script src="js/app.js"></script>
 
 <script>
 'use strict';
@@ -235,6 +234,7 @@ function fazerLogin() {
           }
           document.getElementById('loginOverlay').classList.add('hidden');
           document.getElementById('adminContainer').style.display = 'block';
+          mostrarNomeUtilizador();
           carregarUtilizadores();
         })
         .catch(function(err) {
@@ -267,6 +267,22 @@ function fazerLogout() {
 
 function voltarParaApp() {
   window.location.href = 'index.html';
+}
+
+// ============================================================
+// NOME DO UTILIZADOR NO HEADER
+// ============================================================
+ 
+function mostrarNomeUtilizador() {
+  obterPerfilUtilizador()
+    .then(function(perfil) {
+      var nome = perfil.nome || (firebaseAuth.currentUser && firebaseAuth.currentUser.email) || '—';
+      document.getElementById('headerNomeFuncionario').textContent = nome;
+    })
+    .catch(function() {
+      var user = firebaseAuth.currentUser;
+      document.getElementById('headerNomeFuncionario').textContent = (user && user.email) || '—';
+    });
 }
 
 // ============================================================
@@ -530,6 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (isAdmin) {
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('adminContainer').style.display = 'block';
+            mostrarNomeUtilizador();
             carregarUtilizadores();
           } else {
             apiLogout();
