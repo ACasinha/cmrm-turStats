@@ -1,0 +1,109 @@
+// ============================================================
+// sw-update.js — Registo do Service Worker, versão e actualizações
+// Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
+//
+// Partilhado por index.html e admin.html.
+// O pwa.js (instalação da PWA) é exclusivo do index.html.
+// ============================================================
+
+'use strict';
+
+var _swRegistration = null;
+
+// ============================================================
+// VERSÃO — lida do sw.js e mostrada no #rodapeVersao
+// ============================================================
+
+function mostrarVersao() {
+  fetch('sw.js', { cache: 'no-store' })
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      var match = txt.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
+      if (match) {
+        var versao = match[1].replace('rmz-nacionalidades-', '');
+        var el = document.getElementById('rodapeVersao');
+        if (el) el.textContent = versao;
+      }
+    })
+    .catch(function() {});
+}
+
+// ============================================================
+// REGISTO DO SERVICE WORKER
+// ============================================================
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) {
+        _swRegistration = reg;
+        console.log('[SW] Registado. Scope:', reg.scope);
+        mostrarVersao();
+
+        reg.addEventListener('updatefound', function() {
+          var newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', function() {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              mostrarToast('🔄 Nova versão disponível! Clique em "Verificar atualização".', 'info');
+            }
+          });
+        });
+      })
+      .catch(function(err) {
+        console.warn('[SW] Falha no registo:', err);
+      });
+  });
+}
+
+// ============================================================
+// VERIFICAR ATUALIZAÇÃO — botão no rodapé (#btnVerificarUpdate)
+// ============================================================
+
+function verificarAtualizacao() {
+  var btn = document.getElementById('btnVerificarUpdate');
+  btn.disabled    = true;
+  btn.textContent = '⏳ A verificar...';
+
+  if (!_swRegistration) {
+    mostrarToast('Service Worker não disponível.', 'info');
+    btn.disabled    = false;
+    btn.textContent = '🔄 Verificar atualização';
+    return;
+  }
+
+  _swRegistration.update()
+    .then(function() {
+      var temNovo = _swRegistration.waiting || _swRegistration.installing;
+      if (temNovo) {
+        btn.textContent = '✅ Atualizar agora';
+        btn.disabled    = false;
+        btn.onclick     = function() { aplicarAtualizacao(); };
+        mostrarToast('Nova versão disponível. Guarde os dados e clique em "Atualizar agora".', 'info');
+      } else {
+        mostrarToast('✓ A app está atualizada.', 'sucesso');
+        btn.disabled    = false;
+        btn.textContent = '🔄 Verificar atualização';
+      }
+    })
+    .catch(function(err) {
+      mostrarToast('Erro ao verificar: ' + err.message, 'erro');
+      btn.disabled    = false;
+      btn.textContent = '🔄 Verificar atualização';
+    });
+}
+
+// ============================================================
+// APLICAR ATUALIZAÇÃO — chamado após o utilizador guardar dados
+// ============================================================
+
+function aplicarAtualizacao() {
+  if (_swRegistration && _swRegistration.waiting) {
+    _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      window.location.reload();
+    }, { once: true });
+  } else {
+    window.location.reload();
+  }
+}
