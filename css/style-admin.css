@@ -93,9 +93,6 @@ body {
   background: var(--terra-pale);
   color: var(--cinza-escuro);
   min-height: 100vh;
-  background-image:
-    radial-gradient(ellipse at 10% 20%, rgba(201,149,42,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 80%, rgba(139,74,43,0.08) 0%, transparent 50%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: var(--text-base);
