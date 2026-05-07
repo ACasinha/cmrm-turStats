@@ -867,8 +867,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 .modal-overlay.show { display: flex; }
 
-.modal-pdf-overlay { background: rgba(0,0,0,0.55); backdrop-filter:blur(3px); }
-
+.modal-pdf-overlay { 
+   position: fixed; inset: 0; z-index: var(--z-modal);
+   align-items: center; justify-content: center;
+   background: rgba(0,0,0,0.55); backdrop-filter:blur(3px); }
 .modal-pdf-caixa {
   background: var(--branco); border-radius: var(--radius-lg);
   padding: var(--spacing-xl); width: 100%; max-width: 480px;
