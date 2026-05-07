@@ -73,11 +73,11 @@
     </button>
   </div>
   
-  <div class="users-table-container" style="position:relative">
+  <div class="users-table-container">
     <div class="loading-overlay" id="loadingUsers">
       <div class="spinner"></div>
     </div>
-    
+
     <table class="users-table" id="usersTable">
       <thead>
         <tr>
@@ -85,13 +85,13 @@
           <th>Email</th>
           <th>Role</th>
           <th>Estado</th>
-          <th>Ações</th>
+          <th style="text-align:right">Ações</th>
         </tr>
       </thead>
       <tbody id="usersTableBody">
         <tr>
           <td colspan="5" class="empty-state">
-            <div class="empty-state-icon">👥</div>
+            <span class="empty-state-icon">👥</span>
             <div>A carregar utilizadores...</div>
           </td>
         </tr>
@@ -275,55 +275,97 @@ function voltarParaApp() {
 
 function carregarUtilizadores() {
   var loading = document.getElementById('loadingUsers');
-  var tbody = document.getElementById('usersTableBody');
-  
+  var tbody   = document.getElementById('usersTableBody');
+
   loading.classList.add('show');
-  
+
   listarUtilizadores()
     .then(function(users) {
       loading.classList.remove('show');
-      
+
       if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">' +
-          '<div class="empty-state-icon">👥</div>' +
-          '<div>Nenhum utilizador encontrado.</div>' +
+        tbody.innerHTML =
+          '<tr><td colspan="5" class="empty-state">' +
+            '<span class="empty-state-icon">👥</span>' +
+            '<div>Nenhum utilizador encontrado.</div>' +
           '</td></tr>';
         return;
       }
-      
+
       tbody.innerHTML = '';
+
       users.forEach(function(user) {
         var tr = document.createElement('tr');
-        
-        var badgeRole = user.role === 'administrador' 
+
+        /* ── dados reutilizáveis ── */
+        var nome        = esc(user.nome || '—');
+        var email       = esc(user.email);
+        var isAdmin     = user.role === 'administrador';
+        var statusClass = user.ativo ? 'ativo'  : 'inativo';
+        var statusTexto = user.ativo ? 'Ativo'  : 'Inativo';
+        var uid         = user.uid;
+
+        var badgeRole = isAdmin
           ? '<span class="badge-role badge-admin">Admin</span>'
           : '<span class="badge-role badge-user">Utilizador</span>';
-        
-        var statusClass = user.ativo ? 'ativo' : 'inativo';
-        var statusTexto = user.ativo ? 'Ativo' : 'Inativo';
-        
-        var acoes = user.ativo
-          ? '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + user.uid + '\')">✏️ Editar</button>' +
-            '<button class="btn-action btn-desativar" onclick="toggleAtivo(\'' + user.uid + '\', false)">🚫 Desativar</button>'
-          : '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + user.uid + '\')">✏️ Editar</button>' +
-            '<button class="btn-action btn-ativar" onclick="toggleAtivo(\'' + user.uid + '\', true)">✅ Ativar</button>';
-        
-        tr.innerHTML = 
-          '<td data-label="Nome"><strong>' + esc(user.nome || '—') + '</strong></td>' +
-          '<td data-label="Email">' + esc(user.email) + '</td>' +
-          '<td data-label="Role">' + badgeRole + '</td>' +
-          '<td data-label="Estado"><span class="badge-status ' + statusClass + '"></span>' + statusTexto + '</td>' +
-          '<td data-label="Ações"><div class="user-actions">' + acoes + '</div></td>';
-        
+
+        var badgeEstado =
+          '<span class="estado-pill">' +
+            '<span class="badge-status ' + statusClass + '"></span>' +
+            statusTexto +
+          '</span>';
+
+        var btnEditar =
+          '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + uid + '\')">' +
+            '✏️ Editar' +
+          '</button>';
+
+        var btnToggle = user.ativo
+          ? '<button class="btn-action btn-desativar" onclick="toggleAtivo(\'' + uid + '\', false)">🚫 Desativar</button>'
+          : '<button class="btn-action btn-ativar"    onclick="toggleAtivo(\'' + uid + '\', true)">✅ Ativar</button>';
+
+        /* ────────────────────────────────────────────────────
+           ESTRUTURA DUPLA:
+           • .user-card-* → visível apenas em mobile (≤700px)
+           • <td> normais  → visíveis apenas em desktop (>700px)
+        ──────────────────────────────────────────────────── */
+        tr.innerHTML =
+
+          /* ── ZONA 1 — cabeçalho do card (mobile) ── */
+          '<div class="user-card-header">' +
+            '<span class="user-card-nome">' + nome + '</span>' +
+            '<span class="user-card-badges">' +
+              badgeRole + badgeEstado +
+            '</span>' +
+          '</div>' +
+
+          /* ── ZONA 2 — email (mobile) ── */
+          '<div class="user-card-email">' + email + '</div>' +
+
+          /* ── ZONA 3 — acções (mobile) ── */
+          '<div class="user-card-actions">' +
+            btnEditar + btnToggle +
+          '</div>' +
+
+          /* ── CÉLULAS para tabela desktop ── */
+          '<td data-label="Nome"><strong>' + nome + '</strong></td>' +
+          '<td data-label="Email">' + email + '</td>' +
+          '<td data-label="Role">'  + badgeRole   + '</td>' +
+          '<td data-label="Estado">' + badgeEstado + '</td>' +
+          '<td data-label="Ações"><div class="user-actions">' +
+            btnEditar + btnToggle +
+          '</div></td>';
+
         tbody.appendChild(tr);
       });
     })
     .catch(function(err) {
       loading.classList.remove('show');
       mostrarToast('Erro ao carregar utilizadores: ' + err.message, 'erro');
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">' +
-        '<div class="empty-state-icon">⚠️</div>' +
-        '<div>Erro ao carregar utilizadores.</div>' +
+      tbody.innerHTML =
+        '<tr><td colspan="5" class="empty-state">' +
+          '<span class="empty-state-icon">⚠️</span>' +
+          '<div>Erro ao carregar utilizadores.</div>' +
         '</td></tr>';
     });
 }
