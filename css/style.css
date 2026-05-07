@@ -797,15 +797,17 @@ button:disabled {
 }
 /* ============================================================
    INPUTS & FORM ELEMENTS — Estilos unificados
+   Nota: .num-input (stepper de países) é excluído deste reset
+   e tem os seus próprios estilos na secção TABELA PAÍSES.
 ============================================================ */
 
-/* Estilos base para todos os inputs */
-input[type="text"],
+/* Estilos base para inputs de formulário (não inclui .num-input) */
+input[type="text"]:not(.num-input),
 input[type="email"],
 input[type="password"],
-input[type="number"],
+input[type="number"]:not(.num-input),
 input[type="date"],
-select,
+select:not(.op-nac-select):not(.sug-nac),
 textarea {
   width: 100%;
   border: 1.5px solid var(--cinza-claro);
@@ -820,35 +822,35 @@ textarea {
               background var(--transition-base);
   -webkit-appearance: none;
   appearance: none;
-  min-height: 44px; /* Melhor para touch */
+  min-height: 44px;
 }
 
-input[type="text"]:focus,
+input[type="text"]:not(.num-input):focus,
 input[type="email"]:focus,
 input[type="password"]:focus,
-input[type="number"]:focus,
+input[type="number"]:not(.num-input):focus,
 input[type="date"]:focus,
-select:focus,
+select:not(.op-nac-select):not(.sug-nac):focus,
 textarea:focus {
   outline: none;
   border-color: var(--terra);
   box-shadow: 0 0 0 3px rgba(139, 74, 43, 0.12);
 }
 
-input[type="text"]:disabled,
+input[type="text"]:not(.num-input):disabled,
 input[type="email"]:disabled,
 input[type="password"]:disabled,
-input[type="number"]:disabled,
+input[type="number"]:not(.num-input):disabled,
 input[type="date"]:disabled,
-select:disabled,
+select:not(.op-nac-select):not(.sug-nac):disabled,
 textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   background: rgba(0, 0, 0, 0.03);
 }
 
-/* Estilos específicos para select */
-select {
+/* Estilos específicos para select de formulário */
+select:not(.op-nac-select):not(.sug-nac) {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B4A2B' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
@@ -941,11 +943,12 @@ table tbody tr:hover {
 /* Tabela de países */
 .paises-table th:last-child {
   text-align: center;
-  width: clamp(100px, 20vw, 150px);
+  width: clamp(160px, 24vw, 200px); /* espaço para stepper + input 3 dígitos */
 }
 
 .paises-table td.num-cell {
   text-align: center;
+  white-space: nowrap; /* impede que o stepper quebre linha */
 }
 
 /* Destaque */
@@ -978,32 +981,86 @@ table tbody tr:hover {
 
 
 
+
+/* ── Input numérico do stepper de países ─────────────────────
+   Tem estilos próprios — excluído do reset global de inputs.
+   A largura mínima garante que valores de 3 dígitos cabem
+   confortavelmente sem truncar o texto.
+─────────────────────────────────────────────────────────── */
 .num-input {
-  width: clamp(64px,18vw,90px);
-  border:1.5px solid var(--cinza-claro); border-radius:7px;
-  padding: 8px 6px; text-align:center;
-  font-family:'Source Sans 3',sans-serif; font-size:var(--text-base);
-  background:var(--branco); transition:all 0.2s;
-  -webkit-appearance:none; appearance:none; min-height:40px;
+  /* largura: mínimo 72px em mobile, sobe até 96px em ecrãs largos */
+  width: clamp(72px, 14vw, 96px);
+  min-width: 72px;           /* nunca colapsa abaixo disto */
+  flex-shrink: 0;            /* não encolhe dentro do stepper flex */
+  border: 1.5px solid var(--cinza-claro);
+  border-radius: 7px;
+  padding: 8px 4px;
+  text-align: center;
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--cinza-escuro);
+  background: var(--branco);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 40px;
+  /* garantir que o texto não é cortado */
+  overflow: visible;
+  letter-spacing: 0;
 }
-.num-input:focus { outline:none; border-color:var(--ouro); box-shadow:0 0 0 3px rgba(201,149,42,0.15); }
+
+.num-input:focus {
+  outline: none;
+  border-color: var(--ouro);
+  box-shadow: 0 0 0 3px rgba(201, 149, 42, 0.15);
+}
+
+.num-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.02);
+}
 
 /* Stepper +/- */
-.num-stepper { display:flex; align-items:center; justify-content:center; gap:4px; }
-.btn-stepper {
-  width:36px; height:36px;
-  border:1.5px solid var(--cinza-claro); border-radius:7px;
-  background:var(--branco); color:var(--terra);
-  font-size:1.25rem; font-weight:700; line-height:1;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-  flex-shrink:0; touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
-  transition:background 0.15s, border-color 0.15s;
-  min-width:44px; min-height:44px;
+.num-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
-.btn-stepper:active { background:var(--terra-pale); border-color:var(--terra-light); }
-.btn-menos { color:#c0392b; }
-.btn-mais  { color:var(--verde); }
+
+.btn-stepper {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--cinza-claro);
+  border-radius: 7px;
+  background: var(--branco);
+  color: var(--terra);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.btn-stepper:active:not(:disabled) {
+  background: var(--terra-pale);
+  border-color: var(--terra-light);
+}
+
+.btn-menos { color: var(--vermelho); }
+.btn-mais  { color: var(--verde); }
+
+
 
 /* ============================================================
    SECÇÕES RECOLHÍVEIS
