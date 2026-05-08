@@ -22,6 +22,7 @@ const STATIC_ASSETS = [
   './js/api.js',
   './js/app.js',
   './js/pwa.js',
+  './js/sw-update.js',
   './js/offline.js',
   './js/users.js',
   './js/cloud-function-users.js',
