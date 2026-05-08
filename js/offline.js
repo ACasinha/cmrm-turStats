@@ -96,12 +96,11 @@ function resetarBotaoReconectar() {
 // ============================================================
 
 function mostrarModalPDF() {
-  // Criar modal se não existir
   var modal = document.getElementById('modalEscolhaPDF');
   if (!modal) {
     modal = document.createElement('div');
     modal.id        = 'modalEscolhaPDF';
-    modal.className = 'modal-overlay';
+    modal.className = 'modal-pdf-overlay';
     modal.innerHTML =
       '<div class="modal-pdf-caixa">' +
         '<div class="modal-pdf-titulo">📄 Gerar Formulário PDF</div>' +
@@ -143,6 +142,7 @@ function gerarPDF(tipo) {
   var COR_PRINCIPAL = [139, 74, 43];   // #8B4A2B
   var COR_CLARO     = [245, 235, 224]; // #F5EBE0
   var COR_TEXTO     = [44, 44, 44];
+  var COR_DESTAQUE  = [255, 252, 245]; // fundo suave para Portugal/Espanha
   var MARGEM        = 12;
   var LARGURA       = 210 - MARGEM * 2;
   var y             = MARGEM;
@@ -154,10 +154,10 @@ function gerarPDF(tipo) {
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text('Registo Diário de Nacionalidades', MARGEM, 7);
+    doc.text('Registo Diario de Nacionalidades', MARGEM, 7);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.text('Município de Reguengos de Monsaraz  ·  Servicos de Turismo', MARGEM, 12);
+    doc.text('Municipio de Reguengos de Monsaraz  \u00b7  Servicos de Turismo', MARGEM, 12);
     if (numPag) {
       doc.text('Pag. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
     }
@@ -166,32 +166,20 @@ function gerarPDF(tipo) {
   }
 
   // ── Campos Local / Data ─────────────────────────────────────
-  function camposLocalData(y) {
+  function camposLocalData(yPos) {
     doc.setFillColor.apply(doc, COR_CLARO);
-    doc.roundedRect(MARGEM, y, LARGURA, 9, 1, 1, 'F');
+    doc.roundedRect(MARGEM, yPos, LARGURA, 9, 1, 1, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor.apply(doc, COR_PRINCIPAL);
-    doc.text('LOCAL / POSTO:', MARGEM + 2, y + 3.5);
-    doc.text('DATA:', MARGEM + 100, y + 3.5);
+    doc.text('LOCAL / POSTO:', MARGEM + 2, yPos + 3.5);
+    doc.text('DATA:', MARGEM + 100, yPos + 3.5);
     doc.setDrawColor.apply(doc, COR_PRINCIPAL);
     doc.setLineWidth(0.3);
-    doc.line(MARGEM + 28, y + 6.5, MARGEM + 95, y + 6.5);
-    doc.line(MARGEM + 110, y + 6.5, MARGEM + 140, y + 6.5);
+    doc.line(MARGEM + 28, yPos + 6.5, MARGEM + 95, yPos + 6.5);
+    doc.line(MARGEM + 110, yPos + 6.5, MARGEM + 140, yPos + 6.5);
     doc.setTextColor.apply(doc, COR_TEXTO);
-    return y + 13;
-  }
-
-  // ── Título de secção ────────────────────────────────────────
-  function tituloSecao(y, texto) {
-    doc.setFillColor.apply(doc, COR_PRINCIPAL);
-    doc.rect(MARGEM, y, LARGURA, 5.5, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text(texto, MARGEM + 2, y + 3.8);
-    doc.setTextColor.apply(doc, COR_TEXTO);
-    return y + 5.5;
+    return yPos + 13;
   }
 
   // ── Rodapé ──────────────────────────────────────────────────
@@ -203,7 +191,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     doc.setTextColor(150, 150, 150);
-    doc.text('Registo Diário de Nacionalidades  ·  Município de Reguengos de Monsaraz', MARGEM, yR + 3.5);
+    doc.text('Registo Diario de Nacionalidades  \u00b7  Municipio de Reguengos de Monsaraz', MARGEM, yR + 3.5);
     if (total !== undefined) {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor.apply(doc, COR_PRINCIPAL);
@@ -213,45 +201,35 @@ function gerarPDF(tipo) {
   }
 
   // ── Assinatura ──────────────────────────────────────────────
-  function assinatura(y) {
+  function assinatura(yPos) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor.apply(doc, COR_PRINCIPAL);
-    doc.text('Assinatura do(a) Funcionário(a):', MARGEM, y);
-    doc.text('Data:', MARGEM + 120, y);
+    doc.text('Assinatura do(a) Funcionario(a):', MARGEM, yPos);
+    doc.text('Data:', MARGEM + 120, yPos);
     doc.setDrawColor.apply(doc, COR_PRINCIPAL);
     doc.setLineWidth(0.4);
-    doc.line(MARGEM, y + 7, MARGEM + 112, y + 7);
-    doc.line(MARGEM + 124, y + 7, MARGEM + 152, y + 7);
+    doc.line(MARGEM, yPos + 7, MARGEM + 112, yPos + 7);
+    doc.line(MARGEM + 124, yPos + 7, MARGEM + 152, yPos + 7);
     doc.setTextColor.apply(doc, COR_TEXTO);
-    return y + 12;
+    return yPos + 12;
   }
 
   // ── Aviso final ─────────────────────────────────────────────
-  function avisoFinal(y) {
+  function avisoFinal(yPos) {
     doc.setFillColor(255, 248, 225);
     doc.setDrawColor(192, 57, 43);
     doc.setLineWidth(0.5);
-    doc.roundedRect(MARGEM, y, LARGURA, 8, 1, 1, 'FD');
+    doc.roundedRect(MARGEM, yPos, LARGURA, 8, 1, 1, 'FD');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(192, 57, 43);
-    doc.text('⚠️ Após restabelecimento da Internet inserir dados na aplicação.', MARGEM + 3, y + 5);
+    doc.text('IMPORTANTE: Apos restabelecimento da Internet inserir dados na aplicacao.', MARGEM + 3, yPos + 5);
     doc.setTextColor.apply(doc, COR_TEXTO);
-    return y + 11;
+    return yPos + 11;
   }
 
-  // ── Recolher dados da página ─────────────────────────────────
-  function dadosPaises() {
-    var rows = [];
-    document.querySelectorAll('#tabelaPaises tr').forEach(function(tr) {
-      var inp = tr.querySelector('.pais-input');
-      if (!inp) return;
-      rows.push([inp.dataset.pais || '', parseInt(inp.value, 10) || 0]);
-    });
-    return rows;
-  }
-
+  // ── Recolher dados dos operadores ───────────────────────────
   function dadosOperadores() {
     var rows = [];
     document.querySelectorAll('#tabelaOperadores tr').forEach(function(tr) {
@@ -269,6 +247,7 @@ function gerarPDF(tipo) {
     return rows;
   }
 
+  // ── Recolher dados das sugestões ────────────────────────────
   function dadosSugestoes() {
     var rows = [];
     document.querySelectorAll('#tabelaSugestoes tr').forEach(function(tr) {
@@ -282,49 +261,376 @@ function gerarPDF(tipo) {
 
   var obs = (document.getElementById('observacoes') || {}).value || '';
 
-  // ── Estilo base para tabelas autoTable ───────────────────────
+  // ── Estilo base ─────────────────────────────────────────────
   var estiloBase = {
     theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 2, textColor: COR_TEXTO, lineColor: [220, 210, 200], lineWidth: 0.2 },
-    headStyles: { fillColor: COR_PRINCIPAL, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8, cellPadding: 2.5 },
+    styles: {
+      fontSize: 8, cellPadding: 2,
+      textColor: COR_TEXTO, lineColor: [220, 210, 200], lineWidth: 0.2
+    },
+    headStyles: {
+      fillColor: COR_PRINCIPAL, textColor: [255,255,255],
+      fontStyle: 'bold', fontSize: 8, cellPadding: 2.5
+    },
     alternateRowStyles: { fillColor: [250, 245, 239] },
     margin: { left: MARGEM, right: MARGEM },
   };
 
   // ===========================================================
-  // MODO PAÍSES — 2 páginas
+  // MODO PAÍSES — tabela com 3 colunas e multi-linhas por país
   // ===========================================================
   if (tipo === 'paises') {
-    // Página 1 — tabela de países
+
     y = cabecalho(1);
     y = camposLocalData(y);
 
-    var paises = dadosPaises();
-    var totalPaises = paises.reduce(function(s, r) { return s + r[1]; }, 0);
+    // ── Recolher valores actuais da tabela ───────────────────
+    var valoresPaises = {};
+    document.querySelectorAll('.pais-input').forEach(function(inp) {
+      valoresPaises[inp.dataset.pais] = parseInt(inp.value, 10) || 0;
+    });
 
-    doc.autoTable(Object.assign({}, estiloBase, {
-      startY: y,
-      head: [['País', 'Turistas / Visitantes']],
-      body: paises.map(function(r) { return [r[0], r[1] > 0 ? r[1] : '']; }),
-      foot: [['TOTAL', totalPaises > 0 ? totalPaises : '']],
-      footStyles: { fillColor: COR_CLARO, textColor: COR_PRINCIPAL, fontStyle: 'bold', fontSize: 8.5 },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        1: { cellWidth: 22, halign: 'right' }
-      },
-      styles: Object.assign({}, estiloBase.styles, { fontSize: 7.5, cellPadding: 0.3 }),
-      headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 8 }),
-      didParseCell: function(data) {
-        if (data.section === 'body' && (data.row.index === 0 || data.row.index === 1)) {
-          data.cell.styles.fontStyle = 'bold';
-          data.cell.styles.textColor = COR_PRINCIPAL;
-        }
+    // ── Lista de países com configuração de sub-linhas ───────
+    //   subLinhas: nº de caixas de registo na coluna central
+    //   Portugal → 3 sub-linhas, Espanha → 2, restantes → 1
+    var listaPDF = [
+      { nome: 'Portugal',           subLinhas: 3 },
+      { nome: 'Espanha',            subLinhas: 2 },
+      { nome: 'Africa do Sul',      subLinhas: 1 },
+      { nome: 'Albania',            subLinhas: 1 },
+      { nome: 'Alemanha',           subLinhas: 1 },
+      { nome: 'Angola',             subLinhas: 1 },
+      { nome: 'Argentina',          subLinhas: 1 },
+      { nome: 'Australia',          subLinhas: 1 },
+      { nome: 'Austria',            subLinhas: 1 },
+      { nome: 'Belgica',            subLinhas: 1 },
+      { nome: 'Bosnia Herzegovina', subLinhas: 1 },
+      { nome: 'Brasil',             subLinhas: 1 },
+      { nome: 'Canada',             subLinhas: 1 },
+      { nome: 'Chile',              subLinhas: 1 },
+      { nome: 'China',              subLinhas: 1 },
+      { nome: 'Chipre',             subLinhas: 1 },
+      { nome: 'Colombia',           subLinhas: 1 },
+      { nome: 'Coreia do Sul',      subLinhas: 1 },
+      { nome: 'Croatia',            subLinhas: 1 },
+      { nome: 'Dinamarca',          subLinhas: 1 },
+      { nome: 'Eslovenia',          subLinhas: 1 },
+      { nome: 'Estonia',            subLinhas: 1 },
+      { nome: 'EUA',                subLinhas: 1 },
+      { nome: 'Finlandia',          subLinhas: 1 },
+      { nome: 'Franca',             subLinhas: 1 },
+      { nome: 'Grecia',             subLinhas: 1 },
+      { nome: 'Holanda',            subLinhas: 1 },
+      { nome: 'Hungria',            subLinhas: 1 },
+      { nome: 'India',              subLinhas: 1 },
+      { nome: 'Inglaterra',         subLinhas: 1 },
+      { nome: 'Irlanda',            subLinhas: 1 },
+      { nome: 'Islandia',           subLinhas: 1 },
+      { nome: 'Israel',             subLinhas: 1 },
+      { nome: 'Italia',             subLinhas: 1 },
+      { nome: 'Japao',              subLinhas: 1 },
+      { nome: 'Letonia',            subLinhas: 1 },
+      { nome: 'Lituania',           subLinhas: 1 },
+      { nome: 'Luxemburgo',         subLinhas: 1 },
+      { nome: 'Mexico',             subLinhas: 1 },
+      { nome: 'Moldavia',           subLinhas: 1 },
+      { nome: 'Monaco',             subLinhas: 1 },
+      { nome: 'Noruega',            subLinhas: 1 },
+      { nome: 'Nova Zelandia',      subLinhas: 1 },
+      { nome: 'Polonia',            subLinhas: 1 },
+      { nome: 'Republica Checa',    subLinhas: 1 },
+      { nome: 'Romania',            subLinhas: 1 },
+      { nome: 'Russia',             subLinhas: 1 },
+      { nome: 'Singapura',          subLinhas: 1 },
+      { nome: 'Suecia',             subLinhas: 1 },
+      { nome: 'Suica',              subLinhas: 1 },
+      { nome: 'Ucrania',            subLinhas: 1 },
+      { nome: 'Venezuela',          subLinhas: 1 },
+      { nome: 'Outros Paises',      subLinhas: 1 },
+    ];
+
+    // ── Mapear nomes do data.js → nomes sem diacríticos ─────
+    // (os valores já registados vêm com diacríticos do data.js)
+    var mapaOriginal = {
+      'Africa do Sul':   'África do Sul',
+      'Albania':         'Albânia',
+      'Austria':         'Áustria',
+      'Belgica':         'Bélgica',
+      'Bosnia Herzegovina': 'Bósnia Herzegovina',
+      'Canada':          'Canadá',
+      'Colombia':        'Colômbia',
+      'Croatia':         'Croácia',
+      'Eslovenia':       'Eslovénia',
+      'Estonia':         'Estónia',
+      'Finlandia':       'Finlândia',
+      'Franca':          'França',
+      'Grecia':          'Grécia',
+      'India':           'Índia',
+      'Islandia':        'Islândia',
+      'Italia':          'Itália',
+      'Japao':           'Japão',
+      'Letonia':         'Letónia',
+      'Lituania':        'Lituânia',
+      'Mexico':          'México',
+      'Moldavia':        'Moldávia',
+      'Monaco':          'Mónaco',
+      'Nova Zelandia':   'Nova Zelândia',
+      'Polonia':         'Polónia',
+      'Republica Checa': 'República Checa',
+      'Romania':         'Roménia',
+      'Russia':          'Rússia',
+      'Suecia':          'Suécia',
+      'Suica':           'Suíça',
+      'Ucrania':         'Ucrânia',
+      'Outros Paises':   'Outros Países',
+      'Australia':       'Austrália',
+      'Colombia':        'Colômbia',
+    };
+
+    // ── Construir body com sub-linhas emuladas ───────────────
+    //
+    // Estrutura de cada linha no body:
+    //   col 0 — nome do país  (apenas na 1ª sub-linha do grupo)
+    //   col 1 — célula de contagem vazia (para o funcionário preencher)
+    //           pré-preenchida com o valor digital se existir
+    //   col 2 — total digital  (apenas na 1ª sub-linha do grupo)
+    //
+    // Metadados para o rowSpan emulado:
+    //   _grupo    : índice do grupo (país)
+    //   _subIdx   : índice dentro do grupo (0, 1, 2…)
+    //   _subTotal : total de sub-linhas deste grupo
+    //   _destaque : true para Portugal e Espanha
+
+    var bodyRows   = [];   // linhas para o autoTable
+    var metaDados  = [];   // metadados paralelos (por linha)
+    var totalGeral = 0;
+
+    listaPDF.forEach(function(pais, grupoIdx) {
+      var nomeOriginal = mapaOriginal[pais.nome] || pais.nome;
+      var valor = valoresPaises[nomeOriginal] || 0;
+      totalGeral += valor;
+      var destaque = (pais.nome === 'Portugal' || pais.nome === 'Espanha');
+
+      for (var s = 0; s < pais.subLinhas; s++) {
+        var primaria = (s === 0);
+        // col 0: nome só na linha primária
+        // col 1: valor digital na linha primária se existir; vazio nas seguintes
+        // col 2: total só na linha primária
+        bodyRows.push([
+          primaria ? pais.nome : '',
+          (primaria && valor > 0) ? String(valor) : '',
+          primaria ? (valor > 0 ? String(valor) : '') : ''
+        ]);
+        metaDados.push({
+          grupoIdx:  grupoIdx,
+          subIdx:    s,
+          subTotal:  pais.subLinhas,
+          primaria:  primaria,
+          destaque:  destaque,
+          ultimaSub: (s === pais.subLinhas - 1)
+        });
       }
-    }));
+    });
 
-    rodape(1, totalPaises > 0 ? totalPaises : '—');
+    // ── Larguras das colunas ─────────────────────────────────
+    // Col 0 (País): fixo 52mm — acomoda "Bosnia Herzegovina" a 7.5pt
+    // Col 2 (Total): 20mm
+    // Col 1 (Turistas): ocupa o resto = 186 - 52 - 20 = 114mm
+    var COL_PAIS   = 52;
+    var COL_TOTAL  = 20;
+    var COL_VISIT  = LARGURA - COL_PAIS - COL_TOTAL;  // ~114mm
 
-    // Página 2 — operadores, sugestões, obs
+    // Altura de cada sub-linha em mm (para cálculos de rowSpan visual)
+    var ALTURA_LINHA = 5.5;
+
+    // Mapa de { grupoIdx → y de início da primeira sub-linha }
+    // preenchido em didDrawCell
+    var grupoYInicio = {};
+
+    doc.autoTable({
+      theme: 'grid',
+      startY: y,
+      head: [['Pais / Regiao de Origem', 'Turistas / Visitantes', 'Total']],
+      body: bodyRows,
+      foot: [['TOTAL', '', totalGeral > 0 ? String(totalGeral) : '']],
+
+      styles: {
+        fontSize: 7.5,
+        cellPadding: { top: 1.2, bottom: 1.2, left: 2, right: 2 },
+        textColor: COR_TEXTO,
+        lineColor: [220, 210, 200],
+        lineWidth: 0.2,
+        valign: 'middle',
+      },
+      headStyles: {
+        fillColor: COR_PRINCIPAL,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        cellPadding: 2.5,
+        halign: 'center',
+      },
+      footStyles: {
+        fillColor: COR_CLARO,
+        textColor: COR_PRINCIPAL,
+        fontStyle: 'bold',
+        fontSize: 8.5,
+      },
+      alternateRowStyles: { fillColor: false },  // desactivar zebra — gerida manualmente
+      margin: { left: MARGEM, right: MARGEM },
+
+      columnStyles: {
+        0: { cellWidth: COL_PAIS,  fontStyle: 'normal' },
+        1: { cellWidth: COL_VISIT, halign: 'center' },
+        2: { cellWidth: COL_TOTAL, halign: 'right'  },
+      },
+
+      // ── Estilo por célula ──────────────────────────────────
+      didParseCell: function(data) {
+        if (data.section !== 'body') return;
+        var meta = metaDados[data.row.index];
+        if (!meta) return;
+
+        // Fundo: alternância por grupo (não por linha individual)
+        var fundoPar   = [250, 245, 239];
+        var fundoImpar = [255, 255, 255];
+        var fundoBase  = (meta.grupoIdx % 2 === 0) ? fundoPar : fundoImpar;
+
+        // Países de destaque têm fundo e texto especiais
+        if (meta.destaque) {
+          data.cell.styles.fillColor   = COR_DESTAQUE;
+          data.cell.styles.fontStyle   = (data.column.index === 0 && meta.primaria) ? 'bold' : 'normal';
+          data.cell.styles.textColor   = (data.column.index === 0 && meta.primaria) ? COR_PRINCIPAL : COR_TEXTO;
+        } else {
+          data.cell.styles.fillColor = fundoBase;
+        }
+
+        // Col 0 — sub-linhas secundárias: sem texto, sem borda superior
+        if (data.column.index === 0 && !meta.primaria) {
+          data.cell.styles.lineColor = [255, 255, 255]; // borda invisível
+        }
+
+        // Col 2 — sub-linhas secundárias: sem texto, borda lateral invisível
+        if (data.column.index === 2 && !meta.primaria) {
+          data.cell.styles.lineColor = [255, 255, 255];
+        }
+
+        // Sub-linhas secundárias na col 1: borda superior a tracejado suave
+        if (data.column.index === 1 && !meta.primaria) {
+          // manter linha tênue para separar as caixas de registo
+          data.cell.styles.lineColor = [200, 195, 190];
+          data.cell.styles.lineWidth = 0.15;
+        }
+      },
+
+      // ── Desenho custom após cada célula ───────────────────
+      didDrawCell: function(data) {
+        if (data.section !== 'body') return;
+        var meta = metaDados[data.row.index];
+        if (!meta) return;
+
+        var x  = data.cell.x;
+        var cy = data.cell.y;
+        var w  = data.cell.width;
+        var h  = data.cell.height;
+
+        // Registar y de início do grupo (primeira sub-linha)
+        if (meta.primaria) {
+          grupoYInicio[meta.grupoIdx] = cy;
+        }
+
+        // ── Col 2 (Total) — span visual ──────────────────────
+        // Na sub-linha primária de um grupo multi-linha:
+        //   1. Cobrir toda a altura do grupo com fill da cor de fundo
+        //   2. Redesenhar a borda exterior
+        //   3. Escrever o valor centrado verticalmente
+        if (data.column.index === 2 && meta.primaria && meta.subTotal > 1) {
+          var alturaGrupo = h * meta.subTotal;
+          var yInicio     = cy;
+
+          // 1. Fill de fundo (cobre sub-linhas seguintes da mesma coluna)
+          var corFundo = meta.destaque ? COR_DESTAQUE : ((meta.grupoIdx % 2 === 0) ? [250,245,239] : [255,255,255]);
+          doc.setFillColor.apply(doc, corFundo);
+          doc.rect(x, yInicio, w, alturaGrupo, 'F');
+
+          // 2. Borda exterior da célula agrupada
+          doc.setDrawColor.apply(doc, [220, 210, 200]);
+          doc.setLineWidth(0.2);
+          doc.rect(x, yInicio, w, alturaGrupo, 'S');
+
+          // 3. Texto do total centrado verticalmente no grupo
+          var valorTxt = data.cell.text ? data.cell.text.join('') : '';
+          if (valorTxt) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor.apply(doc, COR_TEXTO);
+            doc.text(
+              valorTxt,
+              x + w - 2,
+              yInicio + alturaGrupo / 2 + 0.6,
+              { align: 'right', baseline: 'middle' }
+            );
+          }
+        }
+
+        // ── Col 0 (País) — span visual ───────────────────────
+        // Idem: cobrir sub-linhas com fill e escrever o nome centrado
+        if (data.column.index === 0 && meta.primaria && meta.subTotal > 1) {
+          var alturaGrupo0 = h * meta.subTotal;
+          var corFundo0    = meta.destaque ? COR_DESTAQUE : ((meta.grupoIdx % 2 === 0) ? [250,245,239] : [255,255,255]);
+
+          // Fill
+          doc.setFillColor.apply(doc, corFundo0);
+          doc.rect(x, cy, w, alturaGrupo0, 'F');
+
+          // Borda
+          doc.setDrawColor.apply(doc, [220, 210, 200]);
+          doc.setLineWidth(0.2);
+          doc.rect(x, cy, w, alturaGrupo0, 'S');
+
+          // Texto
+          var nomeTxt = data.cell.text ? data.cell.text.join('') : '';
+          if (nomeTxt) {
+            doc.setFont('helvetica', meta.destaque ? 'bold' : 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor.apply(doc, meta.destaque ? COR_PRINCIPAL : COR_TEXTO);
+            doc.text(
+              nomeTxt,
+              x + 2,
+              cy + alturaGrupo0 / 2 + 0.6,
+              { align: 'left', baseline: 'middle' }
+            );
+          }
+        }
+
+        // ── Col 1 (Turistas / Visitantes) — caixas de registo ─
+        // Desenhar linhas divisórias entre sub-linhas dentro da célula
+        // para que o funcionário saiba onde escrever cada contagem
+        if (data.column.index === 1) {
+          // Na última sub-linha de um grupo multi-linha, desenhar separador
+          // de grupo mais espesso (visível) entre este grupo e o próximo
+          if (meta.ultimaSub && meta.subTotal > 1) {
+            doc.setDrawColor.apply(doc, [139, 74, 43]);
+            doc.setLineWidth(0.35);
+            doc.line(x, cy + h, x + w, cy + h);
+          }
+          // Caixa de registo (área ligeiramente destacada para escrita manual)
+          // Só para células vazias (sem valor digital)
+          var valDigital = data.cell.text ? data.cell.text.join('').trim() : '';
+          if (!valDigital) {
+            // Fundo levemente mais claro para indicar área de escrita
+            doc.setFillColor(248, 244, 240);
+            var padding = 0.8;
+            doc.rect(x + padding, cy + padding, w - padding * 2, h - padding * 2, 'F');
+          }
+        }
+      },
+    });
+
+    var totalPaisesY = doc.lastAutoTable.finalY;
+    rodape(1, totalGeral > 0 ? totalGeral : '—');
+
+    // ── Página 2 — Operadores, Sugestões, Observações ────────
     doc.addPage();
     y = cabecalho(2);
 
@@ -333,7 +639,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Operador / Agência', 'Nacionalidades', 'Total']],
+      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
       body: ops.length ? ops : [['', '', '']],
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -341,7 +647,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Sugestão / Crítica', 'Nacionalidade']],
+      head: [['Sugestao / Critica', 'Nacionalidade']],
       body: sugs.length ? sugs : [['', '']],
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -349,7 +655,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Outras Observações']],
+      head: [['Outras Observacoes']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
@@ -375,12 +681,12 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Tipo de Visitante', 'Número']],
+      head: [['Tipo de Visitante', 'Numero']],
       body: [
-        ['Nacionais',    vNac > 0 ? vNac : ''],
-        ['Estrangeiros', vEst > 0 ? vEst : ''],
+        ['Nacionais',    vNac > 0 ? String(vNac) : ''],
+        ['Estrangeiros', vEst > 0 ? String(vEst) : ''],
       ],
-      foot: [['TOTAL', totalSimples > 0 ? totalSimples : '']],
+      foot: [['TOTAL', totalSimples > 0 ? String(totalSimples) : '']],
       footStyles: { fillColor: COR_CLARO, textColor: COR_PRINCIPAL, fontStyle: 'bold', fontSize: 9 },
       styles: Object.assign({}, estiloBase.styles, { fontSize: 11, cellPadding: 5 }),
       headStyles: Object.assign({}, estiloBase.headStyles, { fontSize: 10 }),
@@ -393,7 +699,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Operador / Agência', 'Nacionalidades', 'Total']],
+      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
       body: ops.length ? ops : [['', '', '']],
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -401,7 +707,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Sugestão / Crítica', 'Nacionalidade']],
+      head: [['Sugestao / Critica', 'Nacionalidade']],
       body: sugs.length ? sugs : [['', '']],
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -409,7 +715,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Outras Observações']],
+      head: [['Outras Observacoes']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
@@ -421,8 +727,8 @@ function gerarPDF(tipo) {
   }
 
   // ── Guardar / descarregar ────────────────────────────────────
-  var data = new Date().toISOString().slice(0, 10);
-  var nome = 'Registo-Nacionalidades-' + tipo + '-' + data + '.pdf';
+  var dataHoje = new Date().toISOString().slice(0, 10);
+  var nome = 'Registo-Nacionalidades-' + tipo + '-' + dataHoje + '.pdf';
   doc.save(nome);
 }
 
