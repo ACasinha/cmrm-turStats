@@ -20,7 +20,7 @@ function mostrarVersao() {
     .then(function(txt) {
       var match = txt.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/);
       if (match) {
-        var versao = match[1].replace('rmz-nacionalidades-', '');
+        var versao = match[1].replace(/^.*-v/, 'v');
         var el = document.getElementById('rodapeVersao');
         if (el) el.textContent = versao;
       }
@@ -100,9 +100,13 @@ function verificarAtualizacao() {
 function aplicarAtualizacao() {
   if (_swRegistration && _swRegistration.waiting) {
     _swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    var reloadTimer = setTimeout(function() {
+    window.location.reload();
+    }, 3000); // fallback
     navigator.serviceWorker.addEventListener('controllerchange', function() {
-      window.location.reload();
-    }, { once: true });
+    clearTimeout(reloadTimer);
+    window.location.reload();
+}, { once: true });
   } else {
     window.location.reload();
   }
