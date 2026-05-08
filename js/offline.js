@@ -157,10 +157,10 @@ function gerarPDF(tipo) {
   var MARGEM_INF = 16;                 // reserva para rodapé
 
   // ── Larguras da tabela de países ────────────────────────────
-  // Col 0 (País):            52 mm
+  // Col 0 (País):            32 mm
   // Col 2 (Total):           22 mm
-  // Col 1 (Turistas/Visit.): 186 - 52 - 22 = 112 mm
-  var COL0   = 52;
+  // Col 1 (Turistas/Visit.): 186 - 32 - 22 = 132 mm
+  var COL0   = 32;
   var COL2   = 22;
   var COL1   = LARGURA - COL0 - COL2;
   var H_LIN  = 4.0;   // altura de cada sub-linha (mm)
@@ -439,7 +439,7 @@ function gerarPDF(tipo) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       st([255, 255, 255]);
-      doc.text('País / Região de Origem',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
+      doc.text('País',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Turistas / Visitantes',    X1 + COL1 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Total',                    X2 + COL2 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       st(COR_TEXTO);
