@@ -141,7 +141,7 @@ function gerarPDF(tipo) {
   var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   // ── Paleta ──────────────────────────────────────────────────
-  var COR_PRINCIPAL    = [139, 74,  43];   // #8B4A2B terra
+  var COR_PRINCIPAL    = [196, 133,  90];   // #C4855A terra-light
   var COR_CLARO        = [245, 235, 224];  // #F5EBE0 bege
   var COR_TEXTO        = [44,  44,  44];   // quase preto
   var COR_BORDA        = [200, 185, 170];  // borda da tabela
@@ -163,8 +163,8 @@ function gerarPDF(tipo) {
   var COL0   = 52;
   var COL2   = 22;
   var COL1   = LARGURA - COL0 - COL2;
-  var H_LIN  = 6.0;   // altura de cada sub-linha (mm)
-  var H_HEAD = 7.0;   // altura do cabeçalho da tabela (mm)
+  var H_LIN  = 4.0;   // altura de cada sub-linha (mm)
+  var H_HEAD = 5.0;   // altura do cabeçalho da tabela (mm)
 
   // ── Posições X ──────────────────────────────────────────────
   var X0 = MARGEM;
@@ -193,10 +193,10 @@ function gerarPDF(tipo) {
     st([255, 255, 255]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text('Registo Diario de Nacionalidades', MARGEM, 7);
+    doc.text('Registo Diário de Nacionalidades', MARGEM, 7);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.text('Municipio de Reguengos de Monsaraz  \u00b7  Servicos de Turismo', MARGEM, 12);
+    doc.text('Município de Reguengos de Monsaraz  \u00b7  Serviços de Turismo', MARGEM, 12);
     if (numPag) doc.text('Pag. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
     st(COR_TEXTO);
     return 23;
@@ -228,7 +228,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     st([150, 150, 150]);
-    doc.text('Registo Diario de Nacionalidades  \u00b7  Municipio de Reguengos de Monsaraz', MARGEM, yR + 3.5);
+    doc.text('Registo Diário de Nacionalidades  \u00b7  Município de Reguengos de Monsaraz', MARGEM, yR + 3.5);
     if (total !== undefined) {
       doc.setFont('helvetica', 'bold');
       st(COR_PRINCIPAL);
@@ -242,7 +242,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     st(COR_PRINCIPAL);
-    doc.text('Assinatura do(a) Funcionario(a):', MARGEM, yp);
+    doc.text('Assinatura do(a) Funcionário(a):', MARGEM, yp);
     doc.text('Data:', MARGEM + 120, yp);
     sd(COR_PRINCIPAL);
     doc.setLineWidth(0.4);
@@ -261,7 +261,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(192, 57, 43);
-    doc.text('IMPORTANTE: Apos restabelecimento da Internet inserir dados na aplicacao.', MARGEM + 3, yp + 5);
+    doc.text('IMPORTANTE: Após restabelecimento da Internet inserir dados na aplicação.', MARGEM + 3, yp + 5);
     st(COR_TEXTO);
     return yp + 11;
   }
@@ -589,7 +589,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      head: [['Operador / Agência', 'Nacionalidades', 'Total']],
       body: ops,
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -597,7 +597,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Sugestao / Critica', 'Nacionalidade']],
+      head: [['Sugestão / Crítica', 'Nacionalidade']],
       body: sugs,
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -605,7 +605,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Outras Observacoes']],
+      head: [['Outras Observações']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
@@ -650,7 +650,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      head: [['Operador / Agência', 'Nacionalidades', 'Total']],
       body: ops,
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -658,7 +658,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Sugestao / Critica', 'Nacionalidade']],
+      head: [['Sugestão / Crítica', 'Nacionalidade']],
       body: sugs,
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -666,7 +666,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Outras Observacoes']],
+      head: [['Outras Observações']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
