@@ -101,7 +101,7 @@ function mostrarModalPDF() {
   if (!modal) {
     modal = document.createElement('div');
     modal.id        = 'modalEscolhaPDF';
-    modal.className = 'modal-pdf-overlay';
+    modal.className = 'modal-overlay';
     modal.innerHTML =
       '<div class="modal-pdf-caixa">' +
         '<div class="modal-pdf-titulo">📄 Gerar Formulário PDF</div>' +
