@@ -141,7 +141,7 @@ function gerarPDF(tipo) {
   var doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   // ── Paleta ──────────────────────────────────────────────────
-  var COR_PRINCIPAL    = [196, 133,  90];   // #C4855A terra-light
+  var COR_PRINCIPAL    = [139, 74,  43];   // #8B4A2B terra
   var COR_CLARO        = [245, 235, 224];  // #F5EBE0 bege
   var COR_TEXTO        = [44,  44,  44];   // quase preto
   var COR_BORDA        = [200, 185, 170];  // borda da tabela
@@ -197,7 +197,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.text('Município de Reguengos de Monsaraz  \u00b7  Serviços de Turismo', MARGEM, 12);
-    if (numPag) doc.text('Pag. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
+    if (numPag) doc.text('Pág. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
     st(COR_TEXTO);
     return 23;
   }
@@ -439,7 +439,7 @@ function gerarPDF(tipo) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       st([255, 255, 255]);
-      doc.text('Pais / Regiao de Origem',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
+      doc.text('País / Região de Origem',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Turistas / Visitantes',    X1 + COL1 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Total',                    X2 + COL2 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       st(COR_TEXTO);
@@ -632,7 +632,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Tipo de Visitante', 'Numero']],
+      head: [['Tipo de Visitante', 'Número']],
       body: [
         ['Nacionais',    vNac > 0 ? String(vNac) : ''],
         ['Estrangeiros', vEst > 0 ? String(vEst) : ''],
