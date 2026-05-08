@@ -493,7 +493,7 @@ textarea {
               background var(--transition-base);
   -webkit-appearance: none;
   appearance: none;
-  min-height: 44px;
+  min-height: 50px;
 }
 
 input[type="text"]:focus,
@@ -648,7 +648,7 @@ table tbody tr:hover { background: rgba(245,235,224,0.6); }
   color: var(--cinza-escuro); background: var(--branco);
   transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none; appearance: none;
-  min-height: 40px; overflow: visible; letter-spacing: 0;
+  min-height: 44px; overflow: visible; letter-spacing: 0;
 }
 .num-input:focus {
   outline: none; border-color: var(--ouro);
