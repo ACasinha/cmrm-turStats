@@ -12,464 +12,10 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" href="img/logo.png">
 <title>Registo Diário de Nacionalidades</title>
-
-<!-- BeerCSS -->
-<link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
-<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
-
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-<style>
-  /* ── Tema personalizado sobre BeerCSS ── */
-  :root {
-    --primary:         #8B4A2B;
-    --on-primary:      #FFFFFF;
-    --primary-container:   #F5EBE0;
-    --on-primary-container: #6B3320;
-    --secondary:       #C9952A;
-    --on-secondary:    #FFFFFF;
-    --secondary-container: #FFF3DC;
-    --tertiary:        #3D5A3E;
-    --on-tertiary:     #FFFFFF;
-    --tertiary-container:  #D6EDD6;
-    --surface:         #FDFAF6;
-    --on-surface:      #2C2C2C;
-    --surface-variant: #F0E8DF;
-    --outline:         #C4A88A;
-    --outline-variant: #E8E0D5;
-    --error:           #C0392B;
-    --on-error:        #FFFFFF;
-
-    /* Tipografia */
-    --font-display: 'Playfair Display', serif;
-    --font-body:    'Source Sans 3', sans-serif;
-  }
-
-  body { font-family: var(--font-body); background: var(--surface); }
-
-  /* ── Cabeçalhos com fonte serifada ── */
-  h1, h2, h3, .display-font { font-family: var(--font-display); }
-
-  /* ── LOGIN OVERLAY ── */
-  .login-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: linear-gradient(145deg, #5a2d1a 0%, #8B4A2B 50%, #6B3320 100%);
-    display: flex; align-items: center; justify-content: center;
-    padding: 1rem;
-    transition: opacity .5s ease, visibility .5s ease;
-    overflow-y: auto;
-  }
-  .login-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
-  .login-card {
-    background: var(--surface);
-    border-radius: 24px;
-    padding: clamp(24px,6vw,48px) clamp(20px,6vw,44px);
-    width: 100%; max-width: 420px;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.45);
-    animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
-  }
-  .login-logo { text-align: center; margin-bottom: 1.25rem; }
-  .login-logo img { width: clamp(80px,22vw,130px); margin: 0 auto; }
-  .login-titulo { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--primary); text-align: center; margin-bottom: .2rem; }
-  .login-sub    { font-size: .75rem; color: #666; text-align: center; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1.75rem; }
-
-  .login-erro {
-    background: rgba(192,57,43,.09); border: 1.5px solid rgba(192,57,43,.3);
-    border-radius: 8px; padding: 10px 14px;
-    color: #c0392b; font-size: .85rem; font-weight: 500;
-    margin-bottom: 14px; display: none;
-  }
-  .login-erro.visivel { display: block; animation: shake .4s ease; }
-
-  /* ── INSTALL BANNER ── */
-  .install-banner {
-    background: var(--primary); color: #fff;
-    padding: 10px 16px;
-    display: none; align-items: center; justify-content: center;
-    gap: 10px; flex-wrap: wrap; text-align: center;
-    font-size: .85rem;
-  }
-  .install-banner.visivel { display: flex; }
-
-  /* ── OFFLINE BANNER ── */
-  .offline-banner {
-    background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-    color: white; padding: 14px 20px;
-    display: flex; align-items: center;
-    gap: 16px; flex-wrap: wrap;
-    box-shadow: 0 4px 16px rgba(192,57,43,.4);
-    animation: slideIn .3s ease;
-  }
-  .offline-icone { font-size: 2rem; flex-shrink: 0; }
-  .offline-texto { flex: 1; min-width: 180px; }
-  .offline-texto strong { font-size: .95rem; display: block; }
-  .offline-texto span   { font-size: .82rem; opacity: .9; }
-  .offline-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  /* ── HEADER ── */
-  .header {
-    background: linear-gradient(135deg, var(--primary) 0%, #6B3320 100%);
-    color: white;
-    padding: clamp(10px,2.5vw,18px) clamp(12px,3vw,28px);
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 6px 24px rgba(139,74,43,.2);
-    position: sticky; top: 0; z-index: 100;
-    overflow: hidden; gap: 10px;
-    min-height: clamp(60px,10vw,80px);
-  }
-  .header::before {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 180px; height: 180px; border-radius: 50%;
-    background: rgba(255,255,255,.05); pointer-events: none;
-  }
-  .header-left  { display: flex; align-items: center; gap: clamp(8px,2vw,16px); z-index: 1; min-width: 0; flex: 1; }
-  .logo-circle  { width: clamp(44px,10vw,72px); flex-shrink: 0; }
-  .logo-circle img { width: 100%; object-fit: contain; }
-  .header-text h1 {
-    font-family: var(--font-display);
-    font-size: clamp(.8rem,2.2vw,1.15rem); font-weight: 700; line-height: 1.2; color: #fff;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .header-right { z-index: 1; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-  .header-badge {
-    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2);
-    border-radius: 10px; padding: 6px 12px; text-align: center;
-    display: none;
-  }
-  @media(min-width:520px) { .header-badge { display: block; } }
-  .badge-num   { font-family: var(--font-display); font-size: clamp(1.2rem,3vw,1.6rem); font-weight: 700; color: #F0C96A; display: block; line-height: 1; }
-  .badge-label { font-size: .68rem; opacity: .7; text-transform: uppercase; letter-spacing: 1px; }
-
-  .user-info  { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-  .user-label { font-size: .68rem; opacity: .65; text-transform: uppercase; letter-spacing: 1px; }
-  .user-name  { font-weight: 700; font-size: .82rem; white-space: nowrap; max-width: min(260px,45vw); overflow: hidden; text-overflow: ellipsis; }
-
-  .btn-logout {
-    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.25);
-    color: white; border-radius: 6px; padding: 5px 10px;
-    font-size: .7rem; font-weight: 600; cursor: pointer;
-    transition: background .2s; margin-top: 3px; white-space: nowrap; min-height: 30px;
-  }
-  .btn-logout:hover { background: rgba(255,255,255,.28); }
-
-  /* ── ESTADO BANNER ── */
-  .estado-banner {
-    display: none; margin-bottom: 14px; padding: 11px 14px;
-    border-radius: 10px; font-size: .85rem; font-weight: 500;
-    align-items: center; gap: 10px; animation: slideIn .3s ease;
-  }
-  .estado-banner.carregado  { display: flex; background: rgba(46,91,138,.1);  border: 1.5px solid rgba(46,91,138,.35);  color: #2E5B8A; }
-  .estado-banner.novo       { display: flex; background: rgba(61,90,62,.08);  border: 1.5px solid rgba(106,143,107,.35); color: #3D5A3E; }
-  .estado-banner.verificando{ display: flex; background: rgba(201,149,42,.1); border: 1.5px solid rgba(201,149,42,.35); color: #8a6510; }
-  .estado-banner.bloqueado  { display: flex; background: rgba(192,57,43,.07); border: 1.5px solid rgba(192,57,43,.35); color: #c0392b; }
-  .spinner {
-    border: 3px solid rgba(139,74,43,.12); border-top: 3px solid var(--primary);
-    border-radius: 50%; width: 20px; height: 20px; flex-shrink: 0;
-    animation: spin .9s linear infinite;
-  }
-  .estado-banner .spinner { width: 15px; height: 15px; border-width: 2px; }
-  .input-carregado { border-color: #4A80B8 !important; background: rgba(46,91,138,.04) !important; }
-
-  /* ── META CARD ── */
-  .meta-card {
-    background: white; border-radius: 14px;
-    padding: clamp(12px,3vw,18px) clamp(14px,3vw,24px);
-    margin-bottom: 14px;
-    box-shadow: 0 2px 12px rgba(139,74,43,.12);
-    border-left: 4px solid #C9952A;
-    display: grid; gap: 16px; grid-template-columns: 1fr;
-  }
-  @media(min-width:520px) { .meta-card { grid-template-columns: 1fr 1fr; } }
-  .field-group { display: flex; flex-direction: column; gap: 5px; }
-  .field-group label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
-
-  /* ── SECTION CARDS ── */
-  .section-card { background: white; border-radius: 14px; margin-bottom: 14px; box-shadow: 0 2px 12px rgba(139,74,43,.12); overflow: hidden; }
-  .section-header {
-    padding: clamp(10px,2vw,14px) clamp(12px,3vw,20px);
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    min-height: 50px; color: white;
-    background: linear-gradient(90deg, #3D5A3E 0%, #6A8F6B 100%);
-  }
-  .section-header h2 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; line-height: 1.3; }
-  .section-header .section-count { background: rgba(255,255,255,.2); border-radius: 20px; padding: 3px 10px; font-size: .7rem; white-space: nowrap; flex-shrink: 0; }
-  .section-header.terra { background: linear-gradient(90deg, #8B4A2B 0%, #C4855A 100%); }
-  .section-header.azul  { background: linear-gradient(90deg, #2E5B8A 0%, #4A80B8 100%); }
-
-  .section-toggle { cursor: pointer; user-select: none; }
-  .section-toggle:hover { filter: brightness(1.08); }
-  .toggle-icone { font-size: .85rem; flex-shrink: 0; transition: transform .2s; margin-left: auto; }
-  .verso-body { padding: clamp(10px,2vw,16px); }
-
-  /* ── TOTAIS CARD ── */
-  .totais-card {
-    background: linear-gradient(135deg, #2C2C2C 0%, #444 100%);
-    border-radius: 14px; padding: clamp(12px,3vw,18px) clamp(14px,3vw,28px);
-    margin-bottom: 14px; color: white;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 6px 24px rgba(139,74,43,.2); gap: 12px;
-  }
-  .total-label { font-family: var(--font-display); font-size: clamp(.88rem,2.5vw,1.05rem); }
-  .total-sub   { font-size: .7rem; opacity: .6; margin-top: 2px; }
-  .total-num   { font-family: var(--font-display); font-size: clamp(1.6rem,5.5vw,2.2rem); font-weight: 700; color: #F0C96A; flex-shrink: 0; }
-
-  /* ── TABLES ── */
-  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; }
-  table thead tr { background: #E8E0D5; }
-  table th { padding: clamp(7px,1.5vw,10px) clamp(10px,2vw,16px); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #5A5A5A; text-align: left; white-space: nowrap; }
-  table td { padding: clamp(6px,1.5vw,9px) clamp(10px,2vw,16px); font-size: .85rem; border-bottom: 1px solid rgba(0,0,0,.04); }
-  table tbody tr:hover { background: rgba(245,235,224,.6); }
-  .paises-table th:last-child { text-align: center; width: clamp(160px,24vw,200px); }
-  .paises-table td.num-cell   { text-align: center; white-space: nowrap; }
-  .row-destaque td { background: rgba(201,149,42,.07); }
-  .row-destaque td:first-child { color: var(--primary); font-weight: 700; }
-
-  /* ── STEPPER ── */
-  .num-input {
-    width: clamp(72px,14vw,96px); min-width: 72px; flex-shrink: 0;
-    border: 1.5px solid #E8E0D5; border-radius: 7px;
-    padding: 8px 4px; text-align: center;
-    font-size: .9rem; font-weight: 600; color: #2C2C2C;
-    background: #FDFAF6; transition: border-color .2s, box-shadow .2s;
-    -webkit-appearance: none; appearance: none;
-    min-height: 44px;
-  }
-  .num-input::-webkit-inner-spin-button,
-  .num-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .num-input { -moz-appearance: textfield; }
-  .num-input:focus  { outline: none; border-color: #C9952A; box-shadow: 0 0 0 3px rgba(201,149,42,.15); }
-  .num-input:disabled { opacity: .55; cursor: not-allowed; }
-  .num-stepper { display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .btn-stepper {
-    width: 44px; height: 44px; border: 1.5px solid #E8E0D5;
-    border-radius: 7px; background: #FDFAF6;
-    font-size: 1.25rem; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    cursor: pointer; transition: all .15s; font-family: inherit;
-    touch-action: manipulation; user-select: none;
-  }
-  .btn-stepper:active:not(:disabled) { background: #F5EBE0; border-color: #C4855A; }
-  .btn-stepper:disabled { opacity: .6; cursor: not-allowed; }
-  .btn-menos { color: #c0392b; } .btn-mais { color: #3D5A3E; }
-
-  /* ── OPERADORES NAC ── */
-  .op-nac-cell { min-width: 220px; }
-  .op-nac-lista { display: flex; flex-direction: column; gap: 4px; margin-bottom: 5px; }
-  .op-nac-linha { display: flex; align-items: center; gap: 4px; }
-  .op-nac-linha select {
-    flex: 1; min-width: 0; border: 1.5px solid #E8E0D5; border-radius: 6px;
-    padding: 6px 26px 6px 8px; font-size: .82rem;
-    background: #FDFAF6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B4A2B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
-    color: #2C2C2C; -webkit-appearance: none; min-height: 34px;
-  }
-  .op-nac-linha input[type="number"] {
-    width: 60px; flex-shrink: 0; border: 1.5px solid #E8E0D5; border-radius: 6px;
-    padding: 6px 4px; text-align: center; font-size: .82rem; background: #FDFAF6;
-    min-height: 34px; -webkit-appearance: none; -moz-appearance: textfield;
-  }
-  .btn-rem-nac {
-    background: none; border: none; color: #c0392b; font-size: .85rem;
-    cursor: pointer; padding: 4px 6px; border-radius: 4px; flex-shrink: 0;
-    min-width: 28px; min-height: 28px; touch-action: manipulation;
-  }
-  .btn-rem-nac:hover { background: rgba(192,57,43,.08); }
-  .btn-add-nac {
-    background: none; border: 1.5px dashed #E8E0D5; color: #5A5A5A;
-    border-radius: 6px; padding: 4px 10px; font-size: .7rem;
-    cursor: pointer; width: 100%; text-align: left; transition: border-color .2s, color .2s;
-    min-height: 30px; font-family: inherit;
-  }
-  .btn-add-nac:hover { border-color: #C4855A; color: #8B4A2B; }
-
-  .sug-nac {
-    width: 100%; border: 1.5px solid #E8E0D5; border-radius: 6px;
-    padding: 7px 26px 7px 8px; font-size: .82rem;
-    background: #FDFAF6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B4A2B' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center;
-    color: #2C2C2C; -webkit-appearance: none; min-height: 38px;
-  }
-  .sug-nac:focus { outline: none; border-color: #C4855A; box-shadow: 0 0 0 2px rgba(139,74,43,.08); }
-
-  .op-table, .sug-table { min-width: 360px; }
-  .op-table td:last-child  { width: clamp(70px,14vw,90px); text-align: center; }
-  .sug-table td:last-child { width: clamp(110px,25vw,160px); }
-  .op-table th, .sug-table th {
-    background: #E8E0D5; padding: clamp(7px,1.5vw,9px) clamp(8px,1.5vw,12px);
-    font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; color: #5A5A5A; font-weight: 700; white-space: nowrap;
-  }
-  .op-table td, .sug-table td { padding: 4px 5px; border-bottom: 1px solid rgba(0,0,0,.05); vertical-align: middle; }
-  .op-table input, .sug-table input {
-    width: 100%; border: 1.5px solid #E8E0D5; border-radius: 6px;
-    padding: clamp(7px,1.5vw,8px) clamp(7px,1.5vw,10px); font-size: .82rem; background: #FDFAF6;
-    transition: border-color .2s; -webkit-appearance: none; min-height: 38px; font-family: inherit;
-  }
-  .op-table input:focus, .sug-table input:focus { outline: none; border-color: #C4855A; box-shadow: 0 0 0 2px rgba(139,74,43,.08); }
-
-  /* ── OBS AREA ── */
-  .obs-area {
-    width: 100%; border: 1.5px solid #E8E0D5; border-radius: 10px;
-    padding: clamp(10px,2vw,14px); font-size: .9rem; min-height: 80px; resize: vertical;
-    background: #FDFAF6; transition: border-color .2s; line-height: 1.5; font-family: inherit;
-  }
-  .obs-area:focus { outline: none; border-color: #C4855A; box-shadow: 0 0 0 3px rgba(139,74,43,.08); }
-
-  /* ── BOTÕES ── */
-  .btn-login {
-    width: 100%; padding: clamp(13px,3vw,16px);
-    background: linear-gradient(135deg, #8B4A2B 0%, #C4855A 100%);
-    color: white; border: none; border-radius: 8px;
-    font-size: .92rem; font-weight: 700; letter-spacing: .5px; cursor: pointer;
-    box-shadow: 0 4px 18px rgba(139,74,43,.4); margin-top: 8px; min-height: 48px;
-    touch-action: manipulation; transition: all .2s; font-family: inherit;
-  }
-  .btn-login:hover:not(:disabled)  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,74,43,.5); }
-  .btn-login:active:not(:disabled) { transform: translateY(1px); }
-  .btn-login:disabled { opacity: .6; cursor: not-allowed; }
-
-  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: clamp(14px,3vw,20px); flex-wrap: wrap; }
-  @media(max-width:380px) { .actions { flex-direction: column; } }
-
-  /* Botão guardar e limpar reutilizando BeerCSS classes com overrides */
-  .btn-guardar-custom {
-    padding: clamp(12px,2.5vw,13px) clamp(16px,3.5vw,24px);
-    background: linear-gradient(135deg, #8B4A2B 0%, #C4855A 100%);
-    color: white; border: none; border-radius: 10px;
-    font-size: .9rem; font-weight: 600; cursor: pointer;
-    letter-spacing: .4px; white-space: nowrap; min-height: 46px;
-    touch-action: manipulation; display: inline-flex; align-items: center; gap: 8px;
-    box-shadow: 0 4px 14px rgba(139,74,43,.35); transition: all .2s; font-family: inherit;
-  }
-  .btn-guardar-custom:hover:not(:disabled)  { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,74,43,.45); }
-  .btn-guardar-custom:active:not(:disabled) { transform: translateY(1px); }
-  .btn-guardar-custom:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; }
-
-  .btn-limpar-custom {
-    padding: clamp(12px,2.5vw,13px) clamp(16px,3.5vw,24px);
-    background: white; color: #5A5A5A; border: 1.5px solid #E8E0D5; border-radius: 10px;
-    font-size: .9rem; font-weight: 600; cursor: pointer; white-space: nowrap; min-height: 46px;
-    touch-action: manipulation; display: inline-flex; align-items: center; gap: 8px;
-    transition: all .2s; font-family: inherit;
-  }
-  .btn-limpar-custom:hover:not(:disabled) { border-color: #5A5A5A; background: #F5EBE0; }
-  .btn-limpar-custom:active:not(:disabled){ transform: scale(.97); }
-
-  .btn-reconectar, .btn-imprimir-pdf {
-    background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.4);
-    color: white; border-radius: 8px; padding: 8px 14px;
-    font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-    touch-action: manipulation; min-height: 40px; transition: background .2s; font-family: inherit;
-  }
-  .btn-reconectar:hover  { background: rgba(255,255,255,.35); }
-  .btn-reconectar:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-imprimir-pdf { background: rgba(255,255,255,.9); color: #c0392b; font-weight: 700; }
-  .btn-imprimir-pdf:hover { background: white; }
-
-  .btn-instalar {
-    background: white; color: #8B4A2B; border: none; border-radius: 6px;
-    padding: 7px 14px; font-weight: 700; font-size: .85rem;
-    cursor: pointer; white-space: nowrap; touch-action: manipulation; min-height: 36px; font-family: inherit;
-  }
-  .btn-instalar-fechar {
-    background: transparent; border: none; color: rgba(255,255,255,.7);
-    cursor: pointer; font-size: 1.2rem; padding: 4px 6px; line-height: 1;
-    touch-action: manipulation; min-width: 32px; min-height: 32px;
-    display: flex; align-items: center; justify-content: center; font-family: inherit;
-  }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed; bottom: clamp(14px,3vw,24px); right: clamp(10px,3vw,24px);
-    padding: 12px 16px; border-radius: 10px; color: white;
-    font-size: .85rem; font-weight: 500; box-shadow: 0 6px 24px rgba(139,74,43,.2);
-    z-index: 9999; transform: translateY(16px); opacity: 0; transition: all .3s ease;
-    pointer-events: none; max-width: min(300px,calc(100vw - 20px)); word-break: break-word;
-  }
-  .toast.show    { transform: translateY(0); opacity: 1; }
-  .toast.sucesso { background: #3D5A3E; }
-  .toast.erro    { background: #c0392b; }
-  .toast.info    { background: #2E5B8A; }
-
-  /* ── MODAL PDF ── */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(0,0,0,.55);
-    display: none; align-items: center; justify-content: center;
-    padding: clamp(16px,4vw,32px); backdrop-filter: blur(3px);
-    animation: fadeIn .2s ease; overflow-y: auto;
-  }
-  .modal-overlay.show { display: flex; }
-  .modal-pdf-caixa {
-    background: #FDFAF6; border-radius: 18px; padding: clamp(20px,5vw,36px);
-    width: 100%; max-width: 480px; box-shadow: 0 24px 64px rgba(0,0,0,.35);
-    animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
-  }
-  .modal-pdf-titulo { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: #8B4A2B; margin-bottom: 6px; }
-  .modal-pdf-sub    { font-size: .85rem; color: #5A5A5A; margin-bottom: 1.5rem; }
-  .modal-pdf-opcoes { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; margin-bottom: 16px; }
-  @media(max-width:420px) { .modal-pdf-opcoes { grid-template-columns: 1fr; } }
-  .btn-pdf-opcao {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    padding: 16px 12px; background: #F5EBE0; border: 2px solid #E8E0D5;
-    border-radius: 14px; cursor: pointer; text-align: center;
-    transition: all .2s; font-family: inherit;
-  }
-  .btn-pdf-opcao:hover { border-color: #8B4A2B; background: white; transform: translateY(-2px); box-shadow: 0 2px 12px rgba(139,74,43,.12); }
-  .pdf-opcao-icone  { font-size: 2rem; line-height: 1; }
-  .pdf-opcao-titulo { font-weight: 700; font-size: .9rem; color: #8B4A2B; }
-  .pdf-opcao-desc   { font-size: .7rem; color: #5A5A5A; line-height: 1.4; }
-  .btn-pdf-fechar {
-    width: 100%; padding: 10px; background: none; border: 1.5px solid #E8E0D5;
-    border-radius: 8px; color: #5A5A5A; font-size: .85rem; cursor: pointer;
-    transition: border-color .2s; min-height: 40px; font-family: inherit;
-  }
-  .btn-pdf-fechar:hover { border-color: #5A5A5A; }
-
-  /* ── FUNCIONÁRIO FIXO ── */
-  .funcionario-fixo {
-    background: rgba(46,91,138,.06); border: 1.5px solid rgba(46,91,138,.2);
-    border-radius: 8px; padding: 10px 14px; font-size: .9rem; font-weight: 600; color: #2E5B8A;
-    display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap;
-  }
-  .funcionario-fixo .fn-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: .7; display: block; margin-bottom: 1px; }
-
-  /* ── RODAPÉ ── */
-  .rodape {
-    background: linear-gradient(135deg, #2C2C2C 0%, #3a3a3a 100%);
-    color: rgba(255,255,255,.8); padding: clamp(14px,3vw,22px) clamp(14px,3vw,28px);
-    display: flex; align-items: center; gap: clamp(12px,3vw,24px); flex-wrap: wrap;
-    margin-top: clamp(20px,4vw,32px);
-  }
-  .rodape-logo img { height: clamp(36px,8vw,56px); opacity: .9; object-fit: contain; }
-  .rodape-texto { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
-  .rodape-dev   { font-size: .85rem; opacity: .85; line-height: 1.4; }
-  .rodape-pwa   { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .rodape-versao { font-size: .68rem; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 2px 10px; font-family: monospace; opacity: .7; }
-  .btn-rodape {
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
-    color: rgba(255,255,255,.75); border-radius: 6px; padding: 4px 12px;
-    font-size: .68rem; cursor: pointer; transition: background .2s, color .2s;
-    touch-action: manipulation; min-height: 30px; white-space: nowrap; font-family: inherit;
-  }
-  .btn-rodape:hover    { background: rgba(255,255,255,.18); color: white; }
-  .btn-rodape:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-rodape-instalar { border-color: rgba(240,201,106,.4); color: #F0C96A; }
-  .btn-rodape-instalar:hover { background: rgba(240,201,106,.15); }
-  .btn-rodape-pdf { border-color: rgba(240,201,106,.35); color: rgba(240,201,106,.85); }
-  .btn-rodape-pdf:hover { background: rgba(240,201,106,.12); color: #F0C96A; }
-
-  /* ── ANIMATIONS ── */
-  @keyframes slideUp  { from { opacity:0; transform:translateY(30px) scale(.95); } to { opacity:1; transform:translateY(0) scale(1); } }
-  @keyframes slideIn  { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
-  @keyframes shake    { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-  @keyframes spin     { to { transform:rotate(360deg); } }
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
-<body class="light">
+<body>
 
 <!-- LOGIN -->
 <div class="login-overlay" id="loginOverlay">
@@ -480,23 +26,23 @@
     <div class="login-titulo">Bem-vindo(a)</div>
     <div class="login-sub">Registo Diário de Nacionalidades</div>
     <div class="login-erro" id="loginErro"></div>
-    <div class="field" style="margin-bottom:12px">
-      <input class="active" type="email" id="loginUser" placeholder=" "
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="nome@exemplo.pt"
              autocomplete="username" inputmode="email"
              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
-      <label>Email</label>
     </div>
-    <div class="field" style="margin-bottom:16px">
-      <input class="active" type="password" id="loginPass" placeholder=" "
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password"
              autocomplete="current-password"
              onkeydown="if(event.key==='Enter')fazerLogin()">
-      <label>Password</label>
     </div>
     <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar →</button>
   </div>
 </div>
 
-<!-- BANNER PWA -->
+<!-- BANNER PWA (topo — primeira abertura) -->
 <div class="install-banner" id="installBanner">
   <span>📱 Instale esta app no seu dispositivo para acesso rápido</span>
   <button class="btn-instalar" id="btnInstalar">Instalar</button>
@@ -540,7 +86,7 @@
 </div>
 
 <!-- CONTEÚDO -->
-<div class="container" style="max-width:900px;margin:0 auto;padding:clamp(12px,3vw,24px) clamp(10px,3vw,20px) clamp(60px,10vw,90px)">
+<div class="container">
 
   <div class="estado-banner" id="estadoBanner">
     <div class="spinner" id="estadoSpinner" style="display:none"></div>
@@ -551,31 +97,27 @@
   <div class="meta-card">
     <div class="field-group">
       <label>📍 Local / Posto</label>
-      <div class="field suffix no-margin" style="min-height:50px">
-        <select onchange="agendarVerificacao()" id="local" style="min-height:50px">
-          <option value="" disabled selected>Escolha uma opção...</option>
-          <optgroup label="Lista completa de países">
-            <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
-            <option value="Museu do Fresco">Museu do Fresco</option>
-            <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
-            <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
-            <option value="Casa do Barro">Casa do Barro</option>
-          </optgroup>
-          <optgroup label="Nacionais / Estrangeiros">
-            <option value="Casa da Inquisição">Casa da Inquisição</option>
-            <option value="Igreja de Santiago">Igreja de Santiago</option>
-            <option value="Igreja da Misericórdia">Igreja da Misericórdia</option>
-            <option value="Arte Contemporânea">Arte Contemporânea</option>
-            <option value="Auditório António Marcelino">Auditório António Marcelino</option>
-          </optgroup>
-        </select>
-        <i>arrow_drop_down</i>
-      </div>
+      <select onchange="agendarVerificacao()" id="local">
+        <option value="" disabled selected>Escolha uma opção...</option>
+        <optgroup label="Lista completa de países">
+          <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
+          <option value="Museu do Fresco">Museu do Fresco</option>
+          <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
+          <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
+          <option value="Casa do Barro">Casa do Barro</option>
+        </optgroup>
+        <optgroup label="Nacionais / Estrangeiros">
+          <option value="Casa da Inquisição">Casa da Inquisição</option>
+          <option value="Igreja de Santiago">Igreja de Santiago</option>
+          <option value="Igreja da Misericórdia">Igreja da Misericórdia</option>
+          <option value="Arte Contemporânea">Arte Contemporânea</option>
+          <option value="Auditório António Marcelino">Auditório António Marcelino</option>
+        </optgroup>
+      </select>
     </div>
     <div class="field-group">
       <label>📅 Data</label>
-      <input type="date" id="data" onchange="agendarVerificacao()"
-             style="min-height:50px;width:100%;border:1.5px solid #E8E0D5;border-radius:8px;padding:0 14px;font-size:.9rem;background:#FDFAF6;font-family:inherit">
+      <input type="date" id="data" onchange="agendarVerificacao()">
     </div>
   </div>
 
@@ -607,7 +149,7 @@
 
   <!-- OPERADORES -->
   <div class="section-card">
-    <div class="section-header azul section-toggle" onclick="toggleSecao('corpoOperadores','iconeOperadores')">
+    <div class="section-header azul section-toggle" onclick="toggleSecao('corpoOperadores', 'iconeOperadores')">
       <h2>Operadores e Agências</h2>
       <span class="toggle-icone" id="iconeOperadores">▼</span>
     </div>
@@ -627,7 +169,7 @@
 
   <!-- SUGESTÕES -->
   <div class="section-card">
-    <div class="section-header terra section-toggle" onclick="toggleSecao('corpoSugestoes','iconeSugestoes')">
+    <div class="section-header terra section-toggle" onclick="toggleSecao('corpoSugestoes', 'iconeSugestoes')">
       <h2>Sugestões e Críticas</h2>
       <span class="toggle-icone" id="iconeSugestoes">▼</span>
     </div>
@@ -646,7 +188,7 @@
 
   <!-- OBSERVAÇÕES -->
   <div class="section-card">
-    <div class="section-header terra section-toggle" onclick="toggleSecao('corpoObservacoes','iconeObservacoes')">
+    <div class="section-header terra section-toggle" onclick="toggleSecao('corpoObservacoes', 'iconeObservacoes')">
       <h2>Outras Observações</h2>
       <span class="toggle-icone" id="iconeObservacoes">▼</span>
     </div>
@@ -658,8 +200,8 @@
 
   <!-- AÇÕES -->
   <div class="actions">
-    <button class="btn-limpar-custom" onclick="limparFormulario()">🗑 Limpar</button>
-    <button class="btn-guardar-custom" id="btnGuardar" onclick="guardarDados()">💾 Guardar Registo</button>
+    <button class="btn btn-limpar" onclick="limparFormulario()">🗑 Limpar</button>
+    <button class="btn btn-guardar" id="btnGuardar" onclick="guardarDados()">💾 Guardar Registo</button>
   </div>
 
 </div>
@@ -673,27 +215,25 @@
     <span class="rodape-dev">Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz</span>
     <div class="rodape-pwa">
       <span class="rodape-versao" id="rodapeVersao">v1</span>
-      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">🔄 Verificar atualização</button>
-      <button class="btn-rodape btn-rodape-pdf" onclick="mostrarModalPDF()" title="Gerar formulário PDF">📄 Gerar PDF</button>
-      <button class="btn-rodape btn-rodape-instalar" id="btnInstalarRodape" style="display:none" onclick="instalarApp()" title="Instalar app">📲 Instalar app</button>
-      <button class="btn-rodape" id="btnAdmin" style="display:none" onclick="irParaAdmin()" title="Área de Administração">🛡️ Área de Admin</button>
+      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">
+        🔄 Verificar atualização
+      </button>
+      <button class="btn-rodape btn-rodape-pdf" onclick="mostrarModalPDF()" title="Gerar formulário PDF">
+        📄 Gerar PDF
+      </button>
+      <button class="btn-rodape btn-rodape-instalar" id="btnInstalarRodape" style="display:none" onclick="instalarApp()" title="Instalar app">
+        📲 Instalar app
+      </button>
+      <button class="btn-rodape" id="btnAdmin" style="display:none" onclick="irParaAdmin()" title="Área de Administração">
+        🛡️ Área de Admin
+      </button>
     </div>
   </div>
 </footer>
 
 <div class="toast" id="toast"></div>
 
-<!-- MODAL PDF -->
-<div class="modal-overlay" id="modalPDF">
-  <div class="modal-pdf-caixa">
-    <div class="modal-pdf-titulo">📄 Gerar PDF</div>
-    <div class="modal-pdf-sub">Escolha o tipo de documento a gerar</div>
-    <div class="modal-pdf-opcoes" id="modalPDFOpcoes"></div>
-    <button class="btn-pdf-fechar" onclick="fecharModalPDF()">Cancelar</button>
-  </div>
-</div>
-
-<!-- jsPDF + AutoTable -->
+<!-- jsPDF + AutoTable — geração de PDF no browser -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
@@ -707,10 +247,11 @@
 <script src="js/app.js"></script>
 <script src="js/data.js"></script>
 <script src="js/offline.js"></script>
-<script src="js/pwa.js"></script>
-<script src="js/sw-update.js"></script>
+<script src="js/pwa.js"></script>  
+<script src="js/sw-update.js"></script>  
 <script src="js/ui.js"></script>
 <script src="js/users.js"></script>
+
 
 </body>
 </html>
