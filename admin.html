@@ -6,341 +6,11 @@
 <meta name="theme-color" content="#8B4A2B">
 <link rel="icon" type="image/png" href="img/logo.png">
 <title>Administração - Gestão de Utilizadores</title>
-
-<!-- BeerCSS -->
-<link href="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.css" rel="stylesheet">
-<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.9.7/dist/cdn/beer.min.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"></script>
-
-<!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style-admin.css">
 <link rel="manifest" href="manifest.json">
-
-<style>
-  :root {
-    --primary:        #8B4A2B;
-    --on-primary:     #FFFFFF;
-    --secondary:      #C9952A;
-    --tertiary:       #3D5A3E;
-    --surface:        #FDFAF6;
-    --on-surface:     #2C2C2C;
-    --surface-variant:#F0E8DF;
-    --outline:        #C4A88A;
-    --verde:          #3D5A3E;
-    --verde-dark:     #2d4330;
-    --azul:           #2E5B8A;
-    --vermelho:       #c0392b;
-    --font-display:   'Playfair Display', serif;
-    --font-body:      'Source Sans 3', sans-serif;
-  }
-  body { font-family: var(--font-body); background: #F5EBE0; color: #2C2C2C; }
-  h1, h2, h3 { font-family: var(--font-display); }
-
-  /* ── LOGIN ── */
-  .login-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: linear-gradient(145deg, #5a2d1a 0%, #8B4A2B 50%, #6B3320 100%);
-    display: flex; align-items: center; justify-content: center;
-    padding: clamp(16px,4vw,32px);
-    transition: opacity .5s ease, visibility .5s ease;
-    overflow-y: auto;
-  }
-  .login-overlay.hidden { opacity:0; visibility:hidden; pointer-events:none; }
-
-  .login-card {
-    background: #FDFAF6; border-radius: 24px;
-    padding: clamp(28px,6vw,52px) clamp(24px,6vw,48px);
-    width: 100%; max-width: 420px;
-    box-shadow: 0 32px 80px rgba(0,0,0,.45);
-    animation: slideUp .5s cubic-bezier(.34,1.56,.64,1);
-  }
-  .login-logo { text-align:center; margin-bottom:1.25rem; }
-  .login-logo img { width:clamp(80px,25vw,140px); margin:0 auto; }
-  .login-titulo { font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:#8B4A2B; text-align:center; margin-bottom:.2rem; }
-  .login-sub    { font-size:.75rem; color:#666; text-align:center; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:1.75rem; }
-
-  .login-erro {
-    background:rgba(192,57,43,.09); border:1.5px solid rgba(192,57,43,.3);
-    border-radius:8px; padding:10px 14px; color:#c0392b;
-    font-size:.85rem; font-weight:500; margin-bottom:14px; display:none;
-  }
-  .login-erro.visivel { display:block; animation:shake .4s ease; }
-
-  .btn-login {
-    width:100%; padding:clamp(13px,3vw,16px);
-    background:linear-gradient(135deg,#8B4A2B 0%,#C4855A 100%);
-    color:white; border:none; border-radius:8px;
-    font-size:.92rem; font-weight:700; letter-spacing:.5px; cursor:pointer;
-    box-shadow:0 4px 18px rgba(139,74,43,.4); margin-top:8px; min-height:48px;
-    touch-action:manipulation; transition:all .2s; font-family:inherit;
-  }
-  .btn-login:hover:not(:disabled)  { transform:translateY(-2px); box-shadow:0 8px 24px rgba(139,74,43,.5); }
-  .btn-login:active:not(:disabled) { transform:translateY(1px); }
-  .btn-login:disabled { opacity:.6; cursor:not-allowed; }
-
-  /* ── HEADER ── */
-  .header {
-    background:linear-gradient(135deg,#8B4A2B 0%,#6B3320 100%);
-    color:white;
-    padding:clamp(10px,2.5vw,18px) clamp(12px,3vw,28px);
-    display:flex; align-items:center; justify-content:space-between;
-    box-shadow:0 6px 24px rgba(139,74,43,.2);
-    position:sticky; top:0; z-index:100;
-    overflow:hidden; gap:10px;
-    min-height:clamp(60px,10vw,80px);
-  }
-  .header::before {
-    content:''; position:absolute; top:-40px; right:-40px;
-    width:180px; height:180px; border-radius:50%;
-    background:rgba(255,255,255,.05); pointer-events:none;
-  }
-  .header-left  { display:flex; align-items:center; gap:clamp(8px,2vw,16px); z-index:1; min-width:0; flex:1; }
-  .logo-circle  { width:clamp(44px,10vw,72px); flex-shrink:0; }
-  .logo-circle img { width:100%; object-fit:contain; }
-  .header-text h1 {
-    font-family:var(--font-display); font-size:clamp(.8rem,2.2vw,1.15rem);
-    font-weight:700; line-height:1.2; color:#fff;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-  }
-  .header-right { z-index:1; display:flex; align-items:center; gap:8px; flex-shrink:0; }
-  .user-info  { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
-  .user-label { font-size:.68rem; opacity:.65; text-transform:uppercase; letter-spacing:1px; }
-  .user-name  { font-weight:700; font-size:.82rem; white-space:nowrap; max-width:min(260px,45vw); overflow:hidden; text-overflow:ellipsis; }
-  .btn-logout {
-    background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25);
-    color:white; border-radius:6px; padding:5px 10px;
-    font-size:.7rem; font-weight:600; cursor:pointer; transition:background .2s; margin-top:3px;
-    white-space:nowrap; min-height:30px; font-family:inherit;
-  }
-  .btn-logout:hover { background:rgba(255,255,255,.28); }
-
-  /* ── ADMIN CONTAINER ── */
-  .admin-container { max-width:860px; margin:clamp(12px,4vw,24px) auto; padding:0 clamp(12px,3vw,20px) clamp(40px,8vw,60px); }
-
-  /* ── ADMIN HEADER CARD ── */
-  .admin-header {
-    background:linear-gradient(135deg,#8B4A2B 0%,#6B3320 100%);
-    color:white; padding:clamp(18px,4vw,28px); border-radius:18px;
-    margin-bottom:1.2rem; box-shadow:0 6px 24px rgba(139,74,43,.2);
-    position:relative; overflow:hidden;
-  }
-  .admin-header::after {
-    content:''; position:absolute; bottom:-30px; right:-30px;
-    width:140px; height:140px; border-radius:50%;
-    background:rgba(255,255,255,.06); pointer-events:none;
-  }
-  .admin-header h1 { font-family:var(--font-display); font-size:1.2rem; margin-bottom:4px; line-height:1.3; }
-  .admin-header p  { font-size:.82rem; opacity:.82; }
-
-  /* ── BARRA AÇÕES ── */
-  .admin-actions { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
-
-  .btn-novo-user {
-    background:linear-gradient(135deg,#3D5A3E 0%,#2d4330 100%);
-    color:white; border:none; padding:11px 16px; border-radius:8px;
-    font-size:.85rem; font-weight:600; cursor:pointer;
-    display:flex; align-items:center; gap:6px;
-    box-shadow:0 4px 12px rgba(61,90,62,.3);
-    transition:all .2s; min-height:44px; white-space:nowrap; font-family:inherit;
-  }
-  .btn-novo-user:hover:not(:disabled)  { transform:translateY(-1px); box-shadow:0 6px 16px rgba(61,90,62,.4); }
-  .btn-novo-user:active:not(:disabled) { transform:translateY(0); }
-
-  .btn-voltar {
-    background:linear-gradient(135deg,#8B4A2B 0%,#6B3320 100%) !important;
-    box-shadow:0 4px 12px rgba(139,74,43,.3) !important;
-  }
-  .btn-voltar:hover:not(:disabled) { box-shadow:0 6px 16px rgba(139,74,43,.4) !important; }
-
-  .admin-count { font-size:.7rem; color:#5A5A5A; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; padding:0 2px; }
-
-  /* ── TABELA UTILIZADORES ── */
-  .users-table-container { position:relative; background:white; border-radius:14px; box-shadow:0 2px 12px rgba(139,74,43,.12); overflow:hidden; }
-
-  .users-table { width:100%; border-collapse:collapse; }
-  .users-table thead { background:linear-gradient(90deg,#F5EBE0 0%,#fff 100%); border-bottom:2px solid #E8E0D5; }
-  .users-table th { padding:12px 16px; font-size:.68rem; text-transform:uppercase; letter-spacing:1.2px; color:#5A5A5A; font-weight:700; white-space:nowrap; }
-  .users-table td { padding:14px 16px; font-size:.85rem; vertical-align:middle; border-bottom:1px solid rgba(0,0,0,.04); }
-  .users-table tbody tr { transition:background .15s; }
-  .users-table tbody tr:hover { background:rgba(245,235,224,.5); }
-  .users-table tbody tr:last-child td { border-bottom:none; }
-  .users-table td:last-child { white-space:nowrap; }
-  .user-actions { display:flex; gap:6px; align-items:center; justify-content:flex-end; }
-
-  /* ── BADGES ── */
-  .badge-role {
-    display:inline-flex; align-items:center;
-    font-size:.64rem; padding:3px 9px;
-    border-radius:20px; font-weight:700;
-    letter-spacing:.3px; text-transform:uppercase;
-  }
-  .badge-admin { background:linear-gradient(135deg,#e74c3c,#c0392b); color:white; }
-  .badge-user  { background:linear-gradient(135deg,#4A80B8,#2E5B8A); color:white; }
-
-  .estado-pill  { display:inline-flex; align-items:center; gap:5px; font-size:.7rem; font-weight:600; }
-  .badge-status { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  .badge-status.ativo   { background:#3D5A3E; box-shadow:0 0 0 2px rgba(61,90,62,.2); }
-  .badge-status.inativo { background:#aaa;    box-shadow:0 0 0 2px rgba(0,0,0,.08); }
-
-  /* ── BOTÕES AÇÃO ── */
-  .btn-action {
-    display:inline-flex; align-items:center; justify-content:center; gap:5px;
-    border-radius:8px; font-size:.74rem; padding:7px 12px;
-    min-height:34px; font-weight:600; border:none; color:white;
-    cursor:pointer; white-space:nowrap; transition:all .2s;
-    box-shadow:0 2px 6px rgba(0,0,0,.12); font-family:inherit;
-  }
-  .btn-action:hover:not(:disabled)  { transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.18); }
-  .btn-action:active:not(:disabled) { transform:translateY(0); }
-  .btn-editar    { background:linear-gradient(135deg,#5b86b3,#3f6d99); }
-  .btn-desativar { background:linear-gradient(135deg,#f39c12,#d68910); }
-  .btn-ativar    { background:linear-gradient(135deg,#6A8F6B,#3D5A3E); }
-
-  /* ── EMPTY STATE ── */
-  .empty-state { padding:3rem 1rem; text-align:center; font-size:.85rem; color:#5A5A5A; }
-  .empty-state-icon { font-size:2.5rem; margin-bottom:10px; display:block; }
-
-  /* ── LOADING OVERLAY ── */
-  .loading-overlay {
-    position:absolute; inset:0; background:rgba(255,255,255,.85);
-    backdrop-filter:blur(2px); display:none; align-items:center; justify-content:center;
-    z-index:10; border-radius:14px;
-  }
-  .loading-overlay.show { display:flex; }
-  .spinner {
-    border:3px solid rgba(139,74,43,.12); border-top:3px solid #8B4A2B;
-    border-radius:50%; width:40px; height:40px; animation:spin .9s linear infinite;
-  }
-
-  /* ── MODAIS ── */
-  .modal-overlay {
-    position:fixed; inset:0; z-index:1000;
-    background:rgba(0,0,0,.55);
-    display:none; align-items:center; justify-content:center;
-    padding:clamp(16px,4vw,32px); backdrop-filter:blur(3px);
-    animation:fadeIn .2s ease; overflow-y:auto;
-  }
-  .modal-overlay.show { display:flex; }
-
-  .modal-box {
-    background:#FDFAF6; border-radius:18px;
-    padding:clamp(20px,5vw,36px); width:100%; max-width:500px;
-    box-shadow:0 24px 64px rgba(0,0,0,.35);
-    animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);
-  }
-  .modal-header { margin-bottom:1.25rem; }
-  .modal-header h2 { font-family:var(--font-display); font-size:1.3rem; font-weight:700; color:#8B4A2B; line-height:1.3; }
-  .modal-body    { margin-bottom:1.25rem; }
-  .modal-actions { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
-
-  .btn-modal {
-    padding:10px 20px; border-radius:8px;
-    font-size:.85rem; font-weight:600; min-height:40px; cursor:pointer;
-    transition:all .2s; font-family:inherit;
-  }
-  .btn-guardar {
-    background:linear-gradient(135deg,#8B4A2B 0%,#C4855A 100%);
-    color:white; border:none; box-shadow:0 2px 8px rgba(139,74,43,.3);
-  }
-  .btn-guardar:hover:not(:disabled)  { transform:translateY(-1px); box-shadow:0 4px 12px rgba(139,74,43,.4); }
-  .btn-cancelar {
-    background:white; color:#5A5A5A; border:1.5px solid #E8E0D5;
-  }
-  .btn-cancelar:hover:not(:disabled) { border-color:#5A5A5A; background:#F5EBE0; }
-
-  .form-group { margin-bottom:14px; }
-  .form-group label {
-    display:block; font-size:.7rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:1px;
-    color:#8B4A2B; margin-bottom:6px;
-  }
-
-  /* ── TOAST ── */
-  .toast {
-    position:fixed; bottom:clamp(14px,3vw,24px); right:clamp(10px,3vw,24px);
-    padding:12px 16px; border-radius:10px; color:white;
-    font-size:.85rem; font-weight:500; box-shadow:0 6px 24px rgba(139,74,43,.2);
-    z-index:9999; transform:translateY(16px); opacity:0; transition:all .3s ease;
-    pointer-events:none; max-width:min(300px,calc(100vw - 20px)); word-break:break-word;
-  }
-  .toast.show    { transform:translateY(0); opacity:1; }
-  .toast.sucesso { background:#3D5A3E; }
-  .toast.erro    { background:#c0392b; }
-  .toast.info    { background:#2E5B8A; }
-
-  /* ── RODAPÉ ── */
-  .rodape {
-    background:linear-gradient(135deg,#2C2C2C 0%,#3a3a3a 100%);
-    color:rgba(255,255,255,.8); padding:clamp(14px,3vw,22px) clamp(14px,3vw,28px);
-    display:flex; align-items:center; gap:clamp(12px,3vw,24px); flex-wrap:wrap;
-    margin-top:clamp(20px,4vw,32px);
-  }
-  .rodape-logo img { height:clamp(36px,8vw,56px); opacity:.9; object-fit:contain; }
-  .rodape-texto { flex:1; min-width:200px; display:flex; flex-direction:column; gap:8px; }
-  .rodape-dev   { font-size:.85rem; opacity:.85; line-height:1.4; }
-  .rodape-pwa   { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .rodape-versao { font-size:.68rem; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:20px; padding:2px 10px; font-family:monospace; opacity:.7; }
-  .btn-rodape {
-    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2);
-    color:rgba(255,255,255,.75); border-radius:6px; padding:4px 12px;
-    font-size:.68rem; cursor:pointer; transition:background .2s, color .2s;
-    touch-action:manipulation; min-height:30px; white-space:nowrap; font-family:inherit;
-  }
-  .btn-rodape:hover    { background:rgba(255,255,255,.18); color:white; }
-  .btn-rodape:disabled { opacity:.4; cursor:not-allowed; }
-
-  /* ── CARDS MOBILE (≤700px) ── */
-  @media(max-width:700px) {
-    .users-table-container { background:transparent; box-shadow:none; border-radius:0; overflow:visible; }
-    .users-table, .users-table thead, .users-table tbody { display:block; width:100%; }
-    .users-table thead { display:none; }
-    .users-table tbody tr {
-      display:flex; flex-direction:column;
-      background:white; border-radius:18px; margin-bottom:12px;
-      box-shadow:0 3px 14px rgba(139,74,43,.1),0 1px 4px rgba(0,0,0,.05);
-      overflow:hidden; border:1px solid rgba(139,74,43,.08);
-      transition:box-shadow .2s, transform .2s;
-    }
-    .users-table tbody tr:hover { background:white; box-shadow:0 6px 22px rgba(139,74,43,.14),0 2px 6px rgba(0,0,0,.06); transform:translateY(-1px); }
-    .users-table td { display:none; padding:0; border:none; }
-    .users-table td[data-label="Nome"],
-    .users-table td[data-label="Role"],
-    .users-table td[data-label="Estado"] { display:block; }
-    .users-table td[data-label="Nome"],
-    .users-table td[data-label="Email"],
-    .users-table td[data-label="Role"],
-    .users-table td[data-label="Estado"],
-    .users-table td[data-label="Ações"] { display:none; }
-
-    .user-card-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 16px 10px; gap:10px;
-      border-bottom:1px solid rgba(0,0,0,.05);
-      background:linear-gradient(135deg,rgba(139,74,43,.04) 0%,rgba(255,255,255,0) 60%);
-    }
-    .user-card-nome { font-family:var(--font-display); font-size:1rem; font-weight:700; color:#8B4A2B; line-height:1.3; flex:1; min-width:0; }
-    .user-card-badges { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-    .user-card-email { padding:8px 16px; font-size:.8rem; color:#5A5A5A; border-bottom:1px solid rgba(0,0,0,.04); display:flex; align-items:center; gap:6px; }
-    .user-card-email::before { content:'✉'; font-size:.7rem; opacity:.5; flex-shrink:0; }
-    .user-card-actions { display:flex; gap:8px; padding:10px 14px; background:rgba(0,0,0,.015); }
-    .user-card-actions .btn-action { flex:1; justify-content:center; min-height:38px; font-size:.76rem; border-radius:10px; }
-    .admin-actions { flex-wrap:wrap; }
-  }
-
-  @media(min-width:701px) {
-    .user-card-header,
-    .user-card-email,
-    .user-card-actions { display:none !important; }
-  }
-
-  /* ── ANIMATIONS ── */
-  @keyframes slideUp { from{opacity:0;transform:translateY(30px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
-  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
-  @keyframes shake   { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-  @keyframes spin    { to{transform:rotate(360deg)} }
-</style>
 </head>
-<body class="light">
+<body>
 
 <!-- LOGIN -->
 <div class="login-overlay" id="loginOverlay">
@@ -351,17 +21,17 @@
     <div class="login-titulo">Administração</div>
     <div class="login-sub">Gestão de Utilizadores</div>
     <div class="login-erro" id="loginErro"></div>
-    <div class="field" style="margin-bottom:12px">
-      <input class="active" type="email" id="loginUser" placeholder=" "
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="admin@exemplo.pt"
              autocomplete="username" inputmode="email"
              onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
-      <label>Email</label>
     </div>
-    <div class="field" style="margin-bottom:16px">
-      <input class="active" type="password" id="loginPass" placeholder=" "
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password"
              autocomplete="current-password"
              onkeydown="if(event.key==='Enter')fazerLogin()">
-      <label>Password</label>
     </div>
     <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar →</button>
   </div>
@@ -388,12 +58,12 @@
 
 <!-- CONTEÚDO ADMIN -->
 <div class="admin-container" id="adminContainer" style="display:none">
-
+  
   <div class="admin-header">
     <h1>🛡️ Gestão de Utilizadores</h1>
     <p>Administração do sistema de registo de nacionalidades</p>
   </div>
-
+  
   <div class="admin-actions">
     <button class="btn-novo-user btn-voltar" onclick="voltarParaApp()">
       ← Voltar à App
@@ -402,7 +72,7 @@
       ➕ Novo Utilizador
     </button>
   </div>
-
+  
   <div class="users-table-container">
     <div class="loading-overlay" id="loadingUsers">
       <div class="spinner"></div>
@@ -428,7 +98,7 @@
       </tbody>
     </table>
   </div>
-
+  
 </div>
 
 <!-- MODAL NOVO UTILIZADOR -->
@@ -440,34 +110,22 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Nome Completo *</label>
-        <div class="field no-margin">
-          <input class="active" type="text" id="userNome" placeholder=" " required>
-          <label>João Silva</label>
-        </div>
+        <input type="text" id="userNome" placeholder="João Silva" required>
       </div>
       <div class="form-group">
         <label>Email *</label>
-        <div class="field no-margin">
-          <input class="active" type="email" id="userEmail" placeholder=" " required>
-          <label>joao.silva@exemplo.pt</label>
-        </div>
+        <input type="email" id="userEmail" placeholder="joao.silva@exemplo.pt" required>
       </div>
       <div class="form-group" id="passwordGroup">
         <label>Password *</label>
-        <div class="field no-margin">
-          <input class="active" type="password" id="userPassword" placeholder=" " required>
-          <label>Mínimo 6 caracteres</label>
-        </div>
+        <input type="password" id="userPassword" placeholder="Mínimo 6 caracteres" required>
       </div>
       <div class="form-group">
         <label>Role *</label>
-        <div class="field suffix no-margin">
-          <select id="userRole">
-            <option value="utilizador">Utilizador</option>
-            <option value="administrador">Administrador</option>
-          </select>
-          <i>arrow_drop_down</i>
-        </div>
+        <select id="userRole">
+          <option value="utilizador">Utilizador</option>
+          <option value="administrador">Administrador</option>
+        </select>
       </div>
     </div>
     <div class="modal-actions">
@@ -487,27 +145,18 @@
       <input type="hidden" id="editUserUid">
       <div class="form-group">
         <label>Nome Completo *</label>
-        <div class="field no-margin">
-          <input class="active" type="text" id="editUserNome" placeholder=" " required>
-          <label>Nome</label>
-        </div>
+        <input type="text" id="editUserNome" required>
       </div>
       <div class="form-group">
         <label>Email</label>
-        <div class="field no-margin">
-          <input class="active" type="email" id="editUserEmail" placeholder=" " disabled style="opacity:.6">
-          <label>Email</label>
-        </div>
+        <input type="email" id="editUserEmail" disabled style="opacity:0.6">
       </div>
       <div class="form-group">
         <label>Role *</label>
-        <div class="field suffix no-margin">
-          <select id="editUserRole">
-            <option value="utilizador">Utilizador</option>
-            <option value="administrador">Administrador</option>
-          </select>
-          <i>arrow_drop_down</i>
-        </div>
+        <select id="editUserRole">
+          <option value="utilizador">Utilizador</option>
+          <option value="administrador">Administrador</option>
+        </select>
       </div>
     </div>
     <div class="modal-actions">
@@ -526,7 +175,9 @@
     <span class="rodape-dev">Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz</span>
     <div class="rodape-pwa">
       <span class="rodape-versao" id="rodapeVersao">v1</span>
-      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">🔄 Verificar atualização</button>
+      <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">
+        🔄 Verificar atualização
+      </button>
     </div>
   </div>
 </footer>
@@ -542,6 +193,7 @@
 <script src="js/api.js"></script>
 <script src="js/sw-update.js"></script>
 <script src="js/users.js"></script>
+
 
 <script>
 'use strict';
@@ -570,6 +222,7 @@ function fazerLogin() {
 
   apiAutenticar(email, pass,
     function onSuccess(resp) {
+      // Verificar se é admin
       verificarSeAdmin()
         .then(function(isAdmin) {
           if (!isAdmin) {
@@ -620,7 +273,7 @@ function voltarParaApp() {
 // ============================================================
 // NOME DO UTILIZADOR NO HEADER
 // ============================================================
-
+ 
 function mostrarNomeUtilizador() {
   obterPerfilUtilizador()
     .then(function(perfil) {
@@ -661,6 +314,7 @@ function carregarUtilizadores() {
       users.forEach(function(user) {
         var tr = document.createElement('tr');
 
+        /* ── dados reutilizáveis ── */
         var nome        = esc(user.nome || '—');
         var email       = esc(user.email);
         var isAdmin     = user.role === 'administrador';
@@ -687,20 +341,37 @@ function carregarUtilizadores() {
           ? '<button class="btn-action btn-desativar" onclick="toggleAtivo(\'' + uid + '\', false)">🚫 Desativar</button>'
           : '<button class="btn-action btn-ativar"    onclick="toggleAtivo(\'' + uid + '\', true)">✅ Ativar</button>';
 
+        /* ────────────────────────────────────────────────────
+           ESTRUTURA DUPLA:
+           • .user-card-* → visível apenas em mobile (≤700px)
+           • <td> normais  → visíveis apenas em desktop (>700px)
+        ──────────────────────────────────────────────────── */
         tr.innerHTML =
-          /* ── mobile card zones ── */
+
+          /* ── ZONA 1 — cabeçalho do card (mobile) ── */
           '<div class="user-card-header">' +
             '<span class="user-card-nome">' + nome + '</span>' +
-            '<span class="user-card-badges">' + badgeRole + badgeEstado + '</span>' +
+            '<span class="user-card-badges">' +
+              badgeRole + badgeEstado +
+            '</span>' +
           '</div>' +
+
+          /* ── ZONA 2 — email (mobile) ── */
           '<div class="user-card-email">' + email + '</div>' +
-          '<div class="user-card-actions">' + btnEditar + btnToggle + '</div>' +
-          /* ── desktop table cells ── */
+
+          /* ── ZONA 3 — acções (mobile) ── */
+          '<div class="user-card-actions">' +
+            btnEditar + btnToggle +
+          '</div>' +
+
+          /* ── CÉLULAS para tabela desktop ── */
           '<td data-label="Nome"><strong>' + nome + '</strong></td>' +
           '<td data-label="Email">' + email + '</td>' +
           '<td data-label="Role">'  + badgeRole   + '</td>' +
           '<td data-label="Estado">' + badgeEstado + '</td>' +
-          '<td data-label="Ações"><div class="user-actions">' + btnEditar + btnToggle + '</div></td>';
+          '<td data-label="Ações"><div class="user-actions">' +
+            btnEditar + btnToggle +
+          '</div></td>';
 
         tbody.appendChild(tr);
       });
@@ -736,28 +407,30 @@ function fecharModal() {
 }
 
 function guardarUtilizador() {
-  var nome     = document.getElementById('userNome').value.trim();
-  var email    = document.getElementById('userEmail').value.trim();
+  var nome = document.getElementById('userNome').value.trim();
+  var email = document.getElementById('userEmail').value.trim();
   var password = document.getElementById('userPassword').value;
-  var role     = document.getElementById('userRole').value;
-
+  var role = document.getElementById('userRole').value;
+  
   if (!nome || !email || !password) {
     mostrarToast('Por favor preencha todos os campos obrigatórios.', 'erro');
     return;
   }
+  
   if (password.length < 6) {
     mostrarToast('A password deve ter no mínimo 6 caracteres.', 'erro');
     return;
   }
-
+  
   var btn = document.getElementById('btnGuardarUser');
   btn.disabled = true;
   btn.textContent = '⏳ A guardar...';
-
+  
   criarUtilizador({ email: email, password: password, nome: nome, role: role })
     .then(function(resp) {
       btn.disabled = false;
       btn.textContent = 'Guardar';
+      
       if (resp.sucesso) {
         mostrarToast('✓ ' + resp.mensagem, 'sucesso');
         fecharModal();
@@ -781,14 +454,20 @@ function abrirModalEditar(uid) {
   listarUtilizadores()
     .then(function(users) {
       var user = users.find(function(u) { return u.uid === uid; });
-      if (!user) { mostrarToast('Utilizador não encontrado.', 'erro'); return; }
-      document.getElementById('editUserUid').value   = uid;
-      document.getElementById('editUserNome').value  = user.nome || '';
+      if (!user) {
+        mostrarToast('Utilizador não encontrado.', 'erro');
+        return;
+      }
+      
+      document.getElementById('editUserUid').value = uid;
+      document.getElementById('editUserNome').value = user.nome || '';
       document.getElementById('editUserEmail').value = user.email;
-      document.getElementById('editUserRole').value  = user.role;
+      document.getElementById('editUserRole').value = user.role;
       document.getElementById('modalEditarUser').classList.add('show');
     })
-    .catch(function(err) { mostrarToast('Erro ao carregar utilizador: ' + err.message, 'erro'); });
+    .catch(function(err) {
+      mostrarToast('Erro ao carregar utilizador: ' + err.message, 'erro');
+    });
 }
 
 function fecharModalEditar() {
@@ -796,35 +475,43 @@ function fecharModalEditar() {
 }
 
 function guardarEdicaoUtilizador() {
-  var uid  = document.getElementById('editUserUid').value;
+  var uid = document.getElementById('editUserUid').value;
   var nome = document.getElementById('editUserNome').value.trim();
   var role = document.getElementById('editUserRole').value;
-
-  if (!nome) { mostrarToast('O nome não pode estar vazio.', 'erro'); return; }
-
+  
+  if (!nome) {
+    mostrarToast('O nome não pode estar vazio.', 'erro');
+    return;
+  }
+  
   atualizarUtilizador(uid, { nome: nome, role: role })
     .then(function(resp) {
       mostrarToast('✓ ' + resp.mensagem, 'sucesso');
       fecharModalEditar();
       carregarUtilizadores();
     })
-    .catch(function(err) { mostrarToast('Erro: ' + err.message, 'erro'); });
+    .catch(function(err) {
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
 }
 
 // ============================================================
-// ATIVAR / DESATIVAR
+// ATIVAR/DESATIVAR
 // ============================================================
 
 function toggleAtivo(uid, ativar) {
   var acao = ativar ? 'ativar' : 'desativar';
   if (!confirm('Tem a certeza que deseja ' + acao + ' este utilizador?')) return;
+  
   var fn = ativar ? ativarUtilizador : desativarUtilizador;
   fn(uid)
     .then(function(resp) {
       mostrarToast('✓ ' + resp.mensagem, 'sucesso');
       carregarUtilizadores();
     })
-    .catch(function(err) { mostrarToast('Erro: ' + err.message, 'erro'); });
+    .catch(function(err) {
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
 }
 
 // ============================================================
@@ -833,8 +520,10 @@ function toggleAtivo(uid, ativar) {
 
 function esc(str) {
   return String(str)
-    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
-    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function mostrarToast(msg, tipo) {
@@ -849,8 +538,10 @@ function mostrarToast(msg, tipo) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
+      
       verificarSeAdmin()
         .then(function(isAdmin) {
           if (isAdmin) {
@@ -862,7 +553,9 @@ document.addEventListener('DOMContentLoaded', function() {
             apiLogout();
           }
         })
-        .catch(function() { apiLogout(); });
+        .catch(function() {
+          apiLogout();
+        });
     }
   });
 });
