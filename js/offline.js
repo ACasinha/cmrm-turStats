@@ -193,11 +193,11 @@ function gerarPDF(tipo) {
     st([255, 255, 255]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text('Registo Diario de Nacionalidades', MARGEM, 7);
+    doc.text('Registo Di\u00e1rio de Nacionalidades', MARGEM, 7);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.text('Municipio de Reguengos de Monsaraz  \u00b7  Servicos de Turismo', MARGEM, 12);
-    if (numPag) doc.text('Pag. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
+    doc.text('Munic\u00edpio de Reguengos de Monsaraz  \u00b7  Servi\u00e7os de Turismo', MARGEM, 12);
+    if (numPag) doc.text('P\u00e1g. ' + numPag, 210 - MARGEM, 12, { align: 'right' });
     st(COR_TEXTO);
     return 23;
   }
@@ -228,7 +228,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(6.5);
     st([150, 150, 150]);
-    doc.text('Registo Diario de Nacionalidades  \u00b7  Municipio de Reguengos de Monsaraz', MARGEM, yR + 3.5);
+    doc.text('Registo Di\u00e1rio de Nacionalidades  \u00b7  Munic\u00edpio de Reguengos de Monsaraz', MARGEM, yR + 3.5);
     if (total !== undefined) {
       doc.setFont('helvetica', 'bold');
       st(COR_PRINCIPAL);
@@ -242,7 +242,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     st(COR_PRINCIPAL);
-    doc.text('Assinatura do(a) Funcionario(a):', MARGEM, yp);
+    doc.text('Assinatura do(a) Funcion\u00e1rio(a):', MARGEM, yp);
     doc.text('Data:', MARGEM + 120, yp);
     sd(COR_PRINCIPAL);
     doc.setLineWidth(0.4);
@@ -261,7 +261,7 @@ function gerarPDF(tipo) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(192, 57, 43);
-    doc.text('IMPORTANTE: Apos restabelecimento da Internet inserir dados na aplicacao.', MARGEM + 3, yp + 5);
+    doc.text('IMPORTANTE: Ap\u00f3s restabelecimento da Internet inserir dados na aplica\u00e7\u00e3o.', MARGEM + 3, yp + 5);
     st(COR_TEXTO);
     return yp + 11;
   }
@@ -323,93 +323,63 @@ function gerarPDF(tipo) {
     var listaPDF = [
       { nome: 'Portugal',           sub: 3, dest: true  },
       { nome: 'Espanha',            sub: 2, dest: true  },
-      { nome: 'Africa do Sul',      sub: 1, dest: false },
-      { nome: 'Albania',            sub: 1, dest: false },
+      { nome: '\u00c1frica do Sul',      sub: 1, dest: false },
+      { nome: 'Alb\u00e2nia',            sub: 1, dest: false },
       { nome: 'Alemanha',           sub: 1, dest: false },
       { nome: 'Angola',             sub: 1, dest: false },
       { nome: 'Argentina',          sub: 1, dest: false },
-      { nome: 'Australia',          sub: 1, dest: false },
-      { nome: 'Austria',            sub: 1, dest: false },
-      { nome: 'Belgica',            sub: 1, dest: false },
-      { nome: 'Bosnia Herzegovina', sub: 1, dest: false },
+      { nome: 'Austr\u00e1lia',          sub: 1, dest: false },
+      { nome: '\u00c1ustria',            sub: 1, dest: false },
+      { nome: 'B\u00e9lgica',            sub: 1, dest: false },
+      { nome: 'B\u00f3snia Herzegovina', sub: 1, dest: false },
       { nome: 'Brasil',             sub: 1, dest: false },
-      { nome: 'Canada',             sub: 1, dest: false },
+      { nome: 'Canad\u00e1',             sub: 1, dest: false },
       { nome: 'Chile',              sub: 1, dest: false },
       { nome: 'China',              sub: 1, dest: false },
       { nome: 'Chipre',             sub: 1, dest: false },
-      { nome: 'Colombia',           sub: 1, dest: false },
+      { nome: 'Col\u00f4mbia',           sub: 1, dest: false },
       { nome: 'Coreia do Sul',      sub: 1, dest: false },
-      { nome: 'Croatia',            sub: 1, dest: false },
+      { nome: 'Cro\u00e1cia',            sub: 1, dest: false },
       { nome: 'Dinamarca',          sub: 1, dest: false },
-      { nome: 'Eslovenia',          sub: 1, dest: false },
-      { nome: 'Estonia',            sub: 1, dest: false },
+      { nome: 'Eslov\u00e9nia',          sub: 1, dest: false },
+      { nome: 'Est\u00f3nia',            sub: 1, dest: false },
       { nome: 'EUA',                sub: 1, dest: false },
-      { nome: 'Finlandia',          sub: 1, dest: false },
-      { nome: 'Franca',             sub: 1, dest: false },
-      { nome: 'Grecia',             sub: 1, dest: false },
+      { nome: 'Finl\u00e2ndia',          sub: 1, dest: false },
+      { nome: 'Fran\u00e7a',             sub: 1, dest: false },
+      { nome: 'Gr\u00e9cia',             sub: 1, dest: false },
       { nome: 'Holanda',            sub: 1, dest: false },
       { nome: 'Hungria',            sub: 1, dest: false },
-      { nome: 'India',              sub: 1, dest: false },
+      { nome: '\u00cdndia',              sub: 1, dest: false },
       { nome: 'Inglaterra',         sub: 1, dest: false },
       { nome: 'Irlanda',            sub: 1, dest: false },
-      { nome: 'Islandia',           sub: 1, dest: false },
+      { nome: 'Isl\u00e2ndia',           sub: 1, dest: false },
       { nome: 'Israel',             sub: 1, dest: false },
-      { nome: 'Italia',             sub: 1, dest: false },
-      { nome: 'Japao',              sub: 1, dest: false },
-      { nome: 'Letonia',            sub: 1, dest: false },
-      { nome: 'Lituania',           sub: 1, dest: false },
+      { nome: 'It\u00e1lia',             sub: 1, dest: false },
+      { nome: 'Jap\u00e3o',              sub: 1, dest: false },
+      { nome: 'Let\u00f3nia',            sub: 1, dest: false },
+      { nome: 'Litu\u00e2nia',           sub: 1, dest: false },
       { nome: 'Luxemburgo',         sub: 1, dest: false },
-      { nome: 'Mexico',             sub: 1, dest: false },
-      { nome: 'Moldavia',           sub: 1, dest: false },
-      { nome: 'Monaco',             sub: 1, dest: false },
+      { nome: 'M\u00e9xico',             sub: 1, dest: false },
+      { nome: 'Mold\u00e1via',           sub: 1, dest: false },
+      { nome: 'M\u00f3naco',             sub: 1, dest: false },
       { nome: 'Noruega',            sub: 1, dest: false },
-      { nome: 'Nova Zelandia',      sub: 1, dest: false },
-      { nome: 'Polonia',            sub: 1, dest: false },
-      { nome: 'Republica Checa',    sub: 1, dest: false },
-      { nome: 'Romania',            sub: 1, dest: false },
-      { nome: 'Russia',             sub: 1, dest: false },
+      { nome: 'Nova Zel\u00e2ndia',      sub: 1, dest: false },
+      { nome: 'Pol\u00f3nia',            sub: 1, dest: false },
+      { nome: 'Rep\u00fablica Checa',    sub: 1, dest: false },
+      { nome: 'Rom\u00e9nia',            sub: 1, dest: false },
+      { nome: 'R\u00fassia',             sub: 1, dest: false },
       { nome: 'Singapura',          sub: 1, dest: false },
-      { nome: 'Suecia',             sub: 1, dest: false },
-      { nome: 'Suica',              sub: 1, dest: false },
-      { nome: 'Ucrania',            sub: 1, dest: false },
+      { nome: 'Su\u00e9cia',             sub: 1, dest: false },
+      { nome: 'Su\u00ed\u00e7a',              sub: 1, dest: false },
+      { nome: 'Ucr\u00e2nia',            sub: 1, dest: false },
       { nome: 'Venezuela',          sub: 1, dest: false },
-      { nome: 'Outros Paises',      sub: 1, dest: false },
+      { nome: 'Outros Pa\u00edses',      sub: 1, dest: false },
     ];
 
-    // Nomes sem diacríticos → com diacríticos (para ler valores da app)
+    // Os nomes em listaPDF já têm diacríticos e coincidem com data.js.
+    // O mapa apenas trata excepções de grafia entre os dois ficheiros.
     var mapa = {
-      'Africa do Sul':      'África do Sul',
-      'Albania':            'Albânia',
-      'Australia':          'Austrália',
-      'Austria':            'Áustria',
-      'Belgica':            'Bélgica',
-      'Bosnia Herzegovina': 'Bósnia Herzegovina',
-      'Canada':             'Canadá',
-      'Colombia':           'Colômbia',
-      'Croatia':            'Croácia',
-      'Eslovenia':          'Eslovénia',
-      'Estonia':            'Estónia',
-      'Finlandia':          'Finlândia',
-      'Franca':             'França',
-      'Grecia':             'Grécia',
-      'India':              'Índia',
-      'Islandia':           'Islândia',
-      'Italia':             'Itália',
-      'Japao':              'Japão',
-      'Letonia':            'Letónia',
-      'Lituania':           'Lituânia',
-      'Mexico':             'México',
-      'Moldavia':           'Moldávia',
-      'Monaco':             'Mónaco',
-      'Nova Zelandia':      'Nova Zelândia',
-      'Outros Paises':      'Outros Países',
-      'Polonia':            'Polónia',
-      'Republica Checa':    'República Checa',
-      'Romania':            'Roménia',
-      'Russia':             'Rússia',
-      'Suecia':             'Suécia',
-      'Suica':              'Suíça',
-      'Ucrania':            'Ucrânia',
+      'Col\u00f4mbia': 'Col\u00f4mbia',   // coincide
     };
 
     // Ler valores registados
@@ -420,7 +390,7 @@ function gerarPDF(tipo) {
 
     var totalGeral = 0;
     listaPDF.forEach(function(p) {
-      totalGeral += vals[mapa[p.nome] || p.nome] || 0;
+      totalGeral += vals[p.nome] || 0;
     });
 
     // ── Cabeçalho da tabela de países ────────────────────────
@@ -439,7 +409,7 @@ function gerarPDF(tipo) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       st([255, 255, 255]);
-      doc.text('Pais / Regiao de Origem',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
+      doc.text('Pa\u00eds / Regi\u00e3o de Origem',  X0 + COL0 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Turistas / Visitantes',    X1 + COL1 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       doc.text('Total',                    X2 + COL2 / 2, yp + H_HEAD / 2 + 0.5, { align: 'center', baseline: 'middle' });
       st(COR_TEXTO);
@@ -553,7 +523,7 @@ function gerarPDF(tipo) {
     yc = cabecalhoTabela(yc);
 
     listaPDF.forEach(function(pais, idx) {
-      var orig  = mapa[pais.nome] || pais.nome;
+      var orig  = pais.nome;
       var valor = vals[orig] || 0;
       var alturaGrupo = pais.sub * H_LIN;
 
@@ -589,7 +559,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      head: [['Operador / Ag\u00eancia', 'Nacionalidades', 'Total']],
       body: ops,
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -597,7 +567,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Sugestao / Critica', 'Nacionalidade']],
+      head: [['Sugest\u00e3o / Cr\u00edtica', 'Nacionalidade']],
       body: sugs,
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -605,7 +575,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y2,
-      head: [['Outras Observacoes']],
+      head: [['Outras Observa\u00e7\u00f5es']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
@@ -758,7 +728,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Operador / Agencia', 'Nacionalidades', 'Total']],
+      head: [['Operador / Ag\u00eancia', 'Nacionalidades', 'Total']],
       body: ops,
       columnStyles: { 0: { cellWidth: 55 }, 2: { cellWidth: 18, halign: 'right' } },
     }));
@@ -766,7 +736,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Sugestao / Critica', 'Nacionalidade']],
+      head: [['Sugest\u00e3o / Cr\u00edtica', 'Nacionalidade']],
       body: sugs,
       columnStyles: { 1: { cellWidth: 38 } },
     }));
@@ -774,7 +744,7 @@ function gerarPDF(tipo) {
 
     doc.autoTable(Object.assign({}, estiloBase, {
       startY: y,
-      head: [['Outras Observacoes']],
+      head: [['Outras Observa\u00e7\u00f5es']],
       body: [[obs || '']],
       styles: Object.assign({}, estiloBase.styles, { minCellHeight: 12 }),
     }));
