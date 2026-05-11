@@ -259,9 +259,8 @@ function verificarDados() {
   var partes = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
-  apiVerificarDados(local, data,
+  apiVerificarDados(local, dataFormatada,
     function onSuccess(resp) {
-      console.log('[verificarDados] resposta:', JSON.stringify(resp)); // ← adicionar
       if (!resp.sucesso) {
         mostrarBanner('', '');
         mostrarToast('Erro: ' + resp.mensagem, 'erro');
