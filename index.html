@@ -97,7 +97,7 @@
   <div class="meta-card">
     <div class="field-group">
       <label>📍 Local / Posto</label>
-      <select id="local">
+      <select id="local" onchange="agendarVerificacao()">
         <option value="" disabled selected>Escolha uma opção...</option>
         <optgroup label="Lista completa de países">
           <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
@@ -117,7 +117,7 @@
     </div>
     <div class="field-group">
       <label>📅 Data</label>
-      <input type="date" id="data">
+      <input type="date" id="data" onchange="agendarVerificacao()">
     </div>
   </div>
 
