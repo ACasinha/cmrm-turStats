@@ -261,6 +261,7 @@ function verificarDados() {
 
   apiVerificarDados(local, data,
     function onSuccess(resp) {
+      console.log('[verificarDados] resposta:', JSON.stringify(resp)); // ← adicionar
       if (!resp.sucesso) {
         mostrarBanner('', '');
         mostrarToast('Erro: ' + resp.mensagem, 'erro');
