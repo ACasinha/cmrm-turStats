@@ -205,8 +205,11 @@ function inicializarApp() {
   });
   // Observar o formulário completo para qualquer input/change
   document.getElementById('local').addEventListener('change', function() {
-    dadosAlterados = false; // ao mudar local, os dados são recarregados — reset
+  dadosAlterados = false; // ao mudar local, os dados são recarregados — reset
+  ultimoLocalVerificado = '';
+  ultimaDataVerificada  = '';
   });
+    
   // Obrigatoriedade de local em campos de texto livres (operadores e sugestões)
   // via delegação no contentor principal
   document.querySelector('.container').addEventListener('input', function(e) {
@@ -221,7 +224,9 @@ function inicializarApp() {
     }
   });
   document.getElementById('data').addEventListener('change', function() {
-    dadosAlterados = false; // ao mudar data, idem
+  dadosAlterados = false; // ao mudar data, idem
+  ultimoLocalVerificado = '';
+  ultimaDataVerificada  = ''; 
   });
 }
 
@@ -230,8 +235,9 @@ function inicializarApp() {
 // ============================================================
 
 function agendarVerificacao() {
-  // Reconstruir tabela de países ao mudar local (adapta modo detalhado/simplificado)
   if (typeof construirTabelaPaises === 'function') construirTabelaPaises();
+  ultimoLocalVerificado = '';  // ← forçar re-verificação
+  ultimaDataVerificada  = '';  // ← forçar re-verificação
   clearTimeout(verificacaoTimer);
   verificacaoTimer = setTimeout(verificarDados, 600);
 }
