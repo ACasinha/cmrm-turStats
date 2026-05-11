@@ -100,7 +100,7 @@ function mostrarModalPDF() {
   if (!modal) {
     modal = document.createElement('div');
     modal.id        = 'modalEscolhaPDF';
-    modal.className = 'modal-pdf-overlay';
+    modal.className = 'modal-overlay';
     modal.innerHTML =
       '<div class="modal-pdf-caixa">' +
         '<div class="modal-pdf-titulo">📄 Gerar Formulário PDF</div>' +
@@ -160,11 +160,11 @@ function gerarPDF(tipo) {
   // Col 0 (País):            52 mm
   // Col 2 (Total):           22 mm
   // Col 1 (Turistas/Visit.): 186 - 52 - 22 = 112 mm
-  var COL0   = 52;
+  var COL0   = 32;
   var COL2   = 22;
   var COL1   = LARGURA - COL0 - COL2;
-  var H_LIN  = 6.0;   // altura de cada sub-linha (mm)
-  var H_HEAD = 7.0;   // altura do cabeçalho da tabela (mm)
+  var H_LIN  = 4.0;   // altura de cada sub-linha (mm)
+  var H_HEAD = 5.0;   // altura do cabeçalho da tabela (mm)
 
   // ── Posições X ──────────────────────────────────────────────
   var X0 = MARGEM;
