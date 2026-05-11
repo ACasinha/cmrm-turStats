@@ -255,6 +255,10 @@ function verificarDados() {
   document.getElementById('btnGuardar').disabled = false;
   mostrarBanner('verificando', '⏳ A verificar dados existentes...');
 
+  // Converter "2026-05-11" para "11/05/2026"
+  var partes = data.split('-');
+  var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
+
   apiVerificarDados(local, data,
     function onSuccess(resp) {
       if (!resp.sucesso) {
@@ -349,8 +353,12 @@ function guardarDados() {
   btn.textContent = '⏳ A guardar...';
   mostrarToast('A guardar...', 'info');
 
+  // ← Converter "2026-05-11" para "11/05/2026"
+  var partes = data.split('-');
+  var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
+
   apiGuardarRegisto(
-    { data: data, local: local, paises: paises, operadores: operadores, sugestoes: sugestoes, observacoes: observacoes },
+    { data: dataFormatada, local: local, paises: paises, operadores: operadores, sugestoes: sugestoes, observacoes: observacoes },
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
