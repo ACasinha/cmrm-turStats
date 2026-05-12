@@ -16,12 +16,19 @@ function esc(str) {
 }
 
 // ============================================================
-// CONSTRUÇÃO DE TABELAS
+// CONSTRUÇÃO DA SECÇÃO DE PAÍSES
+//
+// Arquitectura:
+//   1. Tabela de destaque  — sempre visível (Portugal, Espanha…)
+//   2. Zona de adicionados — países escolhidos via busca
+//   3. Painel de busca     — campo + lista filtrada
 // ============================================================
+
+// Estado dos países adicionados via pesquisa
+var _paisesAdicionados = []; // [ { nome, valor } ]
 
 function construirTabelaPaises() {
   var local  = (document.getElementById('local') || {}).value || '';
-  var lista  = (typeof listaPaises === 'function') ? listaPaises(local) : PAISES;
   var simples = (typeof modoSimplificado === 'function') && modoSimplificado(local);
 
   // Actualizar título da secção
@@ -29,30 +36,261 @@ function construirTabelaPaises() {
   if (titulo) {
     titulo.textContent = simples
       ? 'Nacionais / Estrangeiros'
-      : 'Paises — Turistas e Visitantes';
+      : 'Países — Turistas e Visitantes';
   }
 
-  var tbody = document.getElementById('tabelaPaises');
-  tbody.innerHTML = '';
+  if (simples) {
+    _construirModoSimples();
+  } else {
+    _construirModoDetalhado();
+  }
+}
 
-  lista.forEach(function(pais) {
-    var tr = document.createElement('tr');
-    if (pais.destaque) tr.classList.add('row-destaque');
-    tr.innerHTML =
-      '<td>' + esc(pais.nome) + '</td>' +
-      '<td class="num-cell">' +
-        '<div class="num-stepper">' +
-          '<button type="button" class="btn-stepper btn-menos"' +
-                  ' onclick="stepPais(this,-1)" aria-label="Menos">−</button>' +
-          '<input type="number" inputmode="numeric" class="num-input pais-input"' +
-                 ' min="0" placeholder="0" data-pais="' + esc(pais.nome) + '"' +
-                 ' oninput="atualizarTotais(this)">' +
-          '<button type="button" class="btn-stepper btn-mais"' +
-                  ' onclick="stepPais(this,1)" aria-label="Mais">+</button>' +
-        '</div>' +
-      '</td>';
-    tbody.appendChild(tr);
+// ── Modo simplificado (Nacionais / Estrangeiros) ─────────────
+function _construirModoSimples() {
+  var container = document.getElementById('paisesContainer');
+  container.innerHTML = '';
+
+  // Ocultar zona de pesquisa
+  var zonaPesquisa = document.getElementById('zonaPesquisaPaises');
+  if (zonaPesquisa) zonaPesquisa.style.display = 'none';
+
+  var tbody = document.createElement('tbody');
+  tbody.id = 'tabelaPaises';
+
+  PAISES_SIMPLES.forEach(function(pais) {
+    tbody.appendChild(_criarLinhaPais(pais.nome, pais.destaque));
   });
+
+  var table = document.createElement('table');
+  table.className = 'paises-table';
+  table.innerHTML =
+    '<thead><tr>' +
+      '<th>Tipo</th>' +
+      '<th style="text-align:center">Turistas / Visitantes</th>' +
+    '</tr></thead>';
+  table.appendChild(tbody);
+
+  var scroll = document.createElement('div');
+  scroll.className = 'table-scroll';
+  scroll.appendChild(table);
+  container.appendChild(scroll);
+}
+
+// ── Modo detalhado (lista completa com pesquisa) ─────────────
+function _construirModoDetalhado() {
+  var container = document.getElementById('paisesContainer');
+  container.innerHTML = '';
+
+  // ── Tabela de destaque ────────────────────────────────────
+  var tbodyDestaque = document.createElement('tbody');
+  tbodyDestaque.id = 'tabelaPaises'; // mantido para compatibilidade com o resto do código
+
+  PAISES.filter(function(p) { return p.destaque; }).forEach(function(pais) {
+    tbodyDestaque.appendChild(_criarLinhaPais(pais.nome, true));
+  });
+
+  var tableDestaque = document.createElement('table');
+  tableDestaque.className = 'paises-table';
+  tableDestaque.innerHTML =
+    '<thead><tr>' +
+      '<th>País</th>' +
+      '<th style="text-align:center">Turistas / Visitantes</th>' +
+    '</tr></thead>';
+  tableDestaque.appendChild(tbodyDestaque);
+
+  var scrollDestaque = document.createElement('div');
+  scrollDestaque.className = 'table-scroll';
+  scrollDestaque.appendChild(tableDestaque);
+  container.appendChild(scrollDestaque);
+
+  // ── Zona de países adicionados via pesquisa ───────────────
+  var zonaAdicionados = document.createElement('div');
+  zonaAdicionados.id = 'zonaAdicionados';
+  zonaAdicionados.style.display = _paisesAdicionados.length ? '' : 'none';
+
+  var tbodyExtra = document.createElement('tbody');
+  tbodyExtra.id = 'tabelaPaisesExtra';
+
+  _paisesAdicionados.forEach(function(p) {
+    tbodyExtra.appendChild(_criarLinhaPaisExtra(p.nome));
+  });
+
+  var tableExtra = document.createElement('table');
+  tableExtra.className = 'paises-table paises-table-extra';
+  tableExtra.innerHTML =
+    '<thead><tr>' +
+      '<th>Outros países</th>' +
+      '<th style="text-align:center">Turistas / Visitantes</th>' +
+    '</tr></thead>';
+  tableExtra.appendChild(tbodyExtra);
+
+  var scrollExtra = document.createElement('div');
+  scrollExtra.className = 'table-scroll';
+  scrollExtra.appendChild(tableExtra);
+  zonaAdicionados.appendChild(scrollExtra);
+  container.appendChild(zonaAdicionados);
+
+  // ── Painel de pesquisa ────────────────────────────────────
+  var zonaPesquisa = document.getElementById('zonaPesquisaPaises');
+  if (zonaPesquisa) {
+    zonaPesquisa.style.display = '';
+    _inicializarPesquisa();
+  }
+
+  // Restaurar valores guardados nos adicionados
+  _paisesAdicionados.forEach(function(p) {
+    var inp = document.querySelector('.pais-input[data-pais="' + p.nome + '"]');
+    if (inp && p.valor > 0) {
+      inp.value = p.valor;
+      _aplicarEstiloValor(inp);
+    }
+  });
+}
+
+// ── Criar linha de país (destaque / modo simples) ─────────────
+function _criarLinhaPais(nomePais, destaque) {
+  var tr = document.createElement('tr');
+  if (destaque) tr.classList.add('row-destaque');
+  tr.innerHTML =
+    '<td>' + esc(nomePais) + '</td>' +
+    '<td class="num-cell">' +
+      '<div class="num-stepper">' +
+        '<button type="button" class="btn-stepper btn-menos"' +
+                ' onclick="stepPais(this,-1)" aria-label="Menos">−</button>' +
+        '<input type="number" inputmode="numeric" class="num-input pais-input"' +
+               ' min="0" placeholder="0" data-pais="' + esc(nomePais) + '"' +
+               ' oninput="atualizarTotais(this)">' +
+        '<button type="button" class="btn-stepper btn-mais"' +
+                ' onclick="stepPais(this,1)" aria-label="Mais">+</button>' +
+      '</div>' +
+    '</td>';
+  return tr;
+}
+
+// ── Criar linha de país adicionado (com botão remover) ────────
+function _criarLinhaPaisExtra(nomePais) {
+  var tr = document.createElement('tr');
+  tr.dataset.paisNome = nomePais;
+  tr.innerHTML =
+    '<td>' +
+      '<span>' + esc(nomePais) + '</span>' +
+      '<button type="button" class="btn-remover-pais" ' +
+              'onclick="removerPaisExtra(this)" ' +
+              'aria-label="Remover ' + esc(nomePais) + '" ' +
+              'title="Remover">✕</button>' +
+    '</td>' +
+    '<td class="num-cell">' +
+      '<div class="num-stepper">' +
+        '<button type="button" class="btn-stepper btn-menos"' +
+                ' onclick="stepPais(this,-1)" aria-label="Menos">−</button>' +
+        '<input type="number" inputmode="numeric" class="num-input pais-input"' +
+               ' min="0" placeholder="0" data-pais="' + esc(nomePais) + '"' +
+               ' oninput="atualizarTotais(this)">' +
+        '<button type="button" class="btn-stepper btn-mais"' +
+                ' onclick="stepPais(this,1)" aria-label="Mais">+</button>' +
+      '</div>' +
+    '</td>';
+  return tr;
+}
+
+// ── Pesquisa de países ────────────────────────────────────────
+
+function _inicializarPesquisa() {
+  var input = document.getElementById('inputPesquisaPais');
+  var lista = document.getElementById('listaPesquisaPaises');
+  if (!input || !lista) return;
+
+  // Limpar listeners antigos clonando o elemento
+  var novoInput = input.cloneNode(true);
+  input.parentNode.replaceChild(novoInput, input);
+  input = novoInput;
+
+  input.addEventListener('input', function() {
+    _filtrarPaises(input.value.trim());
+  });
+  input.addEventListener('focus', function() {
+    if (input.value.trim()) _filtrarPaises(input.value.trim());
+  });
+
+  // Fechar dropdown ao clicar fora
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#zonaPesquisaPaises')) {
+      lista.style.display = 'none';
+    }
+  });
+}
+
+function _filtrarPaises(termo) {
+  var lista = document.getElementById('listaPesquisaPaises');
+  if (!lista) return;
+
+  // Nomes já presentes (destaque + adicionados)
+  var presentes = PAISES.filter(function(p) { return p.destaque; })
+                        .map(function(p) { return p.nome; });
+  _paisesAdicionados.forEach(function(p) { presentes.push(p.nome); });
+
+  var disponiveis = PAISES.filter(function(p) {
+    if (presentes.indexOf(p.nome) !== -1) return false;
+    if (!termo) return false;
+    return p.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .indexOf(termo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) !== -1;
+  });
+
+  if (!disponiveis.length) {
+    lista.style.display = 'none';
+    return;
+  }
+
+  lista.innerHTML = '';
+  disponiveis.forEach(function(pais) {
+    var li = document.createElement('li');
+    li.className = 'pais-sugestao';
+    li.textContent = pais.nome;
+    li.addEventListener('click', function() {
+      adicionarPaisExtra(pais.nome);
+      document.getElementById('inputPesquisaPais').value = '';
+      lista.style.display = 'none';
+    });
+    lista.appendChild(li);
+  });
+  lista.style.display = 'block';
+}
+
+function adicionarPaisExtra(nomePais) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) return;
+
+  // Evitar duplicados
+  var jaExiste = _paisesAdicionados.some(function(p) { return p.nome === nomePais; });
+  if (jaExiste) return;
+
+  _paisesAdicionados.push({ nome: nomePais, valor: 0 });
+
+  var tbody = document.getElementById('tabelaPaisesExtra');
+  if (tbody) {
+    tbody.appendChild(_criarLinhaPaisExtra(nomePais));
+  }
+
+  var zona = document.getElementById('zonaAdicionados');
+  if (zona) zona.style.display = '';
+}
+
+function removerPaisExtra(btn) {
+  var tr = btn.closest('tr');
+  var nomePais = tr.dataset.paisNome;
+
+  // Remover do estado
+  _paisesAdicionados = _paisesAdicionados.filter(function(p) { return p.nome !== nomePais; });
+
+  tr.remove();
+
+  var zona = document.getElementById('zonaAdicionados');
+  var tbody = document.getElementById('tabelaPaisesExtra');
+  if (zona && tbody && tbody.rows.length === 0) {
+    zona.style.display = 'none';
+  }
+
+  recalcularTotais();
 }
 
 function stepPais(btn, delta) {
@@ -64,7 +302,7 @@ function stepPais(btn, delta) {
   atualizarTotais(input);
 }
 
-// Gera o HTML das <option> da lista de países
+// Gera o HTML das <option> da lista de países (para operadores/sugestões)
 function opcoesNacionalidades(selecionada) {
   return PAISES.map(function(p) {
     var sel = p.nome === selecionada ? ' selected' : '';
@@ -73,8 +311,6 @@ function opcoesNacionalidades(selecionada) {
 }
 
 // ── Operadores ───────────────────────────────────────────────
-// Cada linha tem: nome do operador | lista de entradas país+nº | total (auto)
-// As entradas de nacionalidade são pares [select país] [input nº] com botão +.
 
 function construirTabelaOperadores(n, dados) {
   var tbody = document.getElementById('tabelaOperadores');
@@ -84,7 +320,6 @@ function construirTabelaOperadores(n, dados) {
     var op  = (dados && dados[i]) ? dados[i] : {};
     var cls = op.operador ? 'input-carregado' : '';
 
-    // Converter string guardada "Alemanha: 3, França: 2" em array de pares
     var pares = parsearNacionalidades(op.nacionalidades || '');
 
     var tr = document.createElement('tr');
@@ -103,12 +338,11 @@ function construirTabelaOperadores(n, dados) {
       </td>`;
     tbody.appendChild(tr);
 
-    // Preencher pares existentes
     var lista = tr.querySelector('.op-nac-lista');
     if (pares.length > 0) {
       pares.forEach(function(par) { adicionarLinhaOp(lista, par.pais, par.num); });
     } else {
-      adicionarLinhaOp(lista, '', ''); // linha em branco inicial
+      adicionarLinhaOp(lista, '', '');
     }
     recalcularTotalOp(tr);
   }
@@ -137,7 +371,6 @@ function adicionarLinhaOp(lista, paisSel, num) {
   lista.appendChild(div);
 }
 
-// Guard usado em todos os inputs de operadores — verifica local antes de aceitar
 function guardaLocalERecalcula(el) {
   if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
     el.value = (el.tagName === 'SELECT') ? '' : '';
@@ -160,8 +393,6 @@ function removerLinhaOp(btn) {
   recalcularTotalOp(tr);
 }
 
-// recalcularTotalOpDeLista substituído por guardaLocalERecalcula
-
 function recalcularTotalOp(tr) {
   var total = 0;
   tr.querySelectorAll('.op-nac-num').forEach(function(inp) {
@@ -170,7 +401,6 @@ function recalcularTotalOp(tr) {
   tr.querySelector('.op-total').value = total > 0 ? total : '';
 }
 
-// Serializar as linhas de nacionalidade para guardar (formato "País: N, País: N")
 function serializarNacOp(tr) {
   var pares = [];
   tr.querySelectorAll('.op-nac-linha').forEach(function(linha) {
@@ -181,14 +411,13 @@ function serializarNacOp(tr) {
   return pares.join(', ');
 }
 
-
-// Guard para input de sugestões — evita inline com aspas problemáticas
 function onInputSugTexto(inp) {
   if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
     inp.value = ''; return;
   }
   if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
 }
+
 function construirTabelaSugestoes(n, dados) {
   var tbody = document.getElementById('tabelaSugestoes');
   tbody.innerHTML = '';
@@ -215,12 +444,7 @@ function construirTabelaSugestoes(n, dados) {
 // TOTAIS
 // ============================================================
 
-function atualizarTotais(input) {
-  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
-    input.value = '';
-    return;
-  }
-  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
+function _aplicarEstiloValor(input) {
   var val = parseInt(input.value, 10) || 0;
   if (val > 0) {
     input.style.borderColor = 'var(--verde-light)';
@@ -230,6 +454,15 @@ function atualizarTotais(input) {
   } else {
     input.style.cssText = '';
   }
+}
+
+function atualizarTotais(input) {
+  if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+    input.value = '';
+    return;
+  }
+  if (typeof sinalizarAlteracao === 'function') sinalizarAlteracao();
+  _aplicarEstiloValor(input);
   recalcularTotais();
 }
 
@@ -300,15 +533,28 @@ function recolherSugestoes() {
 // ============================================================
 
 function limparFormularioParcial() {
+  // Limpar países adicionados
+  _paisesAdicionados = [];
+
   document.querySelectorAll('.pais-input').forEach(function(inp) {
     inp.value = ''; inp.style.cssText = ''; inp.classList.remove('input-carregado');
   });
   document.getElementById('totalDiario').textContent = '0';
   document.getElementById('totalGeral').textContent  = '0';
   document.getElementById('contadorPaises').textContent = '0 entradas';
+
+  // Reconstruir a secção de países (limpa os adicionados)
+  construirTabelaPaises();
+
   construirTabelaOperadores(NUM_LINHAS_OP);
   construirTabelaSugestoes(NUM_LINHAS_SUG);
   document.getElementById('observacoes').value = '';
+
+  // Limpar campo de pesquisa
+  var inputPesquisa = document.getElementById('inputPesquisaPais');
+  if (inputPesquisa) inputPesquisa.value = '';
+  var listaPesquisa = document.getElementById('listaPesquisaPaises');
+  if (listaPesquisa) listaPesquisa.style.display = 'none';
 }
 
 function limparFormulario() {
@@ -327,6 +573,25 @@ function limparFormulario() {
 // ============================================================
 
 function carregarDados(resp) {
+  // Identificar países extra (não destaque) que têm valores guardados
+  var paisesDestaque = PAISES.filter(function(p) { return p.destaque; })
+                             .map(function(p) { return p.nome; });
+  var paisesSimples  = PAISES_SIMPLES.map(function(p) { return p.nome; });
+
+  // Adicionar automaticamente países extra que têm valor
+  _paisesAdicionados = [];
+  Object.keys(resp.paises || {}).forEach(function(nomePais) {
+    if (resp.paises[nomePais] > 0 &&
+        paisesDestaque.indexOf(nomePais) === -1 &&
+        paisesSimples.indexOf(nomePais) === -1) {
+      _paisesAdicionados.push({ nome: nomePais, valor: resp.paises[nomePais] });
+    }
+  });
+
+  // Reconstruir a tabela com os adicionados já no estado
+  construirTabelaPaises();
+
+  // Preencher valores
   document.querySelectorAll('.pais-input').forEach(function(inp) {
     var v = resp.paises[inp.dataset.pais];
     if (v && v > 0) {
@@ -338,16 +603,18 @@ function carregarDados(resp) {
       inp.style.fontWeight  = '600';
     }
   });
+
   var nOp  = Math.max(NUM_LINHAS_OP,  (resp.operadores || []).length + 1);
   var nSug = Math.max(NUM_LINHAS_SUG, (resp.sugestoes  || []).length + 1);
   construirTabelaOperadores(nOp,  resp.operadores || []);
   construirTabelaSugestoes(nSug,  resp.sugestoes  || []);
-  // Carregar observações
+
   if (resp.observacoes) {
     document.getElementById('observacoes').value = resp.observacoes;
   }
   recalcularTotais();
 }
+
 // ============================================================
 // SECÇÕES RECOLHÍVEIS
 // ============================================================
