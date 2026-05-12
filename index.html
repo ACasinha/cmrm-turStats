@@ -122,21 +122,26 @@
   </div>
 
   <!-- PAÍSES -->
-  <div class="section-card">
-    <div class="section-header">
-      <h2 id="tituloPaises">Países — Turistas e Visitantes</h2>
-      <span class="section-count" id="contadorPaises">0 entradas</span>
-    </div>
-    <div class="table-scroll">
-      <table class="paises-table">
-        <thead><tr>
-          <th>País</th>
-          <th style="text-align:center">Turistas / Visitantes</th>
-        </tr></thead>
-        <tbody id="tabelaPaises"></tbody>
-      </table>
-    </div>
+<div class="section-card">
+  <div class="section-header">
+    <h2 id="tituloPaises">Países — Turistas e Visitantes</h2>
+    <span class="section-count" id="contadorPaises">0 entradas</span>
   </div>
+
+  <!-- Destaque + extra renderizados aqui pelo ui.js -->
+  <div id="paisesContainer"></div>
+
+  <!-- Painel de pesquisa — oculto no modo simplificado -->
+  <div id="zonaPesquisaPaises" class="zona-pesquisa-paises">
+    <div class="pesquisa-paises-wrap">
+      <span class="pesquisa-icone">🔍</span>
+      <input type="text" id="inputPesquisaPais"
+             placeholder="Adicionar outro país..."
+             autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <ul id="listaPesquisaPaises" class="lista-pesquisa-paises"></ul>
+  </div>
+</div>
 
   <!-- TOTAL -->
   <div class="totais-card">
