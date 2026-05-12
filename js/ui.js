@@ -504,7 +504,7 @@ function recalcularTotais() {
   document.getElementById('totalDiario').textContent = total;
   document.getElementById('totalGeral').textContent  = total;
   document.getElementById('contadorPaises').textContent =
-    count + (count === 1 ? ' entrada' : ' entradas');
+    count + (count === 1 ? ' registo' : ' registos');
 }
 
 // ============================================================
@@ -569,7 +569,7 @@ function limparFormularioParcial() {
   });
   document.getElementById('totalDiario').textContent = '0';
   document.getElementById('totalGeral').textContent  = '0';
-  document.getElementById('contadorPaises').textContent = '0 entradas';
+  document.getElementById('contadorPaises').textContent = '0 registos';
 
   // Reconstruir a secção de países (limpa os adicionados)
   construirTabelaPaises();
