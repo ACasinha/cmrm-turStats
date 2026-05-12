@@ -632,6 +632,131 @@ table tbody tr:hover { background: rgba(245,235,224,0.6); }
 .row-destaque td { background: rgba(201,149,42,0.07); }
 .row-destaque td:first-child { color: var(--terra); font-weight: 700; }
 
+/* ============================================================
+   PESQUISA DE PAÍSES 
+============================================================ */
+
+/* ── Zona de pesquisa ──────────────────────────────────────── */
+.zona-pesquisa-paises {
+  position: relative;
+  padding: clamp(8px, 2vw, 12px) clamp(10px, 3vw, 16px) clamp(10px, 2vw, 14px);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  background: rgba(245, 235, 224, 0.3);
+}
+
+.pesquisa-paises-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--branco);
+  border: 1.5px solid var(--cinza-claro);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.pesquisa-paises-wrap:focus-within {
+  border-color: var(--terra-light);
+  box-shadow: 0 0 0 3px rgba(139, 74, 43, 0.10);
+}
+
+.pesquisa-icone {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+#inputPesquisaPais {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: clamp(9px, 2vw, 11px) 0;
+  font-size: var(--text-base);
+  color: var(--cinza-escuro);
+  min-height: 0; /* override do estilo global */
+  box-shadow: none !important;
+}
+#inputPesquisaPais:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+#inputPesquisaPais::placeholder {
+  color: var(--cinza);
+  opacity: 0.6;
+}
+
+/* ── Dropdown de resultados ─────────────────────────────────── */
+.lista-pesquisa-paises {
+  display: none;
+  position: absolute;
+  left: clamp(10px, 3vw, 16px);
+  right: clamp(10px, 3vw, 16px);
+  top: calc(100% - clamp(10px, 2vw, 14px));
+  background: white;
+  border: 1.5px solid var(--cinza-claro);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(139,74,43,0.12);
+  z-index: 50;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pais-sugestao {
+  padding: 10px 14px;
+  font-size: var(--text-sm);
+  color: var(--cinza-escuro);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  transition: background var(--transition-fast);
+}
+.pais-sugestao:last-child { border-bottom: none; }
+.pais-sugestao:hover,
+.pais-sugestao:focus {
+  background: var(--terra-pale);
+  color: var(--terra);
+}
+.pais-sugestao:active { background: rgba(139,74,43,0.12); }
+
+/* ── Tabela de países extra (adicionados) ───────────────────── */
+.paises-table-extra thead tr {
+  background: linear-gradient(90deg, rgba(46,91,138,0.08) 0%, transparent 100%);
+}
+.paises-table-extra thead th {
+  color: var(--azul);
+}
+
+/* ── Botão remover país ─────────────────────────────────────── */
+.btn-remover-pais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--cinza);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  opacity: 0.45;
+  transition: opacity var(--transition-fast), color var(--transition-fast),
+              background var(--transition-fast);
+  vertical-align: middle;
+  min-width: 22px;
+  min-height: 22px;
+  touch-action: manipulation;
+}
+.btn-remover-pais:hover {
+  opacity: 1;
+  color: var(--vermelho);
+  background: rgba(192, 57, 43, 0.08);
+}
+
 
 /* ============================================================
    INPUT NUMÉRICO STEPPER (países)
