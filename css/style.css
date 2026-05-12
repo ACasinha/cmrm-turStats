@@ -636,6 +636,11 @@ table tbody tr:hover { background: rgba(245,235,224,0.6); }
    PESQUISA DE PAÍSES 
 ============================================================ */
 
+/* ============================================================
+   PESQUISA DE PAÍSES — adicionar ao style.css
+   (após a secção /* TABELAS */)
+============================================================ */
+
 /* ── Zona de pesquisa ──────────────────────────────────────── */
 .zona-pesquisa-paises {
   position: relative;
@@ -690,20 +695,16 @@ table tbody tr:hover { background: rgba(245,235,224,0.6); }
 /* ── Dropdown de resultados ─────────────────────────────────── */
 .lista-pesquisa-paises {
   display: none;
-  position: absolute;
-  left: clamp(10px, 3vw, 16px);
-  right: clamp(10px, 3vw, 16px);
-  top: calc(100% - clamp(10px, 2vw, 14px));
+  /* position e top/left/width definidos por JS via getBoundingClientRect */
   background: white;
   border: 1.5px solid var(--cinza-claro);
-  border-top: none;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  box-shadow: 0 8px 24px rgba(139,74,43,0.12);
-  z-index: 50;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(139,74,43,0.15);
   list-style: none;
   max-height: 220px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  margin-top: 2px;
 }
 
 .pais-sugestao {
