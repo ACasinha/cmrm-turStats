@@ -198,8 +198,24 @@ function _criarLinhaPaisExtra(nomePais) {
 
 function _inicializarPesquisa() {
   var input = document.getElementById('inputPesquisaPais');
+  if (!input) return;
+
+  // Mover o dropdown para o body (escapa qualquer overflow:hidden)
   var lista = document.getElementById('listaPesquisaPaises');
-  if (!input || !lista) return;
+  if (lista && lista.parentNode !== document.body) {
+    document.body.appendChild(lista);
+  }
+  if (!lista) return;
+
+  // Posicionar o dropdown sob o input
+  function posicionarDropdown() {
+    var r = input.getBoundingClientRect();
+    lista.style.position = 'fixed';
+    lista.style.top      = (r.bottom) + 'px';
+    lista.style.left     = r.left + 'px';
+    lista.style.width    = r.width + 'px';
+    lista.style.zIndex   = '9000';
+  }
 
   // Limpar listeners antigos clonando o elemento
   var novoInput = input.cloneNode(true);
@@ -207,15 +223,27 @@ function _inicializarPesquisa() {
   input = novoInput;
 
   input.addEventListener('input', function() {
+    posicionarDropdown();
     _filtrarPaises(input.value.trim());
   });
   input.addEventListener('focus', function() {
-    if (input.value.trim()) _filtrarPaises(input.value.trim());
+    if (input.value.trim()) {
+      posicionarDropdown();
+      _filtrarPaises(input.value.trim());
+    }
   });
+
+  // Reposicionar ao fazer scroll ou resize
+  window.addEventListener('scroll', function() {
+    if (lista.style.display === 'block') posicionarDropdown();
+  }, { passive: true });
+  window.addEventListener('resize', function() {
+    if (lista.style.display === 'block') posicionarDropdown();
+  }, { passive: true });
 
   // Fechar dropdown ao clicar fora
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('#zonaPesquisaPaises')) {
+    if (e.target !== input && !lista.contains(e.target)) {
       lista.style.display = 'none';
     }
   });
