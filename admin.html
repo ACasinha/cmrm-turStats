@@ -87,6 +87,10 @@
       <span>Acesso ao registo diário de nacionalidades</span>
     </div>
     <div class="role-item">
+      <span class="badge-role badge-user badge-user-dash">Utilizador 📊</span>
+      <span>Registo diário <strong>e</strong> acesso ao dashboard</span>
+    </div>
+    <div class="role-item">
       <span class="badge-role badge-visualizador">Visualizador</span>
       <span>Acesso apenas ao dashboard de análise (só leitura)</span>
     </div>
@@ -141,13 +145,22 @@
       </div>
       <div class="form-group">
         <label>Role *</label>
-        <select id="userRole">
+        <select id="userRole" onchange="atualizarRoleInfo('userRole','roleInfoNovo'); gerarCheckboxDashboardNovo()">
           <option value="utilizador">Utilizador — Registo diário</option>
           <option value="visualizador">Visualizador — Apenas dashboard</option>
           <option value="administrador">Administrador — Acesso total</option>
         </select>
       </div>
       <div class="role-info" id="roleInfoNovo"></div>
+      <div class="form-group" id="grupoAcessoDashboardNovo" style="display:none">
+        <label class="checkbox-label">
+          <input type="checkbox" id="userAcessoDashboard">
+          <span>Permitir acesso ao Dashboard</span>
+        </label>
+        <div class="role-info" style="display:block;margin-top:6px">
+          Este utilizador poderá consultar o dashboard de análise, mantendo o role de Utilizador para o registo diário.
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal btn-cancelar" onclick="fecharModal()">Cancelar</button>
@@ -174,13 +187,22 @@
       </div>
       <div class="form-group">
         <label>Role *</label>
-        <select id="editUserRole" onchange="atualizarRoleInfo('editUserRole','roleInfoEditar')">
+        <select id="editUserRole" onchange="atualizarRoleInfo('editUserRole','roleInfoEditar'); gerarCheckboxDashboardEditar()">
           <option value="utilizador">Utilizador — Registo diário</option>
           <option value="visualizador">Visualizador — Apenas dashboard</option>
           <option value="administrador">Administrador — Acesso total</option>
         </select>
       </div>
       <div class="role-info" id="roleInfoEditar"></div>
+      <div class="form-group" id="grupoAcessoDashboardEditar" style="display:none">
+        <label class="checkbox-label">
+          <input type="checkbox" id="editAcessoDashboard">
+          <span>Permitir acesso ao Dashboard</span>
+        </label>
+        <div class="role-info" style="display:block;margin-top:6px">
+          Este utilizador poderá consultar o dashboard de análise, mantendo o role de Utilizador para o registo diário.
+        </div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal btn-cancelar" onclick="fecharModalEditar()">Cancelar</button>
@@ -237,6 +259,20 @@ function atualizarRoleInfo(selectId, infoId) {
     el.textContent = ROLE_INFO[role] || '';
     el.style.display = role ? 'block' : 'none';
   }
+}
+
+// Mostrar/ocultar checkbox de dashboard conforme o role escolhido
+// Só faz sentido para 'utilizador' — admin e visualizador já têm acesso implícito
+function gerarCheckboxDashboardNovo() {
+  var role  = document.getElementById('userRole').value;
+  var grupo = document.getElementById('grupoAcessoDashboardNovo');
+  if (grupo) grupo.style.display = role === 'utilizador' ? '' : 'none';
+}
+
+function gerarCheckboxDashboardEditar() {
+  var role  = document.getElementById('editUserRole').value;
+  var grupo = document.getElementById('grupoAcessoDashboardEditar');
+  if (grupo) grupo.style.display = role === 'utilizador' ? '' : 'none';
 }
 
 // ============================================================
@@ -357,7 +393,7 @@ function carregarUtilizadores() {
         var statusClass = user.ativo ? 'ativo'  : 'inativo';
         var statusTexto = user.ativo ? 'Ativo'  : 'Inativo';
 
-        var badgeRole   = badgeRoleHtml(user.role);
+        var badgeRole   = badgeRoleHtml(user.role, user.acessoDashboard);
         var badgeEstado =
           '<span class="estado-pill">' +
             '<span class="badge-status ' + statusClass + '"></span>' +
@@ -400,9 +436,10 @@ function carregarUtilizadores() {
     });
 }
 
-function badgeRoleHtml(role) {
+function badgeRoleHtml(role, acessoDashboard) {
   if (role === 'administrador') return '<span class="badge-role badge-admin">Admin</span>';
   if (role === 'visualizador')  return '<span class="badge-role badge-visualizador">Visualizador</span>';
+  if (acessoDashboard)          return '<span class="badge-role badge-user badge-user-dash">Utilizador 📊</span>';
   return '<span class="badge-role badge-user">Utilizador</span>';
 }
 
@@ -415,16 +452,12 @@ function abrirModalNovoUtilizador() {
   document.getElementById('userEmail').value    = '';
   document.getElementById('userPassword').value = '';
   document.getElementById('userRole').value     = 'utilizador';
+  document.getElementById('userAcessoDashboard').checked = false;
+  document.getElementById('grupoAcessoDashboardNovo').style.display = ''; // utilizador é o default
   document.getElementById('roleInfoNovo').textContent = ROLE_INFO.utilizador;
   document.getElementById('roleInfoNovo').style.display = 'block';
   document.getElementById('passwordGroup').style.display = 'block';
   document.getElementById('modalTitulo').textContent = 'Novo Utilizador';
-
-  // Atualizar info ao mudar role
-  document.getElementById('userRole').onchange = function() {
-    atualizarRoleInfo('userRole', 'roleInfoNovo');
-  };
-
   document.getElementById('modalNovoUser').classList.add('show');
 }
 
@@ -437,6 +470,10 @@ function guardarUtilizador() {
   var email    = document.getElementById('userEmail').value.trim();
   var password = document.getElementById('userPassword').value;
   var role     = document.getElementById('userRole').value;
+  // acessoDashboard só relevante para 'utilizador'; outros roles têm acesso implícito
+  var acessoDashboard = role === 'utilizador'
+    ? document.getElementById('userAcessoDashboard').checked
+    : false;
 
   if (!nome || !email || !password) {
     mostrarToast('Por favor preencha todos os campos obrigatórios.', 'erro');
@@ -451,7 +488,7 @@ function guardarUtilizador() {
   btn.disabled = true;
   btn.textContent = '⏳ A guardar...';
 
-  criarUtilizador({ email: email, password: password, nome: nome, role: role })
+  criarUtilizador({ email: email, password: password, nome: nome, role: role, acessoDashboard: acessoDashboard })
     .then(function(resp) {
       btn.disabled = false;
       btn.textContent = 'Guardar';
@@ -484,7 +521,10 @@ function abrirModalEditar(uid) {
       document.getElementById('editUserNome').value  = user.nome  || '';
       document.getElementById('editUserEmail').value = user.email;
       document.getElementById('editUserRole').value  = user.role  || 'utilizador';
+      document.getElementById('editAcessoDashboard').checked = !!user.acessoDashboard;
 
+      // Mostrar checkbox só para utilizador
+      gerarCheckboxDashboardEditar();
       atualizarRoleInfo('editUserRole', 'roleInfoEditar');
       document.getElementById('modalEditarUser').classList.add('show');
     })
@@ -501,10 +541,14 @@ function guardarEdicaoUtilizador() {
   var uid  = document.getElementById('editUserUid').value;
   var nome = document.getElementById('editUserNome').value.trim();
   var role = document.getElementById('editUserRole').value;
+  // acessoDashboard só relevante para 'utilizador'; outros roles têm acesso implícito
+  var acessoDashboard = role === 'utilizador'
+    ? document.getElementById('editAcessoDashboard').checked
+    : false;
 
   if (!nome) { mostrarToast('O nome não pode estar vazio.', 'erro'); return; }
 
-  atualizarUtilizador(uid, { nome: nome, role: role })
+  atualizarUtilizador(uid, { nome: nome, role: role, acessoDashboard: acessoDashboard })
     .then(function(resp) {
       mostrarToast('✓ ' + resp.mensagem, 'sucesso');
       fecharModalEditar();
