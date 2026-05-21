@@ -30,7 +30,7 @@ var db = firebase.firestore();
 /**
  * Obtém o perfil do utilizador atual do Firestore.
  * @param {boolean} forcar — ignora cache se true
- * @returns {Promise<Object>} {uid, email, nome, role, ativo}
+ * @returns {Promise<Object>} {uid, email, nome, role, ativo, acessoDashboard}
  */
 function obterPerfilUtilizador(forcar) {
   var agora = Date.now();
@@ -51,6 +51,7 @@ function obterPerfilUtilizador(forcar) {
           email: user.email,
           nome: user.displayName || user.email.split('@')[0],
           role: 'utilizador',
+          acessoDashboard: false,
           criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
           atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
           ativo: true
@@ -94,20 +95,28 @@ function verificarSeAdmin() {
 }
 
 /**
- * Verifica se o utilizador atual tem acesso ao dashboard
- * (administrador ou visualizador).
+ * Verifica se o utilizador atual tem acesso ao dashboard.
+ * Têm acesso: administrador, visualizador, ou utilizador com acessoDashboard: true.
  * @returns {Promise<boolean>}
  */
 function verificarAcessoDashboard() {
   if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
-    var role = _cacheUtilizador.role;
-    return Promise.resolve(role === 'administrador' || role === 'visualizador');
+    return Promise.resolve(_temAcessoDashboard(_cacheUtilizador));
   }
   return obterPerfilUtilizador()
-    .then(function(perfil) {
-      return perfil.role === 'administrador' || perfil.role === 'visualizador';
-    })
+    .then(function(perfil) { return _temAcessoDashboard(perfil); })
     .catch(function() { return false; });
+}
+
+/**
+ * Helper interno — avalia se um perfil tem acesso ao dashboard.
+ * @param {Object} perfil
+ * @returns {boolean}
+ */
+function _temAcessoDashboard(perfil) {
+  return perfil.role === 'administrador'
+      || perfil.role === 'visualizador'
+      || perfil.acessoDashboard === true;
 }
 
 /**
@@ -162,10 +171,11 @@ function atualizarUtilizador(uid, dados) {
         throw new Error('Sem permissão para editar este utilizador.');
       }
 
-      // Utilizador normal não pode mudar role, ativo nem outros campos sensíveis
+      // Utilizador normal não pode mudar role, ativo, acessoDashboard nem outros campos sensíveis
       if (!isAdmin) {
         delete dados.role;
         delete dados.ativo;
+        delete dados.acessoDashboard;
       }
 
       // Validar role se fornecida
