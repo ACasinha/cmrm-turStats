@@ -420,6 +420,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   display: grid;
   gap: clamp(12px,2.5vw,20px);
   grid-template-columns: 1fr;
+  align-items:start;
 }
 
 @media (min-width: 640px) {
@@ -427,6 +428,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 @media (min-width: 1024px) {
   .graficos-grelha { grid-template-columns: repeat(3, 1fr); }
+}
+
+.grafico-card{
+   align-self:start;
 }
 
 /* Variantes de largura */
@@ -488,7 +493,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .btn-iframe-toggle:hover { background: rgba(139,74,43,0.16); }
 
 /* Corpo do iframe */
-.grafico-card-body { flex: 1; position: relative; }
+.grafico-card-body {flex: none; position: relative; }
 
 /* Skeleton loader */
 .grafico-skeleton {
