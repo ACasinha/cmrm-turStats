@@ -20,6 +20,7 @@ window.addEventListener('beforeunload', function(e) {
     return e.returnValue;
   }
 });
+
 // Estado de edição:
 //   null  → sem dados existentes (novo registo)
 //   false → dados existentes mas de outro dia (bloqueado)
@@ -42,24 +43,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (user && sessaoValida()) {
       nomeFuncionarioAtual = user.displayName || user.email;
-      
-      // Verificar role de admin (usa cache se disponível)
+
+      // Verificar perfil completo (role, ativo, acessoDashboard)
       obterPerfilUtilizador()
         .then(function(perfil) {
+          // Botão admin
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
             if (btnAdmin) btnAdmin.style.display = '';
           }
-          // Mostrar botão dashboard se tiver acesso
-          if (perfil.role === 'administrador' || perfil.role === 'visualizador') {
-            var btnDash = document.getElementById('btnDashboard');
-            if (btnDash) btnDash.style.display = '';
-          }
+
+          // ── Ponto 5 — botão dashboard ──────────────────────
+          var temDash = perfil.role === 'administrador'
+                     || perfil.role === 'visualizador'
+                     || perfil.acessoDashboard === true;
+          var btnDash = document.getElementById('btnDashboard');
+          if (btnDash && temDash) btnDash.style.display = '';
+          // ───────────────────────────────────────────────────
         })
         .catch(function(err) {
           console.warn('[Perfil] Erro ao verificar role:', err);
         });
-      
+
       activarApp();
     } else {
       if (user) apiLogout(); // sessão Firebase existe mas as 10h expiraram
@@ -104,12 +109,12 @@ function fazerLogin() {
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
-      
+
       // Carregar perfil do utilizador do Firestore
       obterPerfilUtilizador()
         .then(function(perfil) {
           nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
-          
+
           // Verificar se está ativo
           if (!perfil.ativo) {
             erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
@@ -117,15 +122,21 @@ function fazerLogin() {
             apiLogout();
             return;
           }
-          
-          // Mostrar botão admin e botão dashboard se for administrador
+
+          // Botão admin
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
             if (btnAdmin) btnAdmin.style.display = '';
-            var btnDashboard = document.getElementById('btnDashboard');
-            if (btnDashboard) btnDashboard.style.display = 'none';
           }
-          
+
+          // ── Ponto 4 — botão dashboard ──────────────────────
+          var temDash = perfil.role === 'administrador'
+                     || perfil.role === 'visualizador'
+                     || perfil.acessoDashboard === true;
+          var btnDash = document.getElementById('btnDashboard');
+          if (btnDash && temDash) btnDash.style.display = '';
+          // ───────────────────────────────────────────────────
+
           activarApp();
         })
         .catch(function(err) {
@@ -158,16 +169,18 @@ function fazerLogout() {
 }
 
 // ============================================================
-// NAVEGAÇÃO ADMIN / DASHBOARD
+// NAVEGAÇÃO ADMIN E DASHBOARD
 // ============================================================
 
 function irParaAdmin() {
   window.location.href = 'admin.html';
 }
 
+// ── Ponto 3 — função irParaDashboard() ──────────────────────
 function irParaDashboard() {
   window.location.href = 'dashboard.html';
 }
+// ────────────────────────────────────────────────────────────
 
 // ============================================================
 // ACTIVAR / MOSTRAR LOGIN
@@ -186,16 +199,16 @@ function mostrarEcraLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
   document.getElementById('loginErro').classList.remove('visivel');
   document.getElementById('loginPass').value = '';
-  
+
   // Esconder botão admin
   var btnAdmin = document.getElementById('btnAdmin');
   if (btnAdmin) btnAdmin.style.display = 'none';
-  
-  // Esconder botão dashboard
+
+  // ── Ponto 6 — esconder botão dashboard ──────────────────
   var btnDashboard = document.getElementById('btnDashboard');
   if (btnDashboard) btnDashboard.style.display = 'none';
+  // ────────────────────────────────────────────────────────
 
-  
   limparFormularioParcial();
   mostrarBanner('', '');
   ultimoLocalVerificado = '';
@@ -223,7 +236,6 @@ function inicializarApp() {
   // via delegação no contentor principal
   document.querySelector('.container').addEventListener('input', function(e) {
     var alvo = e.target;
-    // Apenas inputs de texto que não são já guardados pelo atualizarTotais/guardaLocalERecalcula
     if (alvo.classList.contains('op-nome') || alvo.classList.contains('sug-nac')) {
       if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
         alvo.value = '';
@@ -247,7 +259,6 @@ function agendarVerificacao() {
 }
 
 // Verificar se local foi escolhido antes de permitir edição
-// Chamada pelos inputs da tabela de países e demais campos via oninput/onclick
 function verificarLocalEscolhido() {
   var local = document.getElementById('local').value.trim();
   if (!local) {
@@ -285,7 +296,6 @@ function verificarDados() {
       if (resp.existe) {
         carregarDados(resp);
 
-        // Comparar a data do registo com a data de hoje
         var hoje       = new Date();
         var hojeStr    = hoje.getFullYear() + '-' +
                          String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
@@ -325,7 +335,6 @@ function verificarDados() {
 // GUARDAR REGISTO
 // ============================================================
 
-// Chamada pelo ui.js para sinalizar alterações
 function sinalizarAlteracao() {
   dadosAlterados = true;
 }
@@ -344,7 +353,6 @@ function guardarDados() {
     mostrarToast('Por favor, selecione a data.', 'erro');
     return;
   }
-  // Bloquear edição de registos de dias anteriores
   if (edicaoPermitida === false) {
     mostrarToast('Não é possível editar registos de dias anteriores.', 'erro');
     return;
@@ -369,7 +377,7 @@ function guardarDados() {
   btn.textContent = '⏳ A guardar...';
   mostrarToast('A guardar...', 'info');
 
-  // ← Converter "2026-05-11" para "11/05/2026"
+  // Converter "2026-05-11" para "11/05/2026"
   var partes = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
