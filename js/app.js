@@ -50,6 +50,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var btnAdmin = document.getElementById('btnAdmin');
             if (btnAdmin) btnAdmin.style.display = '';
           }
+          // Mostrar botão dashboard se tiver acesso
+          if (perfil.role === 'administrador' || perfil.role === 'visualizador') {
+            var btnDash = document.getElementById('btnDashboard');
+            if (btnDash) btnDash.style.display = '';
+          }
         })
         .catch(function(err) {
           console.warn('[Perfil] Erro ao verificar role:', err);
@@ -113,10 +118,12 @@ function fazerLogin() {
             return;
           }
           
-          // Mostrar botão admin se for administrador
+          // Mostrar botão admin e botão dashboard se for administrador
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
             if (btnAdmin) btnAdmin.style.display = '';
+            var btnDashboard = document.getElementById('btnDashboard');
+            if (btnDashboard) btnDashboard.style.display = 'none';
           }
           
           activarApp();
@@ -183,6 +190,11 @@ function mostrarEcraLogin() {
   // Esconder botão admin
   var btnAdmin = document.getElementById('btnAdmin');
   if (btnAdmin) btnAdmin.style.display = 'none';
+  
+  // Esconder botão dashboard
+  var btnDashboard = document.getElementById('btnDashboard');
+  if (btnDashboard) btnDashboard.style.display = 'none';
+
   
   limparFormularioParcial();
   mostrarBanner('', '');
