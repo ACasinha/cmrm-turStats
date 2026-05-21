@@ -58,21 +58,40 @@
 
 <!-- CONTEÚDO ADMIN -->
 <div class="admin-container" id="adminContainer" style="display:none">
-  
+
   <div class="admin-header">
     <h1>🛡️ Gestão de Utilizadores</h1>
     <p>Administração do sistema de registo de nacionalidades</p>
   </div>
-  
+
   <div class="admin-actions">
     <button class="btn-novo-user btn-voltar" onclick="voltarParaApp()">
       ← Voltar à App
+    </button>
+    <button class="btn-novo-user btn-dashboard" onclick="irParaDashboard()">
+      📊 Dashboard
     </button>
     <button class="btn-novo-user" onclick="abrirModalNovoUtilizador()">
       ➕ Novo Utilizador
     </button>
   </div>
-  
+
+  <!-- Legenda de roles -->
+  <div class="roles-legenda" id="rolesLegenda">
+    <div class="role-item">
+      <span class="badge-role badge-admin">Admin</span>
+      <span>Acesso total — registo, dashboard e gestão de utilizadores</span>
+    </div>
+    <div class="role-item">
+      <span class="badge-role badge-user">Utilizador</span>
+      <span>Acesso ao registo diário de nacionalidades</span>
+    </div>
+    <div class="role-item">
+      <span class="badge-role badge-visualizador">Visualizador</span>
+      <span>Acesso apenas ao dashboard de análise (só leitura)</span>
+    </div>
+  </div>
+
   <div class="users-table-container">
     <div class="loading-overlay" id="loadingUsers">
       <div class="spinner"></div>
@@ -98,7 +117,7 @@
       </tbody>
     </table>
   </div>
-  
+
 </div>
 
 <!-- MODAL NOVO UTILIZADOR -->
@@ -123,10 +142,12 @@
       <div class="form-group">
         <label>Role *</label>
         <select id="userRole">
-          <option value="utilizador">Utilizador</option>
-          <option value="administrador">Administrador</option>
+          <option value="utilizador">Utilizador — Registo diário</option>
+          <option value="visualizador">Visualizador — Apenas dashboard</option>
+          <option value="administrador">Administrador — Acesso total</option>
         </select>
       </div>
+      <div class="role-info" id="roleInfoNovo"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal btn-cancelar" onclick="fecharModal()">Cancelar</button>
@@ -153,11 +174,13 @@
       </div>
       <div class="form-group">
         <label>Role *</label>
-        <select id="editUserRole">
-          <option value="utilizador">Utilizador</option>
-          <option value="administrador">Administrador</option>
+        <select id="editUserRole" onchange="atualizarRoleInfo('editUserRole','roleInfoEditar')">
+          <option value="utilizador">Utilizador — Registo diário</option>
+          <option value="visualizador">Visualizador — Apenas dashboard</option>
+          <option value="administrador">Administrador — Acesso total</option>
         </select>
       </div>
+      <div class="role-info" id="roleInfoEditar"></div>
     </div>
     <div class="modal-actions">
       <button class="btn-modal btn-cancelar" onclick="fecharModalEditar()">Cancelar</button>
@@ -194,11 +217,27 @@
 <script src="js/sw-update.js"></script>
 <script src="js/users.js"></script>
 
-
 <script>
 'use strict';
 
-var modoEdicao = false;
+// ============================================================
+// INFORMAÇÕES DE ROLE
+// ============================================================
+
+var ROLE_INFO = {
+  utilizador:    'Pode fazer login na app e registar visitantes diariamente. Sem acesso ao dashboard nem à administração.',
+  visualizador:  'Pode fazer login no dashboard e consultar os gráficos e estatísticas. Não pode registar dados nem gerir utilizadores.',
+  administrador: 'Acesso completo: registo de dados, dashboard, gestão de utilizadores e configuração dos gráficos.'
+};
+
+function atualizarRoleInfo(selectId, infoId) {
+  var role = document.getElementById(selectId).value;
+  var el   = document.getElementById(infoId);
+  if (el) {
+    el.textContent = ROLE_INFO[role] || '';
+    el.style.display = role ? 'block' : 'none';
+  }
+}
 
 // ============================================================
 // LOGIN
@@ -221,8 +260,7 @@ function fazerLogin() {
   erro.classList.remove('visivel');
 
   apiAutenticar(email, pass,
-    function onSuccess(resp) {
-      // Verificar se é admin
+    function onSuccess() {
       verificarSeAdmin()
         .then(function(isAdmin) {
           if (!isAdmin) {
@@ -266,14 +304,13 @@ function fazerLogout() {
   });
 }
 
-function voltarParaApp() {
-  window.location.href = 'index.html';
-}
+function voltarParaApp()    { window.location.href = 'index.html'; }
+function irParaDashboard()  { window.location.href = 'dashboard.html'; }
 
 // ============================================================
-// NOME DO UTILIZADOR NO HEADER
+// NOME NO HEADER
 // ============================================================
- 
+
 function mostrarNomeUtilizador() {
   obterPerfilUtilizador()
     .then(function(perfil) {
@@ -314,18 +351,13 @@ function carregarUtilizadores() {
       users.forEach(function(user) {
         var tr = document.createElement('tr');
 
-        /* ── dados reutilizáveis ── */
         var nome        = esc(user.nome || '—');
         var email       = esc(user.email);
-        var isAdmin     = user.role === 'administrador';
+        var uid         = user.uid;
         var statusClass = user.ativo ? 'ativo'  : 'inativo';
         var statusTexto = user.ativo ? 'Ativo'  : 'Inativo';
-        var uid         = user.uid;
 
-        var badgeRole = isAdmin
-          ? '<span class="badge-role badge-admin">Admin</span>'
-          : '<span class="badge-role badge-user">Utilizador</span>';
-
+        var badgeRole   = badgeRoleHtml(user.role);
         var badgeEstado =
           '<span class="estado-pill">' +
             '<span class="badge-status ' + statusClass + '"></span>' +
@@ -341,37 +373,18 @@ function carregarUtilizadores() {
           ? '<button class="btn-action btn-desativar" onclick="toggleAtivo(\'' + uid + '\', false)">🚫 Desativar</button>'
           : '<button class="btn-action btn-ativar"    onclick="toggleAtivo(\'' + uid + '\', true)">✅ Ativar</button>';
 
-        /* ────────────────────────────────────────────────────
-           ESTRUTURA DUPLA:
-           • .user-card-* → visível apenas em mobile (≤700px)
-           • <td> normais  → visíveis apenas em desktop (>700px)
-        ──────────────────────────────────────────────────── */
         tr.innerHTML =
-
-          /* ── ZONA 1 — cabeçalho do card (mobile) ── */
           '<div class="user-card-header">' +
             '<span class="user-card-nome">' + nome + '</span>' +
-            '<span class="user-card-badges">' +
-              badgeRole + badgeEstado +
-            '</span>' +
+            '<span class="user-card-badges">' + badgeRole + badgeEstado + '</span>' +
           '</div>' +
-
-          /* ── ZONA 2 — email (mobile) ── */
           '<div class="user-card-email">' + email + '</div>' +
-
-          /* ── ZONA 3 — acções (mobile) ── */
-          '<div class="user-card-actions">' +
-            btnEditar + btnToggle +
-          '</div>' +
-
-          /* ── CÉLULAS para tabela desktop ── */
+          '<div class="user-card-actions">' + btnEditar + btnToggle + '</div>' +
           '<td data-label="Nome"><strong>' + nome + '</strong></td>' +
           '<td data-label="Email">' + email + '</td>' +
           '<td data-label="Role">'  + badgeRole   + '</td>' +
           '<td data-label="Estado">' + badgeEstado + '</td>' +
-          '<td data-label="Ações"><div class="user-actions">' +
-            btnEditar + btnToggle +
-          '</div></td>';
+          '<td data-label="Ações"><div class="user-actions">' + btnEditar + btnToggle + '</div></td>';
 
         tbody.appendChild(tr);
       });
@@ -387,18 +400,31 @@ function carregarUtilizadores() {
     });
 }
 
+function badgeRoleHtml(role) {
+  if (role === 'administrador') return '<span class="badge-role badge-admin">Admin</span>';
+  if (role === 'visualizador')  return '<span class="badge-role badge-visualizador">Visualizador</span>';
+  return '<span class="badge-role badge-user">Utilizador</span>';
+}
+
 // ============================================================
 // MODAL NOVO UTILIZADOR
 // ============================================================
 
 function abrirModalNovoUtilizador() {
-  modoEdicao = false;
-  document.getElementById('modalTitulo').textContent = 'Novo Utilizador';
-  document.getElementById('userNome').value = '';
-  document.getElementById('userEmail').value = '';
+  document.getElementById('userNome').value     = '';
+  document.getElementById('userEmail').value    = '';
   document.getElementById('userPassword').value = '';
-  document.getElementById('userRole').value = 'utilizador';
+  document.getElementById('userRole').value     = 'utilizador';
+  document.getElementById('roleInfoNovo').textContent = ROLE_INFO.utilizador;
+  document.getElementById('roleInfoNovo').style.display = 'block';
   document.getElementById('passwordGroup').style.display = 'block';
+  document.getElementById('modalTitulo').textContent = 'Novo Utilizador';
+
+  // Atualizar info ao mudar role
+  document.getElementById('userRole').onchange = function() {
+    atualizarRoleInfo('userRole', 'roleInfoNovo');
+  };
+
   document.getElementById('modalNovoUser').classList.add('show');
 }
 
@@ -407,30 +433,28 @@ function fecharModal() {
 }
 
 function guardarUtilizador() {
-  var nome = document.getElementById('userNome').value.trim();
-  var email = document.getElementById('userEmail').value.trim();
+  var nome     = document.getElementById('userNome').value.trim();
+  var email    = document.getElementById('userEmail').value.trim();
   var password = document.getElementById('userPassword').value;
-  var role = document.getElementById('userRole').value;
-  
+  var role     = document.getElementById('userRole').value;
+
   if (!nome || !email || !password) {
     mostrarToast('Por favor preencha todos os campos obrigatórios.', 'erro');
     return;
   }
-  
   if (password.length < 6) {
     mostrarToast('A password deve ter no mínimo 6 caracteres.', 'erro');
     return;
   }
-  
+
   var btn = document.getElementById('btnGuardarUser');
   btn.disabled = true;
   btn.textContent = '⏳ A guardar...';
-  
+
   criarUtilizador({ email: email, password: password, nome: nome, role: role })
     .then(function(resp) {
       btn.disabled = false;
       btn.textContent = 'Guardar';
-      
       if (resp.sucesso) {
         mostrarToast('✓ ' + resp.mensagem, 'sucesso');
         fecharModal();
@@ -454,15 +478,14 @@ function abrirModalEditar(uid) {
   listarUtilizadores()
     .then(function(users) {
       var user = users.find(function(u) { return u.uid === uid; });
-      if (!user) {
-        mostrarToast('Utilizador não encontrado.', 'erro');
-        return;
-      }
-      
-      document.getElementById('editUserUid').value = uid;
-      document.getElementById('editUserNome').value = user.nome || '';
+      if (!user) { mostrarToast('Utilizador não encontrado.', 'erro'); return; }
+
+      document.getElementById('editUserUid').value   = uid;
+      document.getElementById('editUserNome').value  = user.nome  || '';
       document.getElementById('editUserEmail').value = user.email;
-      document.getElementById('editUserRole').value = user.role;
+      document.getElementById('editUserRole').value  = user.role  || 'utilizador';
+
+      atualizarRoleInfo('editUserRole', 'roleInfoEditar');
       document.getElementById('modalEditarUser').classList.add('show');
     })
     .catch(function(err) {
@@ -475,15 +498,12 @@ function fecharModalEditar() {
 }
 
 function guardarEdicaoUtilizador() {
-  var uid = document.getElementById('editUserUid').value;
+  var uid  = document.getElementById('editUserUid').value;
   var nome = document.getElementById('editUserNome').value.trim();
   var role = document.getElementById('editUserRole').value;
-  
-  if (!nome) {
-    mostrarToast('O nome não pode estar vazio.', 'erro');
-    return;
-  }
-  
+
+  if (!nome) { mostrarToast('O nome não pode estar vazio.', 'erro'); return; }
+
   atualizarUtilizador(uid, { nome: nome, role: role })
     .then(function(resp) {
       mostrarToast('✓ ' + resp.mensagem, 'sucesso');
@@ -496,13 +516,13 @@ function guardarEdicaoUtilizador() {
 }
 
 // ============================================================
-// ATIVAR/DESATIVAR
+// ATIVAR / DESATIVAR
 // ============================================================
 
 function toggleAtivo(uid, ativar) {
   var acao = ativar ? 'ativar' : 'desativar';
   if (!confirm('Tem a certeza que deseja ' + acao + ' este utilizador?')) return;
-  
+
   var fn = ativar ? ativarUtilizador : desativarUtilizador;
   fn(uid)
     .then(function(resp) {
@@ -538,10 +558,8 @@ function mostrarToast(msg, tipo) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Verificar se já está autenticado
   firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
-      
       verificarSeAdmin()
         .then(function(isAdmin) {
           if (isAdmin) {
@@ -553,9 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
             apiLogout();
           }
         })
-        .catch(function() {
-          apiLogout();
-        });
+        .catch(function() { apiLogout(); });
     }
   });
 });
