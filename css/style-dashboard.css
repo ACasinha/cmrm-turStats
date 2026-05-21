@@ -431,7 +431,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 .grafico-card{
+   display:flex;
+   flex-direction:column;
    align-self:start;
+   height:auto;
 }
 
 /* Variantes de largura */
@@ -493,7 +496,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .btn-iframe-toggle:hover { background: rgba(139,74,43,0.16); }
 
 /* Corpo do iframe */
-.grafico-card-body {flex: none; position: relative; }
+.grafico-card-body {flex: 0 0 auto; position: relative; }
 
 /* Skeleton loader */
 .grafico-skeleton {
@@ -512,9 +515,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .grafico-skeleton.oculto { display: none; }
 
 .grafico-iframe {
-  width: 100%; height: 100%;
-  border: none; display: block;
-  min-height: 300px;
+  width: 100%;
+  border: none; display: block; position:absolute; inset:0;
 }
 
 /* Alturas padrão */
