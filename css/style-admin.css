@@ -703,6 +703,12 @@ input:-webkit-autofill:focus {
   color: white;
 }
  
+/* ── Badge utilizador com acesso ao dashboard ───────────── */
+.badge-user-dash {
+  background: linear-gradient(135deg, #4A80B8, #2E5B8A);
+  color: white;
+}
+ 
 /* ── Botão Dashboard na barra de ações ──────────────────── */
 .btn-dashboard {
   background: linear-gradient(135deg, var(--azul) 0%, #1e3f63 100%);
@@ -754,6 +760,37 @@ input:-webkit-autofill:focus {
   color: var(--azul);
   line-height: 1.5;
   margin-top: 6px;
+}
+ 
+/* ── Checkbox com label estilizado ───────────────────────── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--cinza-escuro);
+  user-select: none;
+  padding: 10px 12px;
+  background: var(--terra-pale);
+  border: 1.5px solid var(--cinza-claro);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+.checkbox-label:hover {
+  border-color: var(--azul-light);
+  background: rgba(46,91,138,0.04);
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px; height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--azul);
+  cursor: pointer;
+  margin: 0;
+}
+.checkbox-label input[type="checkbox"]:checked + span {
+  color: var(--azul);
 }
  
 /* ── Ajuste: select de role com opções mais descritivas ──── */
