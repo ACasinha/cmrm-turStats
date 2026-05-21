@@ -151,11 +151,15 @@ function fazerLogout() {
 }
 
 // ============================================================
-// NAVEGAÇÃO ADMIN
+// NAVEGAÇÃO ADMIN / DASHBOARD
 // ============================================================
 
 function irParaAdmin() {
   window.location.href = 'admin.html';
+}
+
+function irParaDashboard() {
+  window.location.href = 'dashboard.html';
 }
 
 // ============================================================
