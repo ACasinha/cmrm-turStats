@@ -91,12 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(perfil) {
           _perfilAtual = perfil;
           _isAdmin        = perfil.role === 'administrador';
-          _isVisualizador = perfil.role === 'visualizador' || _isAdmin;
+          _isVisualizador = perfil.role === 'administrador'
+                         || perfil.role === 'visualizador'
+                         || perfil.acessoDashboard === true;
 
           if (!_isVisualizador) {
             // Sem permissão
             document.getElementById('loginOverlay').classList.remove('hidden');
-            document.getElementById('loginErro').textContent = 'Acesso negado. Apenas administradores e visualizadores têm acesso ao dashboard.';
+            document.getElementById('loginErro').textContent = 'Acesso negado. Não tem permissão para aceder ao dashboard.';
             document.getElementById('loginErro').classList.add('visivel');
             apiLogout();
             return;
@@ -151,7 +153,9 @@ function fazerLogin() {
         .then(function(perfil) {
           _perfilAtual    = perfil;
           _isAdmin        = perfil.role === 'administrador';
-          _isVisualizador = perfil.role === 'visualizador' || _isAdmin;
+          _isVisualizador = perfil.role === 'administrador'
+                         || perfil.role === 'visualizador'
+                         || perfil.acessoDashboard === true;
 
           if (!perfil.ativo) {
             erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
@@ -160,7 +164,7 @@ function fazerLogin() {
             return;
           }
           if (!_isVisualizador) {
-            erro.textContent = 'Acesso negado. Apenas administradores e visualizadores têm acesso ao dashboard.';
+            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao dashboard.';
             erro.classList.add('visivel');
             apiLogout();
             return;
