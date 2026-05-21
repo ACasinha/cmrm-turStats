@@ -6,8 +6,8 @@
 // O pwa.js lê esta constante para mostrar a versão no rodapé.
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v1.2.4';
-const CACHE_STATIC = 'rmz-static-v1.2.4';
+const CACHE_NAME   = 'rmz-nacionalidades-v1.3.0';
+const CACHE_STATIC = 'rmz-static-v1.3.0';
 
 // Todos os assets necessários para a app funcionar offline.
 // Adicionar aqui qualquer novo ficheiro que seja criado.
@@ -25,6 +25,9 @@ const STATIC_ASSETS = [
   './js/sw-update.js',
   './js/offline.js',
   './js/users.js',
+  './dashboard.html',
+  './js/dashboard.js',
+  './css/style-dashboard.css',
   './js/cloud-function-users.js',
   './img/logo.png',
   './img/logo-turismo.png',
