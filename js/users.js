@@ -5,10 +5,13 @@
 
 'use strict';
 
-var _cacheUtilizador    = null;  // Cache do perfil do utilizador atual
-var _cacheValidadeMs    = 5 * 60 * 1000;  // 5 minutos
-var _timestampCache     = 0;
-var _isAdmin            = false;
+var _cacheUtilizador  = null;
+var _cacheValidadeMs  = 5 * 60 * 1000;  // 5 minutos
+var _timestampCache   = 0;
+var _isAdmin          = false;
+
+// Roles válidas da aplicação
+var ROLES_VALIDAS = ['utilizador', 'visualizador', 'administrador'];
 
 // ============================================================
 // INICIALIZAR FIRESTORE
@@ -21,17 +24,17 @@ if (!firebase.apps.length) {
 var db = firebase.firestore();
 
 // ============================================================
-// OBTER PERFIL DO UTILIZADOR (com cache)
+// OBTER PERFIL DO UTILIZADOR (com cache de 5min)
 // ============================================================
 
 /**
- * Obtém o perfil do utilizador atual do Firestore (com cache de 5min)
- * @returns {Promise<Object>} - {uid, email, nome, role, ativo}
+ * Obtém o perfil do utilizador atual do Firestore.
+ * @param {boolean} forcar — ignora cache se true
+ * @returns {Promise<Object>} {uid, email, nome, role, ativo}
  */
 function obterPerfilUtilizador(forcar) {
   var agora = Date.now();
-  
-  // Usar cache se válido e não forçar reload
+
   if (!forcar && _cacheUtilizador && (agora - _timestampCache < _cacheValidadeMs)) {
     return Promise.resolve(_cacheUtilizador);
   }
@@ -44,7 +47,6 @@ function obterPerfilUtilizador(forcar) {
   return db.collection('users').doc(user.uid).get()
     .then(function(doc) {
       if (!doc.exists) {
-        // Criar perfil se não existir (primeiro login)
         var novoPerfil = {
           email: user.email,
           nome: user.displayName || user.email.split('@')[0],
@@ -57,7 +59,7 @@ function obterPerfilUtilizador(forcar) {
           .then(function() {
             novoPerfil.uid = user.uid;
             _cacheUtilizador = novoPerfil;
-            _timestampCache = agora;
+            _timestampCache  = agora;
             _isAdmin = false;
             return novoPerfil;
           });
@@ -65,12 +67,11 @@ function obterPerfilUtilizador(forcar) {
 
       var perfil = doc.data();
       perfil.uid = doc.id;
-      
-      // Atualizar cache
+
       _cacheUtilizador = perfil;
-      _timestampCache = agora;
+      _timestampCache  = agora;
       _isAdmin = perfil.role === 'administrador';
-      
+
       return perfil;
     })
     .catch(function(err) {
@@ -80,27 +81,42 @@ function obterPerfilUtilizador(forcar) {
 }
 
 /**
- * Verifica se o utilizador atual é administrador
+ * Verifica se o utilizador atual é administrador.
  * @returns {Promise<boolean>}
  */
 function verificarSeAdmin() {
-  // Usar cache se disponível
   if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
     return Promise.resolve(_cacheUtilizador.role === 'administrador');
   }
-  
   return obterPerfilUtilizador()
     .then(function(perfil) { return perfil.role === 'administrador'; })
     .catch(function() { return false; });
 }
 
 /**
- * Limpa o cache do utilizador (chamar no logout)
+ * Verifica se o utilizador atual tem acesso ao dashboard
+ * (administrador ou visualizador).
+ * @returns {Promise<boolean>}
+ */
+function verificarAcessoDashboard() {
+  if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
+    var role = _cacheUtilizador.role;
+    return Promise.resolve(role === 'administrador' || role === 'visualizador');
+  }
+  return obterPerfilUtilizador()
+    .then(function(perfil) {
+      return perfil.role === 'administrador' || perfil.role === 'visualizador';
+    })
+    .catch(function() { return false; });
+}
+
+/**
+ * Limpa o cache do utilizador (chamar no logout).
  */
 function limparCacheUtilizador() {
   _cacheUtilizador = null;
-  _timestampCache = 0;
-  _isAdmin = false;
+  _timestampCache  = 0;
+  _isAdmin         = false;
 }
 
 // ============================================================
@@ -108,7 +124,7 @@ function limparCacheUtilizador() {
 // ============================================================
 
 /**
- * Lista todos os utilizadores (apenas admins)
+ * Lista todos os utilizadores (apenas admins).
  * @returns {Promise<Array>}
  */
 function listarUtilizadores() {
@@ -117,10 +133,7 @@ function listarUtilizadores() {
       if (!isAdmin) {
         throw new Error('Acesso negado. Apenas administradores podem listar utilizadores.');
       }
-      
-      return db.collection('users')
-        .orderBy('email')
-        .get();
+      return db.collection('users').orderBy('email').get();
     })
     .then(function(snapshot) {
       var users = [];
@@ -134,33 +147,36 @@ function listarUtilizadores() {
 }
 
 /**
- * Atualizar perfil de utilizador (admin pode editar qualquer um)
- * @param {string} uid 
- * @param {Object} dados - {nome?, role?, ativo?}
+ * Atualiza o perfil de um utilizador.
+ * Admin pode editar qualquer um; utilizador normal apenas o próprio nome.
+ * @param {string} uid
+ * @param {Object} dados — {nome?, role?, ativo?}
  * @returns {Promise}
  */
 function atualizarUtilizador(uid, dados) {
   return verificarSeAdmin()
     .then(function(isAdmin) {
       var user = firebaseAuth.currentUser;
-      
-      // Admin pode editar qualquer um; utilizador normal só pode editar o próprio nome
+
       if (!isAdmin && user.uid !== uid) {
         throw new Error('Sem permissão para editar este utilizador.');
       }
-      
-      // Utilizador normal não pode mudar role ou ativo
+
+      // Utilizador normal não pode mudar role, ativo nem outros campos sensíveis
       if (!isAdmin) {
         delete dados.role;
         delete dados.ativo;
       }
-      
+
+      // Validar role se fornecida
+      if (dados.role && ROLES_VALIDAS.indexOf(dados.role) === -1) {
+        throw new Error('Role inválida: ' + dados.role);
+      }
+
       dados.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
-      
       return db.collection('users').doc(uid).update(dados);
     })
     .then(function() {
-      // Limpar cache se for o próprio utilizador
       if (firebaseAuth.currentUser && firebaseAuth.currentUser.uid === uid) {
         limparCacheUtilizador();
       }
@@ -169,9 +185,8 @@ function atualizarUtilizador(uid, dados) {
 }
 
 /**
- * Criar novo utilizador (apenas admins, via Cloud Function)
- * Esta função apenas valida; a criação real acontece na Cloud Function
- * @param {Object} dados - {email, password, nome, role}
+ * Cria um novo utilizador (apenas admins, via Cloud Function).
+ * @param {Object} dados — {email, password, nome, role}
  * @returns {Promise}
  */
 function criarUtilizador(dados) {
@@ -180,45 +195,39 @@ function criarUtilizador(dados) {
       if (!isAdmin) {
         throw new Error('Apenas administradores podem criar utilizadores.');
       }
-      
-      // A Cloud Function vai criar o utilizador no Firebase Auth
-      // e o perfil no Firestore
+      if (dados.role && ROLES_VALIDAS.indexOf(dados.role) === -1) {
+        throw new Error('Role inválida: ' + dados.role);
+      }
       return chamarAPI('criarUtilizador', dados);
     });
 }
 
 /**
- * Desativar utilizador (admin apenas)
- * @param {string} uid 
- * @returns {Promise}
+ * Desativa um utilizador (admin apenas).
+ * @param {string} uid
  */
 function desativarUtilizador(uid) {
   return atualizarUtilizador(uid, { ativo: false });
 }
 
 /**
- * Ativar utilizador (admin apenas)
- * @param {string} uid 
- * @returns {Promise}
+ * Ativa um utilizador (admin apenas).
+ * @param {string} uid
  */
 function ativarUtilizador(uid) {
   return atualizarUtilizador(uid, { ativo: true });
 }
 
 // ============================================================
-// ATUALIZAR NOME NO PERFIL (utilizador normal)
+// ATUALIZAR NOME PRÓPRIO
 // ============================================================
 
 /**
- * Atualiza o nome do utilizador atual
- * @param {string} novoNome 
- * @returns {Promise}
+ * Atualiza o nome do utilizador atual.
+ * @param {string} novoNome
  */
 function atualizarMeuNome(novoNome) {
   var user = firebaseAuth.currentUser;
-  if (!user) {
-    return Promise.reject(new Error('Utilizador não autenticado'));
-  }
-  
+  if (!user) return Promise.reject(new Error('Utilizador não autenticado'));
   return atualizarUtilizador(user.uid, { nome: novoNome.trim() });
 }
