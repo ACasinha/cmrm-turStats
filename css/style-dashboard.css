@@ -318,7 +318,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 ============================================================ */
 .tabs-wrapper {
   position: sticky;
-  top: clamp(60px,10vw,80px); /* altura do header */
+  top: clamp(60px,10vw,80px);
   z-index: 50;
   background: var(--terra-pale);
   padding: 10px 0 0;
@@ -414,65 +414,74 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 /* ============================================================
-   GRELHA DE GRÁFICOS
+   GRELHA DE GRÁFICOS — CSS Columns (masonry)
+   Elimina os buracos verticais entre cards de alturas diferentes.
+   Cards de largura total usam column-span:all.
 ============================================================ */
 .graficos-grelha {
-  display: grid;
-  gap: clamp(12px,2.5vw,20px);
-  grid-template-columns: 1fr;
-  align-items:start;
+  columns: 1;
+  column-gap: clamp(12px, 2.5vw, 20px);
+  /* Sem display:grid — columns é incompatível com grid */
 }
 
 @media (min-width: 640px) {
-  .graficos-grelha { grid-template-columns: repeat(2, 1fr); }
+  .graficos-grelha { columns: 2; }
 }
+
 @media (min-width: 1024px) {
-  .graficos-grelha { grid-template-columns: repeat(3, 1fr); }
+  .graficos-grelha { columns: 3; }
 }
 
-.grafico-card{
-   display:flex;
-   flex-direction:column;
-   align-self:start;
-   height:auto;
-}
-
-/* Variantes de largura */
-.grafico-card.largura-total   { grid-column: 1 / -1; }
-.grafico-card.largura-metade  { /* padrão — 1 coluna */ }
-
-@media (min-width: 640px) {
-  .grafico-card.largura-dois-tercos { grid-column: span 2; }
-}
-@media (min-width: 1024px) {
-  .grafico-card.largura-dois-tercos { grid-column: span 2; }
-  .grafico-card.largura-metade      { grid-column: span 1; }
+@media (min-width: 1200px) {
+  .graficos-grelha {
+    columns: 3;
+    column-gap: 24px;
+  }
 }
 
 /* ============================================================
    CARD DE GRÁFICO
 ============================================================ */
 .grafico-card {
-background: var(--branco);
+  /* Impede que o card parta a meio entre duas colunas */
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+
+  /* display:block obrigatório — columns não funciona com flex/grid */
+  display: block;
+
+  /* Margem inferior substitui o gap da grelha */
+  margin-bottom: clamp(12px, 2.5vw, 20px);
+
+  background: var(--branco);
   border: 1.5px solid rgba(139,74,43,0.08);
   border-radius: var(--radius);
   overflow: hidden;
-
-  display:flex;
-  flex-direction:column;
-
-  align-self:start;
-  height:auto;
-
   box-shadow: 0 2px 10px rgba(0,0,0,0.06);
   transition: box-shadow var(--transition-base),
               transform var(--transition-base);
-
   animation: slideUp 0.3s ease;
 }
 .grafico-card:hover {
   box-shadow: 0 6px 22px rgba(139,74,43,0.13);
   transform: translateY(-2px);
+}
+
+/* Cards de largura total atravessam todas as colunas */
+.grafico-card.largura-total {
+  column-span: all;
+  -webkit-column-span: all;
+}
+
+/*
+  largura-dois-tercos: CSS Columns não suporta span parcial,
+  por isso estes cards ocupam uma coluna normal (como largura-metade).
+  Se preferir que ocupem a largura toda, use:
+    .grafico-card.largura-dois-tercos { column-span: all; -webkit-column-span: all; }
+*/
+.grafico-card.largura-metade,
+.grafico-card.largura-dois-tercos {
+  /* sem column-span — uma coluna normal */
 }
 
 .grafico-card-header {
@@ -481,7 +490,6 @@ background: var(--branco);
   display: flex; align-items: center; justify-content: space-between;
   gap: 8px;
   background: linear-gradient(90deg, rgba(139,74,43,0.03) 0%, transparent 70%);
-  flex-shrink: 0;
 }
 .grafico-card-titulo {
   font-weight: 700; font-size: var(--text-sm);
@@ -504,7 +512,9 @@ background: var(--branco);
 .btn-iframe-toggle:hover { background: rgba(139,74,43,0.16); }
 
 /* Corpo do iframe */
-.grafico-card-body {flex: 0 0 auto; position: relative; min-height:0; }
+.grafico-card-body {
+  position: relative;
+}
 
 /* Skeleton loader */
 .grafico-skeleton {
@@ -524,21 +534,31 @@ background: var(--branco);
 
 .grafico-iframe {
   width: 100%;
-  border: none; display: block; position:absolute; inset:0; height:100%;
+  border: none;
+  display: block;
+  /* Sem position:absolute — o iframe define a sua própria altura */
 }
 
-/* Alturas padrão */
+/* Alturas fixas do corpo (usadas quando há iframe com URL configurado) */
 .grafico-card.altura-sm   .grafico-card-body { height: 260px; }
 .grafico-card.altura-md   .grafico-card-body { height: 360px; }
 .grafico-card.altura-lg   .grafico-card-body { height: 480px; }
 .grafico-card.altura-xl   .grafico-card-body { height: 600px; }
 .grafico-card.altura-auto .grafico-card-body { height: auto; }
 
+/* Quando há altura fixa, o iframe volta a ser absoluto para preencher o corpo */
+.grafico-card.altura-sm   .grafico-iframe,
+.grafico-card.altura-md   .grafico-iframe,
+.grafico-card.altura-lg   .grafico-iframe,
+.grafico-card.altura-xl   .grafico-iframe {
+  position: absolute; inset: 0; height: 100%;
+}
+
 /* Placeholder para iframe não configurado */
 .grafico-placeholder {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  height: 100%; min-height: 240px; gap: 10px;
+  min-height: 200px; gap: 10px;
   color: var(--cinza); text-align: center; padding: 20px;
   background: repeating-linear-gradient(
     45deg,
@@ -718,8 +738,4 @@ background: var(--branco);
   .dashboard-header { flex-direction: column; }
   .dashboard-header-actions { width: 100%; }
   .btn-voltar { flex: 1; justify-content: center; }
-}
-
-@media (min-width: 1200px) {
-  .graficos-grelha { grid-template-columns: repeat(3, 1fr); gap: 24px; }
 }
