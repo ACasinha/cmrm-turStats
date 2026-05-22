@@ -414,29 +414,26 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 /* ============================================================
-   GRELHA DE GRÁFICOS — Grid com alinhamento ao topo
-   largura-total e largura-dois-tercos funcionam via grid-column.
-   O espaço vertical entre cards heterogéneos é minimizado
-   usando align-items:start e grid-auto-rows:auto.
+   GRELHA DE GRÁFICOS — CSS Grid
+   align-items:start faz cada card ocupar apenas a sua altura
+   natural, sem inflar a linha — elimina os buracos verticais.
+   largura-metade, largura-dois-tercos e largura-total funcionam
+   via grid-column span.
 ============================================================ */
 .graficos-grelha {
   display: grid;
   gap: clamp(12px, 2.5vw, 20px);
   grid-template-columns: 1fr;
-  align-items: start;        /* ← cada card alinha ao topo da sua célula */
-  grid-auto-rows: auto;      /* ← linhas crescem com o conteúdo */
+  align-items: start;
+  grid-auto-rows: auto;
 }
 
 @media (min-width: 640px) {
-  .graficos-grelha {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .graficos-grelha { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (min-width: 1024px) {
-  .graficos-grelha {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  .graficos-grelha { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 1200px) {
@@ -446,39 +443,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   }
 }
 
-/* Variantes de largura */
-.grafico-card.largura-total {
-  grid-column: 1 / -1;
-}
-
-@media (min-width: 640px) {
-  .grafico-card.largura-dois-tercos {
-    grid-column: span 2;
-  }
-}
-
-@media (min-width: 1024px) {
-  .grafico-card.largura-dois-tercos {
-    grid-column: span 2;   /* 2 de 3 colunas — funciona */
-  }
-  .grafico-card.largura-metade {
-    grid-column: span 1;
-  }
-}
-
-/* Card base — align-self:start é a chave */
-.grafico-card {
-  display: flex;
-  flex-direction: column;
-  align-self: start;         /* ← não estica para preencher a linha */
-
 /* ============================================================
    CARD DE GRÁFICO
 ============================================================ */
 .grafico-card {
   display: flex;
   flex-direction: column;
-  align-self: start;     /* não estica para preencher a linha */
+  align-self: start;   /* não estica para igualar a linha — sem buracos */
   background: var(--branco);
   border: 1.5px solid rgba(139,74,43,0.08);
   border-radius: var(--radius);
@@ -498,7 +469,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   grid-column: 1 / -1;
 }
 
-/* Dois terços — span 2 de 3 colunas (só activo a partir de 640px) */
+/* Dois terços — span 2 de 3 colunas */
 @media (min-width: 640px) {
   .grafico-card.largura-dois-tercos { grid-column: span 2; }
 }
