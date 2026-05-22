@@ -476,16 +476,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
    CARD DE GRÁFICO
 ============================================================ */
 .grafico-card {
-  /* Impede que o card parta a meio entre duas colunas */
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-
-  /* display:block obrigatório — columns não funciona com flex/grid */
-  display: block;
-
-  /* Margem inferior substitui o gap da grelha */
-  margin-bottom: clamp(12px, 2.5vw, 20px);
-
+  display: flex;
+  flex-direction: column;
+  align-self: start;     /* não estica para preencher a linha */
   background: var(--branco);
   border: 1.5px solid rgba(139,74,43,0.08);
   border-radius: var(--radius);
@@ -500,21 +493,19 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   transform: translateY(-2px);
 }
 
-/* Cards de largura total atravessam todas as colunas */
+/* Largura total — todas as colunas */
 .grafico-card.largura-total {
-  column-span: all;
-  -webkit-column-span: all;
+  grid-column: 1 / -1;
 }
 
-/*
-  largura-dois-tercos: CSS Columns não suporta span parcial,
-  por isso estes cards ocupam uma coluna normal (como largura-metade).
-  Se preferir que ocupem a largura toda, use:
-    .grafico-card.largura-dois-tercos { column-span: all; -webkit-column-span: all; }
-*/
-.grafico-card.largura-metade,
-.grafico-card.largura-dois-tercos {
-  /* sem column-span — uma coluna normal */
+/* Dois terços — span 2 de 3 colunas (só activo a partir de 640px) */
+@media (min-width: 640px) {
+  .grafico-card.largura-dois-tercos { grid-column: span 2; }
+}
+
+/* Metade — 1 coluna (comportamento por defeito, explicitado) */
+@media (min-width: 1024px) {
+  .grafico-card.largura-metade { grid-column: span 1; }
 }
 
 .grafico-card-header {
