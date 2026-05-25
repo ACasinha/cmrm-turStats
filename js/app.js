@@ -169,16 +169,19 @@ function fazerLogout() {
 }
 
 // ============================================================
-// NAVEGAÇÃO ADMIN E DASHBOARD
+// NAVEGAÇÃO ADMIN, DASHBOARD e EDITOR
 // ============================================================
 
 function irParaAdmin() {
   window.location.href = 'admin.html';
 }
 
-// ── Ponto 3 — função irParaDashboard() ──────────────────────
 function irParaDashboard() {
   window.location.href = 'dashboard.html';
+}
+
+function irParaEditor() {
+  window.location.href = 'editor.html';
 }
 // ────────────────────────────────────────────────────────────
 
