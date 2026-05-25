@@ -53,13 +53,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btnAdmin) btnAdmin.style.display = '';
           }
 
-          // ── Ponto 5 — botão dashboard ──────────────────────
+          // Botão dashboard ──────────────────────
           var temDash = perfil.role === 'administrador'
                      || perfil.role === 'visualizador'
                      || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
-          // ───────────────────────────────────────────────────
+         
+          // Botão editor ──────────────────────
+          var temEditor = perfil.role === 'administrador'
+                     || perfil.acessoEditor === true;
+          var btnEditor = document.getElementById('btnEditor');
+          if (btnEditor && temEditor) btnEditor.style.display = '';
         })
         .catch(function(err) {
           console.warn('[Perfil] Erro ao verificar role:', err);
