@@ -2,9 +2,7 @@
 // editor.js — Editor Mensal de Dados
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 //
-// Permite a administradores e utilizadores com role "editor"
-// consultar e editar os registos de um mês completo por local,
-// apresentados numa grelha país × dia.
+// Acesso: administradores ou utilizadores com acessoEditor: true
 // ============================================================
 
 'use strict';
@@ -21,15 +19,21 @@ var _dadosMes         = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
 var _alteracoes       = {};   // { 'DD/MM/YYYY': { pais: valor, ... } } — só células alteradas
 var _totalAlteracoes  = 0;
 
-// Dias da semana abreviados (pt)
 var DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+// ============================================================
+// HELPER — verifica se o perfil tem acesso ao editor
+// Têm acesso: administrador, ou utilizador com acessoEditor: true
+// ============================================================
+function _temAcessoEditor(perfil) {
+  return perfil.role === 'administrador' || perfil.acessoEditor === true;
+}
 
 // ============================================================
 // ARRANQUE
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Pré-preencher o mês com o mês actual
   var hoje = new Date();
   var mesStr = hoje.getFullYear() + '-' +
                String(hoje.getMonth() + 1).padStart(2, '0');
@@ -44,12 +48,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(perfil) {
           _perfilAtual = perfil;
           _isAdmin     = perfil.role === 'administrador';
-          _isEditor    = perfil.role === 'editor' || _isAdmin;
+          _isEditor    = _temAcessoEditor(perfil);
 
           if (!_isEditor) {
-            // Sem permissão — mostrar erro no ecrã de login
             var erro = document.getElementById('loginErro');
-            erro.textContent = 'Acesso negado. Apenas administradores e editores podem aceder a esta área.';
+            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao editor mensal.';
             erro.classList.add('visivel');
             apiLogout();
             return;
@@ -63,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
       mostrarEcraLogin();
     }
 
-    // Observar logout externo
     firebaseAuth.onAuthStateChanged(function(u) {
       if (!u && _appInicializada) {
         _appInicializada = false;
@@ -102,7 +104,7 @@ function fazerLogin() {
         .then(function(perfil) {
           _perfilAtual = perfil;
           _isAdmin     = perfil.role === 'administrador';
-          _isEditor    = perfil.role === 'editor' || _isAdmin;
+          _isEditor    = _temAcessoEditor(perfil);
 
           if (!perfil.ativo) {
             erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
@@ -111,7 +113,7 @@ function fazerLogin() {
             return;
           }
           if (!_isEditor) {
-            erro.textContent = 'Acesso negado. Apenas administradores e editores podem aceder a esta área.';
+            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao editor mensal.';
             erro.classList.add('visivel');
             apiLogout();
             return;
@@ -160,7 +162,6 @@ function activarEditor(perfil) {
   document.getElementById('headerNomeFuncionario').textContent =
     perfil.nome || perfil.email || '—';
 
-  // Mostrar badge de modo
   var badgeModo = document.getElementById('badgeModo');
   if (badgeModo) {
     badgeModo.className = 'modo-badge ' + (_isAdmin ? 'admin' : 'editor');
@@ -176,7 +177,7 @@ function activarEditor(perfil) {
 
 function carregarMes() {
   var local = document.getElementById('selectorLocal').value;
-  var mes   = document.getElementById('inputMes').value;  // 'YYYY-MM'
+  var mes   = document.getElementById('inputMes').value;
 
   if (!local) {
     mostrarToast('Escolha um local / posto.', 'erro');
@@ -202,45 +203,35 @@ function carregarMes() {
 
   mostrarGrelhaLoading(true);
 
-  // Determinar todos os dias do mês
-  var partes = mes.split('-');
-  var ano    = parseInt(partes[0], 10);
-  var mesNum = parseInt(partes[1], 10);
+  var partes  = mes.split('-');
+  var ano     = parseInt(partes[0], 10);
+  var mesNum  = parseInt(partes[1], 10);
   var numDias = new Date(ano, mesNum, 0).getDate();
 
   var datas = [];
   for (var d = 1; d <= numDias; d++) {
-    // Formato do Firestore: "DD/MM/YYYY"
     datas.push(
       String(d).padStart(2, '0') + '/' +
-      String(mesNum).padStart(2, '0') + '/' +
-      ano
+      String(mesNum).padStart(2, '0') + '/' + ano
     );
   }
 
-  // Chamar a Cloud Function para verificar/obter dados de cada dia
-  // Usamos promises em paralelo para todos os dias
   var promessas = datas.map(function(data) {
     return new Promise(function(resolve) {
       chamarAPI('verificarDados', { local: local, data: data })
         .then(function(resp) {
-          if (resp.sucesso && resp.existe && resp.paises) {
-            resolve({ data: data, paises: resp.paises });
-          } else {
-            resolve({ data: data, paises: {} });
-          }
+          resolve({
+            data:   data,
+            paises: (resp.sucesso && resp.existe && resp.paises) ? resp.paises : {}
+          });
         })
-        .catch(function() {
-          resolve({ data: data, paises: {} });
-        });
+        .catch(function() { resolve({ data: data, paises: {} }); });
     });
   });
 
   Promise.all(promessas)
     .then(function(resultados) {
-      resultados.forEach(function(r) {
-        _dadosMes[r.data] = r.paises;
-      });
+      resultados.forEach(function(r) { _dadosMes[r.data] = r.paises; });
       mostrarGrelhaLoading(false);
       construirGrelha(local, ano, mesNum, numDias);
     })
@@ -258,26 +249,22 @@ function construirGrelha(local, ano, mesNum, numDias) {
   var wrapper = document.getElementById('grelhaWrapper');
   wrapper.innerHTML = '';
 
-  // Determinar lista de países conforme o local
   var simples   = (typeof modoSimplificado === 'function') && modoSimplificado(local);
   var listaPais = simples ? PAISES_SIMPLES : PAISES;
 
-  // Hoje (para destacar a coluna)
-  var hoje      = new Date();
-  var hojeAno   = hoje.getFullYear();
-  var hojesMes  = hoje.getMonth() + 1;
-  var hojesDia  = hoje.getDate();
+  var hoje     = new Date();
+  var hojeAno  = hoje.getFullYear();
+  var hojesMes = hoje.getMonth() + 1;
+  var hojesDia = hoje.getDate();
 
-  // ── Tabela ────────────────────────────────────────────────
   var tabela = document.createElement('table');
   tabela.className = 'grelha-tabela';
   tabela.setAttribute('role', 'grid');
 
   // ── CABEÇALHO ────────────────────────────────────────────
-  var thead = document.createElement('thead');
+  var thead  = document.createElement('thead');
   var trHead = document.createElement('tr');
 
-  // Célula de cabeçalho "País / Tipo"
   var thPais = document.createElement('th');
   thPais.className = 'th-pais';
   thPais.setAttribute('scope', 'col');
@@ -287,12 +274,11 @@ function construirGrelha(local, ano, mesNum, numDias) {
   thPais.appendChild(thPaisInner);
   trHead.appendChild(thPais);
 
-  // Células de dia
   for (var d = 1; d <= numDias; d++) {
-    var dataObj   = new Date(ano, mesNum - 1, d);
-    var diaSem    = dataObj.getDay(); // 0=Dom, 6=Sáb
-    var ehFDS     = diaSem === 0 || diaSem === 6;
-    var ehHoje    = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
+    var dataObj = new Date(ano, mesNum - 1, d);
+    var diaSem  = dataObj.getDay();
+    var ehFDS   = diaSem === 0 || diaSem === 6;
+    var ehHoje  = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
 
     var th = document.createElement('th');
     th.className = 'th-dia' + (ehFDS ? ' fim-semana' : '') + (ehHoje ? ' hoje' : '');
@@ -300,22 +286,18 @@ function construirGrelha(local, ano, mesNum, numDias) {
 
     var inner = document.createElement('div');
     inner.className = 'th-dia-inner';
-
     var numEl = document.createElement('span');
     numEl.className = 'th-dia-num';
     numEl.textContent = d;
-
     var semEl = document.createElement('span');
     semEl.className = 'th-dia-sem';
     semEl.textContent = DIAS_SEM[diaSem];
-
     inner.appendChild(numEl);
     inner.appendChild(semEl);
     th.appendChild(inner);
     trHead.appendChild(th);
   }
 
-  // Célula de cabeçalho "Total"
   var thTot = document.createElement('th');
   thTot.className = 'th-total';
   thTot.setAttribute('scope', 'col');
@@ -329,48 +311,41 @@ function construirGrelha(local, ano, mesNum, numDias) {
   tabela.appendChild(thead);
 
   // ── CORPO ─────────────────────────────────────────────────
-  var tbody = document.createElement('tbody');
-
-  // Separar países de destaque dos restantes
+  var tbody         = document.createElement('tbody');
   var paisesDestaque = listaPais.filter(function(p) { return p.destaque; });
   var paisesResto    = listaPais.filter(function(p) { return !p.destaque; });
+  var totaisDia      = {};
 
-  // Totais por coluna (dia)
-  var totaisDia = {}; // { dia: total }
-
-  function adicionarLinhaPais(pais, idx, isDestaque) {
+  function adicionarLinhaPais(pais, isDestaque) {
     var tr = document.createElement('tr');
     tr.dataset.pais = pais.nome;
     if (isDestaque) tr.classList.add('linha-destaque');
 
-    // Célula de país
     var tdPais = document.createElement('td');
     tdPais.className = 'td-pais';
     tdPais.textContent = pais.nome;
     tdPais.title = pais.nome;
     tr.appendChild(tdPais);
 
-    // Células de valores por dia
     var totalLinha = 0;
 
     for (var d = 1; d <= numDias; d++) {
-      var dataFmt   = String(d).padStart(2, '0') + '/' +
-                      String(mesNum).padStart(2, '0') + '/' + ano;
-      var dataObj   = new Date(ano, mesNum - 1, d);
-      var diaSem    = dataObj.getDay();
-      var ehFDS     = diaSem === 0 || diaSem === 6;
-      var ehHoje    = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
+      var dataFmt = String(d).padStart(2, '0') + '/' +
+                    String(mesNum).padStart(2, '0') + '/' + ano;
+      var dObj    = new Date(ano, mesNum - 1, d);
+      var dSem    = dObj.getDay();
+      var eFDS    = dSem === 0 || dSem === 6;
+      var eHoje   = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
 
       var valor = (_dadosMes[dataFmt] && _dadosMes[dataFmt][pais.nome])
-                  ? (_dadosMes[dataFmt][pais.nome] || 0)
-                  : 0;
+                  ? (_dadosMes[dataFmt][pais.nome] || 0) : 0;
       totalLinha += valor;
       totaisDia[d] = (totaisDia[d] || 0) + valor;
 
       var td = document.createElement('td');
       td.className = 'td-valor' +
-                     (ehFDS  ? ' fim-semana' : '') +
-                     (ehHoje ? ' hoje-col'   : '');
+                     (eFDS  ? ' fim-semana' : '') +
+                     (eHoje ? ' hoje-col'   : '');
 
       var inp = document.createElement('input');
       inp.type = 'number';
@@ -379,19 +354,18 @@ function construirGrelha(local, ano, mesNum, numDias) {
       inp.className = 'cel-input' + (valor > 0 ? ' tem-valor' : '');
       inp.value = valor > 0 ? String(valor) : '';
       inp.placeholder = '0';
-      inp.dataset.data  = dataFmt;
-      inp.dataset.pais  = pais.nome;
+      inp.dataset.data = dataFmt;
+      inp.dataset.pais = pais.nome;
       inp.setAttribute('aria-label', pais.nome + ' — dia ' + d);
 
-      inp.addEventListener('change',   function(e) { onCelChange(e.target); });
-      inp.addEventListener('keydown',  function(e) { onCelKeydown(e); });
-      inp.addEventListener('focus',    function(e) { e.target.select(); });
+      inp.addEventListener('change',  function(e) { onCelChange(e.target); });
+      inp.addEventListener('keydown', function(e) { onCelKeydown(e); });
+      inp.addEventListener('focus',   function(e) { e.target.select(); });
 
       td.appendChild(inp);
       tr.appendChild(td);
     }
 
-    // Célula de total da linha
     var tdTot = document.createElement('td');
     tdTot.className = 'td-total';
     tdTot.dataset.paisTotal = pais.nome;
@@ -401,10 +375,8 @@ function construirGrelha(local, ano, mesNum, numDias) {
     tbody.appendChild(tr);
   }
 
-  // Países de destaque
-  paisesDestaque.forEach(function(p, i) { adicionarLinhaPais(p, i, true); });
+  paisesDestaque.forEach(function(p) { adicionarLinhaPais(p, true); });
 
-  // Separador visual entre destaque e resto (apenas no modo detalhado)
   if (!simples && paisesResto.length > 0) {
     var trSep = document.createElement('tr');
     trSep.className = 'linha-separador';
@@ -414,8 +386,7 @@ function construirGrelha(local, ano, mesNum, numDias) {
     tbody.appendChild(trSep);
   }
 
-  // Restantes países
-  paisesResto.forEach(function(p, i) { adicionarLinhaPais(p, i, false); });
+  paisesResto.forEach(function(p) { adicionarLinhaPais(p, false); });
 
   // ── Linha de totais por dia ───────────────────────────────
   var trTotais = document.createElement('tr');
@@ -424,7 +395,6 @@ function construirGrelha(local, ano, mesNum, numDias) {
   var tdTotLabel = document.createElement('td');
   tdTotLabel.className = 'td-pais';
   tdTotLabel.textContent = 'Total do dia';
-  tdTotLabel.style.fontWeight = '700';
   trTotais.appendChild(tdTotLabel);
 
   var totalGeral = 0;
@@ -434,10 +404,8 @@ function construirGrelha(local, ano, mesNum, numDias) {
     var tdT = document.createElement('td');
     tdT.className = 'td-valor';
     tdT.dataset.totalDia = d;
-    tdT.style.textAlign = 'center';
-    tdT.style.fontWeight = '700';
-    tdT.style.color = t > 0 ? 'var(--verde)' : 'var(--cinza)';
-    tdT.style.fontSize = 'var(--text-xs)';
+    tdT.style.cssText = 'text-align:center;font-weight:700;font-size:var(--text-xs);color:' +
+                        (t > 0 ? 'var(--verde)' : 'var(--cinza)');
     tdT.textContent = t > 0 ? t : '—';
     trTotais.appendChild(tdT);
   }
@@ -450,10 +418,8 @@ function construirGrelha(local, ano, mesNum, numDias) {
 
   tbody.appendChild(trTotais);
   tabela.appendChild(tbody);
-
   wrapper.appendChild(tabela);
 
-  // Actualizar info da grelha
   var nomeMes = new Date(ano, mesNum - 1, 1)
     .toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
   document.getElementById('grelhaInfoTexto').innerHTML =
@@ -469,38 +435,25 @@ function onCelChange(inp) {
   var pais  = inp.dataset.pais;
   var valor = Math.max(0, parseInt(inp.value, 10) || 0);
 
-  // Normalizar
   inp.value = valor > 0 ? String(valor) : '';
-
-  // Estilo
   inp.classList.toggle('tem-valor', valor > 0);
 
-  // Verificar se é diferente do valor original
   var original = (_dadosMes[data] && _dadosMes[data][pais]) || 0;
   var alterado = (valor !== original);
   inp.classList.toggle('alterada', alterado);
 
-  // Registar alteração
   if (!_alteracoes[data]) _alteracoes[data] = {};
   if (alterado) {
     _alteracoes[data][pais] = valor;
   } else {
     delete _alteracoes[data][pais];
-    if (Object.keys(_alteracoes[data]).length === 0) {
-      delete _alteracoes[data];
-    }
+    if (Object.keys(_alteracoes[data]).length === 0) delete _alteracoes[data];
   }
 
-  // Recalcular total da linha
   recalcularTotalLinha(pais);
-
-  // Recalcular total do dia (coluna)
   recalcularTotalDia(data);
-
-  // Recalcular total geral
   recalcularTotalGeral();
 
-  // Actualizar contador de alterações
   _totalAlteracoes = contarAlteracoes();
   atualizarBarraAlteracoes();
 }
@@ -508,7 +461,6 @@ function onCelChange(inp) {
 function onCelKeydown(e) {
   var inp    = e.target;
   var tr     = inp.closest('tr');
-  var td     = inp.closest('td');
   var tabela = inp.closest('table');
   if (!tabela) return;
 
@@ -516,15 +468,12 @@ function onCelKeydown(e) {
   var trIdx   = linhas.indexOf(tr);
   var celulas = Array.from(tr.querySelectorAll('.cel-input'));
   var celIdx  = celulas.indexOf(inp);
-
-  var alvo = null;
+  var alvo    = null;
 
   if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey)) {
     e.preventDefault();
     alvo = celulas[celIdx + 1] || null;
-    if (!alvo && linhas[trIdx + 1]) {
-      alvo = linhas[trIdx + 1].querySelector('.cel-input');
-    }
+    if (!alvo && linhas[trIdx + 1]) alvo = linhas[trIdx + 1].querySelector('.cel-input');
   } else if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
     e.preventDefault();
     alvo = celulas[celIdx - 1] || null;
@@ -535,29 +484,23 @@ function onCelKeydown(e) {
   } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
     e.preventDefault();
     if (linhas[trIdx + 1]) {
-      var proxCels = linhas[trIdx + 1].querySelectorAll('.cel-input');
-      alvo = proxCels[celIdx] || null;
+      alvo = linhas[trIdx + 1].querySelectorAll('.cel-input')[celIdx] || null;
     }
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
     if (trIdx > 0) {
-      var antCels = linhas[trIdx - 1].querySelectorAll('.cel-input');
-      alvo = antCels[celIdx] || null;
+      alvo = linhas[trIdx - 1].querySelectorAll('.cel-input')[celIdx] || null;
     }
   } else if (e.key === 'Escape') {
-    // Reverter valor
-    var data     = inp.dataset.data;
-    var pais     = inp.dataset.pais;
-    var original = (_dadosMes[data] && _dadosMes[data][pais]) || 0;
-    inp.value    = original > 0 ? String(original) : '';
+    var dataE     = inp.dataset.data;
+    var paisE     = inp.dataset.pais;
+    var originalE = (_dadosMes[dataE] && _dadosMes[dataE][paisE]) || 0;
+    inp.value     = originalE > 0 ? String(originalE) : '';
     onCelChange(inp);
     inp.blur();
   }
 
-  if (alvo && !alvo.disabled) {
-    alvo.focus();
-    alvo.select();
-  }
+  if (alvo && !alvo.disabled) { alvo.focus(); alvo.select(); }
 }
 
 // ============================================================
@@ -567,62 +510,46 @@ function onCelKeydown(e) {
 function recalcularTotalLinha(nomePais) {
   var tabela = document.querySelector('.grelha-tabela');
   if (!tabela) return;
-
   var tr = tabela.querySelector('tr[data-pais="' + CSS.escape(nomePais) + '"]');
   if (!tr) return;
-
   var total = 0;
-  tr.querySelectorAll('.cel-input').forEach(function(inp) {
-    total += parseInt(inp.value, 10) || 0;
-  });
-
+  tr.querySelectorAll('.cel-input').forEach(function(i) { total += parseInt(i.value, 10) || 0; });
   var tdTot = tabela.querySelector('td[data-pais-total="' + CSS.escape(nomePais) + '"]');
   if (tdTot) tdTot.textContent = total > 0 ? total : '—';
 }
 
 function recalcularTotalDia(dataFmt) {
-  // Extrair o dia do formato "DD/MM/YYYY"
-  var dia = parseInt(dataFmt.split('/')[0], 10);
+  var dia    = parseInt(dataFmt.split('/')[0], 10);
   var tabela = document.querySelector('.grelha-tabela');
   if (!tabela) return;
-
-  var total = 0;
-  tabela.querySelectorAll('.cel-input[data-data="' + dataFmt + '"]').forEach(function(inp) {
-    total += parseInt(inp.value, 10) || 0;
-  });
-
-  var tdTotDia = tabela.querySelector('td[data-total-dia="' + dia + '"]');
-  if (tdTotDia) {
-    tdTotDia.textContent = total > 0 ? total : '—';
-    tdTotDia.style.color = total > 0 ? 'var(--verde)' : 'var(--cinza)';
+  var total  = 0;
+  tabela.querySelectorAll('.cel-input[data-data="' + dataFmt + '"]')
+        .forEach(function(i) { total += parseInt(i.value, 10) || 0; });
+  var el = tabela.querySelector('td[data-total-dia="' + dia + '"]');
+  if (el) {
+    el.textContent  = total > 0 ? total : '—';
+    el.style.color  = total > 0 ? 'var(--verde)' : 'var(--cinza)';
   }
 }
 
 function recalcularTotalGeral() {
   var tabela = document.querySelector('.grelha-tabela');
   if (!tabela) return;
-
   var total = 0;
-  tabela.querySelectorAll('.cel-input').forEach(function(inp) {
-    total += parseInt(inp.value, 10) || 0;
-  });
-
+  tabela.querySelectorAll('.cel-input').forEach(function(i) { total += parseInt(i.value, 10) || 0; });
   var el = document.getElementById('totalGeralGrelha');
   if (el) el.textContent = total > 0 ? total : '—';
 }
 
 function contarAlteracoes() {
   var n = 0;
-  Object.values(_alteracoes).forEach(function(diaObj) {
-    n += Object.keys(diaObj).length;
-  });
+  Object.values(_alteracoes).forEach(function(obj) { n += Object.keys(obj).length; });
   return n;
 }
 
 function atualizarBarraAlteracoes() {
-  var badge = document.getElementById('alteracoesBadge');
+  var badge      = document.getElementById('alteracoesBadge');
   var btnGuardar = document.getElementById('btnGuardarTudo');
-
   if (_totalAlteracoes > 0) {
     badge.classList.add('visivel');
     badge.textContent = '✏️ ' + _totalAlteracoes +
@@ -639,20 +566,13 @@ function atualizarBarraAlteracoes() {
 // ============================================================
 
 function confirmarGuardar() {
-  if (_totalAlteracoes === 0) {
-    mostrarToast('Não há alterações para guardar.', 'info');
-    return;
-  }
-
-  // Construir resumo para o modal
+  if (_totalAlteracoes === 0) { mostrarToast('Não há alterações para guardar.', 'info'); return; }
   var diasAlterados = Object.keys(_alteracoes).length;
-  var resumo =
+  document.getElementById('modalResumoTexto').textContent =
     '📍 Local: ' + _localAtual + '\n' +
     '📅 Mês: ' + formatarMesLegivel(_mesAtual) + '\n' +
     '📊 Dias com alterações: ' + diasAlterados + '\n' +
     '✏️ Total de células alteradas: ' + _totalAlteracoes;
-
-  document.getElementById('modalResumoTexto').textContent = resumo;
   document.getElementById('modalGuardar').classList.add('show');
 }
 
@@ -662,40 +582,27 @@ function fecharModalGuardar() {
 
 function executarGuardar() {
   fecharModalGuardar();
-
-  var datas  = Object.keys(_alteracoes);
+  var datas = Object.keys(_alteracoes);
   if (datas.length === 0) return;
 
   var btnG = document.getElementById('btnGuardarTudo');
   if (btnG) { btnG.disabled = true; btnG.textContent = '⏳ A guardar...'; }
   mostrarToast('A guardar ' + datas.length + ' dia(s)...', 'info');
 
-  // Construir payloads: para cada data alterada, fundir com dados existentes
   var promessas = datas.map(function(data) {
-    var paisesExistentes = _dadosMes[data] || {};
-    var alteracoesDia    = _alteracoes[data] || {};
-
-    // Fundir: começar com os dados existentes e aplicar as alterações
-    var paisesFinais = {};
-    Object.keys(paisesExistentes).forEach(function(p) {
-      if ((paisesExistentes[p] || 0) > 0) paisesFinais[p] = paisesExistentes[p];
+    var existentes  = _dadosMes[data] || {};
+    var alteracoesDia = _alteracoes[data] || {};
+    var finais = {};
+    Object.keys(existentes).forEach(function(p) {
+      if ((existentes[p] || 0) > 0) finais[p] = existentes[p];
     });
     Object.keys(alteracoesDia).forEach(function(p) {
       var v = alteracoesDia[p] || 0;
-      if (v > 0) {
-        paisesFinais[p] = v;
-      } else {
-        delete paisesFinais[p]; // valor 0 → remover
-      }
+      if (v > 0) finais[p] = v; else delete finais[p];
     });
-
     return chamarAPI('guardarRegisto', {
-      data:        data,
-      local:       _localAtual,
-      paises:      paisesFinais,
-      operadores:  [],
-      sugestoes:   [],
-      observacoes: ''
+      data: data, local: _localAtual, paises: finais,
+      operadores: [], sugestoes: [], observacoes: ''
     });
   });
 
@@ -703,33 +610,23 @@ function executarGuardar() {
     .then(function(resultados) {
       var sucesso = resultados.filter(function(r) { return r && r.sucesso; }).length;
       var falhou  = resultados.length - sucesso;
-
       if (btnG) { btnG.disabled = false; btnG.textContent = '💾 Guardar alterações'; }
 
       if (falhou === 0) {
-        // Actualizar _dadosMes com as alterações guardadas
         datas.forEach(function(data) {
           if (!_dadosMes[data]) _dadosMes[data] = {};
-          var alt = _alteracoes[data] || {};
-          Object.keys(alt).forEach(function(p) {
-            _dadosMes[data][p] = alt[p];
+          Object.keys(_alteracoes[data] || {}).forEach(function(p) {
+            _dadosMes[data][p] = _alteracoes[data][p];
           });
         });
-
-        // Limpar alterações e estilos
-        _alteracoes       = {};
-        _totalAlteracoes  = 0;
+        _alteracoes = {}; _totalAlteracoes = 0;
         atualizarBarraAlteracoes();
         document.querySelectorAll('.cel-input.alterada').forEach(function(el) {
           el.classList.remove('alterada');
         });
-
         mostrarToast('✓ ' + sucesso + ' dia(s) guardado(s) com sucesso.', 'sucesso');
       } else {
-        mostrarToast(
-          '⚠️ ' + sucesso + ' dia(s) guardado(s), ' + falhou + ' com erro. Verifique a ligação.',
-          'aviso'
-        );
+        mostrarToast('⚠️ ' + sucesso + ' guardado(s), ' + falhou + ' com erro.', 'aviso');
         atualizarBarraAlteracoes();
       }
     })
@@ -742,21 +639,17 @@ function executarGuardar() {
 function descartarAlteracoes() {
   if (_totalAlteracoes === 0) return;
   if (!confirm('Tem a certeza que quer descartar todas as alterações não guardadas?')) return;
-
-  // Repor valores originais nos inputs
   document.querySelectorAll('.cel-input.alterada').forEach(function(inp) {
     var data     = inp.dataset.data;
     var pais     = inp.dataset.pais;
     var original = (_dadosMes[data] && _dadosMes[data][pais]) || 0;
-    inp.value    = original > 0 ? String(original) : '';
+    inp.value = original > 0 ? String(original) : '';
     inp.classList.remove('alterada');
     inp.classList.toggle('tem-valor', original > 0);
     recalcularTotalLinha(pais);
     recalcularTotalDia(data);
   });
-
-  _alteracoes      = {};
-  _totalAlteracoes = 0;
+  _alteracoes = {}; _totalAlteracoes = 0;
   recalcularTotalGeral();
   atualizarBarraAlteracoes();
   mostrarToast('Alterações descartadas.', 'info');
@@ -767,17 +660,10 @@ function descartarAlteracoes() {
 // ============================================================
 
 function mostrarGrelhaLoading(mostrar) {
-  var loading = document.getElementById('grelhaLoading');
-  var wrapper = document.getElementById('grelhaWrapper');
-
-  if (mostrar) {
-    loading.classList.add('show');
-    wrapper.innerHTML = '';
-    document.getElementById('grelhaAcoes').style.display = 'none';
-  } else {
-    loading.classList.remove('show');
-    document.getElementById('grelhaAcoes').style.display = '';
-  }
+  document.getElementById('grelhaLoading').classList.toggle('show', mostrar);
+  document.getElementById('grelhaWrapper').innerHTML = mostrar ? '' : document.getElementById('grelhaWrapper').innerHTML;
+  document.getElementById('grelhaAcoes').style.display = mostrar ? 'none' : '';
+  if (mostrar) document.getElementById('grelhaWrapper').innerHTML = '';
 }
 
 function formatarMesLegivel(mesStr) {
@@ -787,10 +673,6 @@ function formatarMesLegivel(mesStr) {
   return d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 }
 
-// ============================================================
-// NAVEGAÇÃO
-// ============================================================
-
 function voltarParaApp() {
   if (_totalAlteracoes > 0) {
     if (!confirm('Tem alterações por guardar. Tem a certeza que quer sair?')) return;
@@ -798,39 +680,26 @@ function voltarParaApp() {
   window.location.href = 'index.html';
 }
 
-// ============================================================
-// UTILITÁRIOS
-// ============================================================
-
 function esc(str) {
   return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function mostrarToast(msg, tipo) {
   var t = document.getElementById('toast');
   t.textContent = msg;
-  t.className   = 'toast ' + (tipo || 'info') + ' show';
+  t.className = 'toast ' + (tipo || 'info') + ' show';
   clearTimeout(t._timer);
   t._timer = setTimeout(function() { t.classList.remove('show'); }, 4000);
 }
 
-// Fechar modal ao clicar fora
 document.addEventListener('DOMContentLoaded', function() {
   var overlay = document.getElementById('modalGuardar');
   if (overlay) {
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) fecharModalGuardar();
-    });
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) fecharModalGuardar(); });
   }
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') fecharModalGuardar();
-  });
-
-  // Aviso ao fechar a aba com alterações por guardar
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') fecharModalGuardar(); });
   window.addEventListener('beforeunload', function(e) {
     if (_totalAlteracoes > 0) {
       e.preventDefault();
