@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#8B4A2B">
+<link rel="icon" type="image/png" href="img/logo.png">
+<title>Editor Mensal — Registo de Nacionalidades</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style-editor.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<!-- ============================================================
+     ECRÃ DE LOGIN
+============================================================ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="img/logo.png" alt="Logo Município de Reguengos de Monsaraz">
+    </div>
+    <div class="login-titulo">Editor Mensal</div>
+    <div class="login-sub">Edição de Registos por Mês</div>
+    <div class="login-erro" id="loginErro"></div>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginUser" placeholder="nome@exemplo.pt"
+             autocomplete="username" inputmode="email"
+             onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Password"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="fazerLogin()">Entrar →</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     CONTEÚDO PRINCIPAL (oculto antes do login)
+============================================================ -->
+<div id="editorWrap" style="display:none">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-circle">
+        <img src="img/logo.png" alt="Logo Município">
+      </div>
+      <div class="header-text">
+        <h1>Registo Diário de Nacionalidades</h1>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <span class="user-label">Funcionário(a)</span>
+        <span class="user-name" id="headerNomeFuncionario">—</span>
+        <button class="btn-logout" onclick="fazerLogout()">↩ Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER -->
+  <div class="editor-container">
+
+    <!-- Cabeçalho da página -->
+    <div class="editor-header">
+      <div class="editor-header-info">
+        <h1>✏️ Editor Mensal de Dados</h1>
+        <p>Consulte e edite os registos de um mês completo por local de registo</p>
+      </div>
+      <div class="editor-header-actions">
+        <span class="modo-badge editor" id="badgeModo">✏️ Editor</span>
+        <button class="btn-voltar" onclick="voltarParaApp()">← Voltar à App</button>
+      </div>
+    </div>
+
+    <!-- PAINEL DE CONTROLO — selecção de local e mês -->
+    <div class="painel-controlo">
+
+      <div class="filtro-grupo">
+        <label for="selectorLocal">📍 Local / Posto</label>
+        <select id="selectorLocal">
+          <option value="" disabled selected>Escolha uma opção...</option>
+          <optgroup label="Lista completa de países">
+            <option value="Posto de Turismo de Monsaraz">Posto de Turismo de Monsaraz</option>
+            <option value="Museu do Fresco">Museu do Fresco</option>
+            <option value="Posto de Turismo de Reguengos">Posto de Turismo de Reguengos</option>
+            <option value="Museu José Mestre Batista">Museu José Mestre Batista</option>
+            <option value="Casa do Barro">Casa do Barro</option>
+          </optgroup>
+          <optgroup label="Nacionais / Estrangeiros">
+            <option value="Casa da Inquisição">Casa da Inquisição</option>
+            <option value="Igreja de Santiago">Igreja de Santiago</option>
+            <option value="Igreja da Misericórdia">Igreja da Misericórdia</option>
+            <option value="Arte Contemporânea">Arte Contemporânea</option>
+            <option value="Auditório António Marcelino">Auditório António Marcelino</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="filtro-grupo">
+        <label for="inputMes">📅 Mês</label>
+        <input type="month" id="inputMes"
+               onkeydown="if(event.key==='Enter')carregarMes()">
+      </div>
+
+      <button class="btn-carregar" onclick="carregarMes()" id="btnCarregar">
+        🔍 Carregar dados
+      </button>
+
+    </div>
+
+    <!-- ÁREA DA GRELHA -->
+    <div id="areaPrincipal">
+
+      <!-- Estado inicial / vazio -->
+      <div class="secao-card" id="estadoVazioCard">
+        <div class="grelha-vazia">
+          <span class="grelha-vazia-icone">📋</span>
+          <div class="grelha-vazia-titulo">Nenhuma grelha carregada</div>
+          <div>Escolha um local e um mês e clique em <strong>Carregar dados</strong> para começar.</div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="grelha-loading" id="grelhaLoading">
+        <div class="spinner"></div>
+        <div>A carregar dados do mês...</div>
+      </div>
+
+      <!-- Barra de acções da grelha (visível após carregar) -->
+      <div class="grelha-acoes" id="grelhaAcoes" style="display:none">
+        <div class="grelha-info" id="grelhaInfoTexto">—</div>
+        <span class="alteracoes-badge" id="alteracoesBadge"></span>
+        <button class="btn-limpar-alteracoes" onclick="descartarAlteracoes()" title="Descartar todas as alterações não guardadas">
+          ↩ Descartar
+        </button>
+        <button class="btn-guardar-tudo" id="btnGuardarTudo"
+                onclick="confirmarGuardar()" disabled>
+          💾 Guardar alterações
+        </button>
+      </div>
+
+      <!-- Grelha de edição -->
+      <div class="secao-card" id="secaoGrelha" style="display:none">
+        <div class="secao-card-header"
+             onclick="toggleSecaoGrelha()"
+             role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoGrelha()">
+          <h2 id="secaoGrelhaTitle">Grelha Mensal</h2>
+          <div class="secao-meta">
+            <span class="secao-total-badge" id="secaoTotalBadge">0 registos</span>
+            <span class="secao-toggle-icone" id="secaoToggleIcone">▼</span>
+          </div>
+        </div>
+
+        <!-- Aviso de alterações não guardadas -->
+        <div class="secao-alteracoes-aviso" id="secaoAlteracoesAviso">
+          ✏️ Existem alterações por guardar nesta grelha
+        </div>
+
+        <div class="secao-card-corpo" id="secaoCorpo">
+          <div class="grelha-wrapper" id="grelhaWrapper">
+            <!-- Tabela gerada por editor.js -->
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /areaPrincipal -->
+
+  </div><!-- /editor-container -->
+
+  <!-- RODAPÉ -->
+  <footer class="rodape">
+    <div class="rodape-logo">
+      <img src="img/logo-turismo.png" alt="Serviços de Turismo">
+    </div>
+    <div class="rodape-texto">
+      <span class="rodape-dev">Desenvolvido pelos Serviços de Turismo do Município de Reguengos de Monsaraz</span>
+      <div class="rodape-pwa">
+        <span class="rodape-versao" id="rodapeVersao">v1</span>
+        <button class="btn-rodape" id="btnVerificarUpdate"
+                onclick="verificarAtualizacao()" title="Verificar atualização">
+          🔄 Verificar atualização
+        </button>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /editorWrap -->
+
+<!-- ============================================================
+     MODAL DE CONFIRMAÇÃO DE GUARDAR
+============================================================ -->
+<div class="modal-overlay" id="modalGuardar">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>💾 Confirmar Guardagem</h2>
+    </div>
+    <div class="modal-body">
+      <p>Está prestes a guardar alterações na base de dados. Esta operação <strong>sobrescreve</strong> os valores existentes para cada dia alterado.</p>
+      <div class="modal-resumo" id="modalResumoTexto" style="white-space:pre-line;font-family:monospace"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancelar" onclick="fecharModalGuardar()">Cancelar</button>
+      <button class="btn-modal-confirmar" onclick="executarGuardar()">✓ Confirmar e Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Aplicação -->
+<script src="js/api.js"></script>
+<script src="js/sw-update.js"></script>
+<script src="js/users.js"></script>
+<script src="js/data.js"></script>
+<script src="js/editor.js"></script>
+
+<script>
+'use strict';
+
+// ── Controlo do card de grelha (expandir/recolher) ──────────
+function toggleSecaoGrelha() {
+  var card   = document.getElementById('secaoGrelha');
+  var icone  = document.getElementById('secaoToggleIcone');
+  var aberto = !card.classList.contains('recolhido');
+  card.classList.toggle('recolhido', aberto);
+  icone.textContent = aberto ? '▶' : '▼';
+}
+
+// ── Mostrar o card de grelha após carregar dados ────────────
+// Sobrepor a função construirGrelha do editor.js para também
+// mostrar / atualizar os elementos de UI do HTML.
+var _construirGrelhaOriginal = construirGrelha;
+construirGrelha = function(local, ano, mesNum, numDias) {
+  // Esconder estado vazio, mostrar secção de grelha
+  document.getElementById('estadoVazioCard').style.display  = 'none';
+  document.getElementById('secaoGrelha').style.display      = '';
+  document.getElementById('secaoGrelha').classList.remove('recolhido');
+  document.getElementById('secaoToggleIcone').textContent   = '▼';
+
+  // Chamar a construção original
+  _construirGrelhaOriginal(local, ano, mesNum, numDias);
+
+  // Actualizar título do card
+  var nomeMes = new Date(ano, mesNum - 1, 1)
+    .toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  document.getElementById('secaoGrelhaTitle').textContent =
+    local + ' — ' + nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+  // Contar total de registos carregados
+  var totalCarregado = 0;
+  Object.values(_dadosMes).forEach(function(diaObj) {
+    Object.values(diaObj).forEach(function(v) { totalCarregado += (v || 0); });
+  });
+  document.getElementById('secaoTotalBadge').textContent =
+    totalCarregado > 0
+      ? totalCarregado.toLocaleString('pt-PT') + ' visitantes'
+      : 'Sem dados';
+
+  // Observar alterações para avisos no card
+  observarAlteracoesParaAviso();
+};
+
+// Atualizar aviso de alterações não guardadas no card
+function observarAlteracoesParaAviso() {
+  var avisoEl = document.getElementById('secaoAlteracoesAviso');
+  // Re-ligar o observador à função atualizarBarraAlteracoes
+  var _orig = atualizarBarraAlteracoes;
+  atualizarBarraAlteracoes = function() {
+    _orig();
+    if (avisoEl) {
+      avisoEl.classList.toggle('visivel', _totalAlteracoes > 0);
+    }
+  };
+}
+</script>
+
+</body>
+</html>
