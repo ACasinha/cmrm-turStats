@@ -11,7 +11,7 @@ var _timestampCache   = 0;
 var _isAdmin          = false;
 
 // Roles válidas da aplicação
-var ROLES_VALIDAS = ['utilizador', 'visualizador', 'administrador'];
+var ROLES_VALIDAS = ['utilizador', 'visualizador', 'administrador', 'editor'];
 
 // ============================================================
 // INICIALIZAR FIRESTORE
@@ -52,6 +52,7 @@ function obterPerfilUtilizador(forcar) {
           nome: user.displayName || user.email.split('@')[0],
           role: 'utilizador',
           acessoDashboard: false,
+          acessoEditor: false,
           criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
           atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
           ativo: true
