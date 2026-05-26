@@ -27,7 +27,6 @@ var edicaoPermitida = null;
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-
   var unsubInicial = firebaseAuth.onAuthStateChanged(function(user) {
     unsubInicial();
 
@@ -36,6 +35,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
       obterPerfilUtilizador()
         .then(function(perfil) {
+          _perfilAtual = perfil;
+          _isAdmin        = perfil.role === 'administrador';
+          _isUtilizador = perfil.role === 'administrador'
+                         || perfil.role === 'utilizador'
+
+          if (!_isUtilizador) {
+            // Sem permissão
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('loginErro').textContent = 'Esta conta apenas tem acesso ao dashboard. Contacte o administrador.';
+            document.getElementById('loginErro').classList.add('visivel');
+            apiLogout();
+            return;
+          }
+          
           // Botão admin
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
@@ -44,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
           // Botão dashboard
           var temDash = perfil.role === 'administrador'
-                     || perfil.role === 'visualizador'
                      || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
