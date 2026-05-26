@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
     unsubInicial();
 
     if (user && sessaoValida()) {
-      nomeFuncionarioAtual = user.displayName || user.email;
 
       obterPerfilUtilizador()
         .then(function(perfil) {
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
         
-          activarApp();
+          activarApp(perfil);
           
         })
         .catch(function() {
@@ -117,7 +116,10 @@ function fazerLogin() {
 
       obterPerfilUtilizador()
         .then(function(perfil) {
-          nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
+          _perfilAtual = perfil;
+          _isAdmin      = perfil.role === 'administrador';
+          _isUtilizador = perfil.role === 'administrador'
+                       || perfil.role === 'utilizador';
 
           if (!perfil.ativo) {
             erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
@@ -151,12 +153,12 @@ function fazerLogin() {
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
 
-          activarApp();
+          activarApp(perfil);
         })
         .catch(function(err) {
           console.error('[Perfil] Erro ao carregar:', err);
           nomeFuncionarioAtual = resp.nomeFuncionario;
-          activarApp();
+          activarApp(perfil);
         });
     },
     function onFailure(err) {
@@ -193,9 +195,10 @@ function irParaEditor()    { window.location.href = 'editor.html'; }
 // ACTIVAR / MOSTRAR LOGIN
 // ============================================================
 
-function activarApp() {
+function activarApp(perfil) {
   document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('headerNomeFuncionario').textContent = nomeFuncionarioAtual;
+  document.getElementById('headerNomeFuncionario').textContent =
+    perfil.nome || perfil.email || '—';
   if (!appInicializada) {
     inicializarApp();
     appInicializada = true;
