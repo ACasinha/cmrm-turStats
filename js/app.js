@@ -36,9 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
       obterPerfilUtilizador()
         .then(function(perfil) {
           _perfilAtual = perfil;
-          _isAdmin        = perfil.role === 'administrador';
+          _isAdmin      = perfil.role === 'administrador';
           _isUtilizador = perfil.role === 'administrador'
-                         || perfil.role === 'utilizador'
+                       || perfil.role === 'utilizador'
 
           if (!_isUtilizador) {
             // Sem permissão
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
         
-          activarApp();
+          activarApp(perfil);
           
         })
         .catch(function() {
