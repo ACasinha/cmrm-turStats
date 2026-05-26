@@ -113,6 +113,13 @@ function fazerLogin() {
             return;
           }
 
+          if (perfil.role === 'visualizador') {
+            erro.textContent = 'Esta conta apenas tem acesso ao dashboard. Contacte o administrador.';
+            erro.classList.add('visivel');
+            apiLogout();
+            return;
+          }
+
           // Botão admin
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
@@ -121,7 +128,6 @@ function fazerLogin() {
 
           // Botão dashboard
           var temDash = perfil.role === 'administrador'
-                     || perfil.role === 'visualizador'
                      || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
