@@ -8,6 +8,9 @@
 var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
+var _perfilAtual          = null;
+var _isAdmin              = false;
+var _isUtilizador         = false;
 var appInicializada       = false;
 var dadosAlterados        = false;
 
