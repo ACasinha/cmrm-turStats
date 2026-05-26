@@ -5,7 +5,6 @@
 
 'use strict';
 
-var nomeFuncionarioAtual  = '';
 var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
@@ -128,8 +127,8 @@ function fazerLogin() {
             return;
           }
 
-          if (perfil.role === 'visualizador') {
-            erro.textContent = 'Esta conta apenas tem acesso ao dashboard. Contacte o administrador.';
+          if (!_isUtilizador) {
+            erro.textContent = 'Esta conta não tem acesso à aplicação. Contacte o administrador.';
             erro.classList.add('visivel');
             apiLogout();
             return;
@@ -157,7 +156,6 @@ function fazerLogin() {
         })
         .catch(function(err) {
           console.error('[Perfil] Erro ao carregar:', err);
-          nomeFuncionarioAtual = resp.nomeFuncionario;
           activarApp(perfil);
         });
     },
