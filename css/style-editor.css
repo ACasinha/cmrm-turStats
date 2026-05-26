@@ -527,7 +527,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   transition: transform var(--transition-base);
 }
 .secao-card.recolhido .secao-toggle-icone { transform: rotate(-90deg); }
-.secao-card-corpo { transition: none; position: relative; }
+.secao-card-corpo { transition: none; }
 .secao-card.recolhido .secao-card-corpo { display: none; }
 
 /* Aviso de alterações não guardadas por secção */
@@ -547,23 +547,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 ============================================================ */
 .grelha-wrapper {
   overflow-x: auto;
-  overflow-y: auto;
-  max-height: calc(100vh - 320px);
-  min-height: 260px;
-  /* scrollbar já definida no CSS base */
+  -webkit-overflow-scrolling: touch;
+  /* Scrollbar visível mas discreta */
   scrollbar-width: thin;
   scrollbar-color: var(--cinza-claro) transparent;
-  /* border-radius herdado do .secao-card */
-  position: relative;
 }
- 
-/* Scrollbar vertical (webkit) */
-.grelha-wrapper::-webkit-scrollbar {
-  height: 6px;
-  width:  6px;
-}
-.grelha-wrapper::-webkit-scrollbar-track  { background: transparent; }
-.grelha-wrapper::-webkit-scrollbar-thumb  { background: var(--cinza-claro); border-radius: 3px; }
+.grelha-wrapper::-webkit-scrollbar { height: 6px; }
+.grelha-wrapper::-webkit-scrollbar-track { background: transparent; }
+.grelha-wrapper::-webkit-scrollbar-thumb { background: var(--cinza-claro); border-radius: 3px; }
 .grelha-wrapper::-webkit-scrollbar-thumb:hover { background: var(--cinza); }
 
 .grelha-tabela {
@@ -578,31 +569,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .grelha-tabela thead th {
   position: sticky;
   top: 0;
-  z-index: 4;
   background: white;
-  /* Linha de separação visual entre cabeçalho e corpo */
-  box-shadow: 0 2px 0 var(--verde-light);
-}
-
-.grelha-tabela thead .th-pais {
-  position: sticky;
-  left: 0;
-  top:  0;
-  z-index: 6 !important;    /* acima de todos os outros th */
-  background: white !important;
-  border-right: 2px solid var(--cinza-claro);
-  /* Sombra direita subtil para separar da área de scroll */
-  box-shadow: 2px 2px 0 var(--verde-light);
-}
-
-.grelha-tabela thead .th-total {
-  position: sticky;
-  right: 0;
-  top:   0;
-  z-index: 6 !important;
-  background: white !important;
-  border-left: 2px solid var(--cinza-claro);
-  box-shadow: -2px 2px 0 var(--verde-light);
+  z-index: 4;
+  padding: 0;
+  border-bottom: 2px solid var(--verde);
 }
 
 /* Cabeçalho: primeira célula (etiqueta "País / Tipo") */
@@ -672,16 +642,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 /* ── Corpo (tbody) ─────────────────────────────────────────── */
-.grelha-tabela tbody .td-pais {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: white;
-  border-right: 2px solid var(--cinza-claro);
-  /* Sombra direita subtil para indicar que há conteúdo atrás */
-  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
-}
-
 .grelha-tabela tbody tr {
   transition: background var(--transition-fast);
 }
@@ -705,27 +665,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   border-top: 2px solid var(--verde-light);
 }
 .grelha-tabela tbody tr.linha-totais td { font-weight: 700; color: var(--verde); }
-
-/* Variantes de fundo para .td-pais conforme o tipo de linha */
-.grelha-tabela tbody tr:hover .td-pais {
-  background: rgba(245,235,224,0.95);
-}
-.grelha-tabela tbody tr.linha-destaque .td-pais {
-  background: rgba(201,149,42,0.09);
-}
-.grelha-tabela tbody tr.linha-destaque:hover .td-pais {
-  background: rgba(201,149,42,0.16);
-}
-.grelha-tabela tbody tr.linha-totais .td-pais {
-  background: rgba(61,90,62,0.09);
-  border-top: 2px solid var(--verde-light);
-  /* Sombra mais forte na linha de totais */
-  box-shadow: 2px 0 6px rgba(0,0,0,0.10);
-}
-.grelha-tabela tbody tr.linha-separador .td-pais {
-  background: rgba(0,0,0,0.03);
-  box-shadow: none;
-}
 
 /* ── Célula de País (coluna esquerda sticky) ─────────────────── */
 .td-pais {
@@ -756,31 +695,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   background: rgba(61,90,62,0.08);
   color: var(--verde-dark);
   border-top: 2px solid var(--verde-light);
-}
-
-.grelha-tabela tbody .td-total {
-  position: sticky;
-  right: 0;
-  z-index: 2;
-  background: white;
-  border-left: 2px solid var(--cinza-claro);
-  box-shadow: -2px 0 4px rgba(0,0,0,0.06);
-}
- 
-.grelha-tabela tbody tr:hover .td-total {
-  background: rgba(245,235,224,0.95);
-}
-.grelha-tabela tbody tr.linha-destaque .td-total {
-  background: rgba(201,149,42,0.07);
-}
-.grelha-tabela tbody tr.linha-totais .td-total {
-  background: rgba(61,90,62,0.10);
-  border-top: 2px solid var(--verde-light);
-  box-shadow: -2px 0 6px rgba(0,0,0,0.10);
-}
-.grelha-tabela tbody tr.linha-separador .td-total {
-  background: rgba(0,0,0,0.03);
-  box-shadow: none;
 }
 
 /* ── Célula de valor (input numérico) ───────────────────────── */
@@ -1002,9 +916,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   .editor-header { flex-direction: column; }
   .editor-header-actions { width: 100%; }
   .btn-voltar { flex: 1; justify-content: center; }
-  .grelha-wrapper {
-    max-height: calc(100vh - 280px);
-    min-height: 200px;
 }
 
 @media (max-width: 380px) {
@@ -1013,7 +924,171 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
     --col-pais-w: 110px;
     --col-tot-w:  44px;
   }
+}
+
+/* ── 1. Wrapper com scroll nos dois eixos ───────────────────
+   A chave: o wrapper precisa de ser o contentor de scroll
+   em X e Y para que sticky funcione em ambas as direções.
+   calc(100vh - Xpx) desconta: header global (~72px),
+   editor-header (~80px), painel-controlo (~72px),
+   grelha-acoes (~48px), margens (~40px) = ~312px.
+   O utilizador ainda vê bastante grelha e pode fazer
+   scroll horizontal E vertical dentro deste bloco.
+   ─────────────────────────────────────────────────────────── */
+.grelha-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 320px);
+  min-height: 260px;
+  /* scrollbar já definida no CSS base */
+  scrollbar-width: thin;
+  scrollbar-color: var(--cinza-claro) transparent;
+  /* border-radius herdado do .secao-card */
+  position: relative;
+}
+ 
+/* Scrollbar vertical (webkit) */
+.grelha-wrapper::-webkit-scrollbar {
+  height: 6px;
+  width:  6px;
+}
+.grelha-wrapper::-webkit-scrollbar-track  { background: transparent; }
+.grelha-wrapper::-webkit-scrollbar-thumb  { background: var(--cinza-claro); border-radius: 3px; }
+.grelha-wrapper::-webkit-scrollbar-thumb:hover { background: var(--cinza); }
+ 
+ 
+/* ── 2. Cabeçalho da tabela — sticky no topo ────────────────
+   top: 0 porque o scroll vertical agora é do .grelha-wrapper,
+   não da janela. O header global já está fora deste contexto.
+   ─────────────────────────────────────────────────────────── */
+.grelha-tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: white;
+  /* Linha de separação visual entre cabeçalho e corpo */
+  box-shadow: 0 2px 0 var(--verde-light);
+}
+ 
+ 
+/* ── 3. Canto superior-esquerdo (País/Região) ───────────────
+   Sticky em X (left:0) E em Y (top:0) — o canto fixo.
+   z-index mais alto para ficar acima de tudo.
+   ─────────────────────────────────────────────────────────── */
+.grelha-tabela thead .th-pais {
+  position: sticky;
+  left: 0;
+  top:  0;
+  z-index: 6 !important;    /* acima de todos os outros th */
+  background: white !important;
+  border-right: 2px solid var(--cinza-claro);
+  /* Sombra direita subtil para separar da área de scroll */
+  box-shadow: 2px 2px 0 var(--verde-light);
+}
+ 
+ 
+/* ── 4. Canto superior-direito (Total — cabeçalho) ──────────
+   Sticky em X (right:0) E em Y (top:0).
+   ─────────────────────────────────────────────────────────── */
+.grelha-tabela thead .th-total {
+  position: sticky;
+  right: 0;
+  top:   0;
+  z-index: 6 !important;
+  background: white !important;
+  border-left: 2px solid var(--cinza-claro);
+  box-shadow: -2px 2px 0 var(--verde-light);
+}
+ 
+ 
+/* ── 5. Coluna de países no corpo — sticky à esquerda ────────
+   Já definida no CSS base mas reforçamos o z-index e
+   garantimos que o background acompanha as variantes de linha.
+   ─────────────────────────────────────────────────────────── */
+.grelha-tabela tbody .td-pais {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: white;
+  border-right: 2px solid var(--cinza-claro);
+  /* Sombra direita subtil para indicar que há conteúdo atrás */
+  box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+}
+ 
+/* Variantes de fundo para .td-pais conforme o tipo de linha */
+.grelha-tabela tbody tr:hover .td-pais {
+  background: rgba(245,235,224,0.95);
+}
+.grelha-tabela tbody tr.linha-destaque .td-pais {
+  background: rgba(201,149,42,0.09);
+}
+.grelha-tabela tbody tr.linha-destaque:hover .td-pais {
+  background: rgba(201,149,42,0.16);
+}
+.grelha-tabela tbody tr.linha-totais .td-pais {
+  background: rgba(61,90,62,0.09);
+  border-top: 2px solid var(--verde-light);
+  /* Sombra mais forte na linha de totais */
+  box-shadow: 2px 0 6px rgba(0,0,0,0.10);
+}
+.grelha-tabela tbody tr.linha-separador .td-pais {
+  background: rgba(0,0,0,0.03);
+  box-shadow: none;
+}
+ 
+ 
+/* ── 6. Coluna de total no corpo — sticky à direita ──────────
+   Já definida no CSS base; reforçamos o z-index e sombra.
+   ─────────────────────────────────────────────────────────── */
+.grelha-tabela tbody .td-total {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: white;
+  border-left: 2px solid var(--cinza-claro);
+  box-shadow: -2px 0 4px rgba(0,0,0,0.06);
+}
+ 
+.grelha-tabela tbody tr:hover .td-total {
+  background: rgba(245,235,224,0.95);
+}
+.grelha-tabela tbody tr.linha-destaque .td-total {
+  background: rgba(201,149,42,0.07);
+}
+.grelha-tabela tbody tr.linha-totais .td-total {
+  background: rgba(61,90,62,0.10);
+  border-top: 2px solid var(--verde-light);
+  box-shadow: -2px 0 6px rgba(0,0,0,0.10);
+}
+.grelha-tabela tbody tr.linha-separador .td-total {
+  background: rgba(0,0,0,0.03);
+  box-shadow: none;
+}
+ 
+ 
+/* ── 7. Indicador visual de scroll horizontal ───────────────
+   Gradientes nas bordas do wrapper para indicar que há
+   conteúdo para fazer scroll (pseudo-elementos no contentor
+   pai .secao-card-corpo, que não tem overflow hidden).
+   ─────────────────────────────────────────────────────────── */
+.secao-card-corpo {
+  position: relative;
+}
+ 
+ 
+/* ── 8. Ajuste de altura em ecrãs pequenos ──────────────────
+   Em mobile reduzimos um pouco a altura mínima.
+   ─────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .grelha-wrapper {
+    max-height: calc(100vh - 280px);
+    min-height: 200px;
+  }
+}
+ 
+@media (max-width: 380px) {
   .grelha-wrapper {
     max-height: calc(100vh - 260px);
     min-height: 180px;
+  }
 }
