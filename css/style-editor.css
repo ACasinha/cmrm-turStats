@@ -546,10 +546,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
    GRELHA MENSAL — tabela de scroll horizontal
 ============================================================ */
 .grelha-wrapper {
-  overflow: auto;
-   max-height: calc(100vh - 260px);
-   position: relative;
-   isolation: isolate;
+  overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   /* Scrollbar visível mas discreta */
   scrollbar-width: thin;
@@ -561,7 +558,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .grelha-wrapper::-webkit-scrollbar-thumb:hover { background: var(--cinza); }
 
 .grelha-tabela {
-  position: relative;
   border-collapse: separate;
   border-spacing: 0;
   /* Largura mínima: coluna país + 31 dias + coluna total */
@@ -574,7 +570,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   top: 0;
   background: white;
-  z-index: 40;
+  z-index: 4;
   padding: 0;
   border-bottom: 2px solid var(--verde);
 }
@@ -583,13 +579,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .th-pais {
   min-width: var(--col-pais-w);
   width: var(--col-pais-w);
-  position:sticky;
   left: 0;
-  top: 0;
-  z-index: 100; 
+  z-index: 5 !important; /* acima dos outros th */
   border-right: 2px solid var(--cinza-claro);
   background: white !important;
-  box-shadow: 6px 0 8px -8px rgba(0,0,0,.15);
 }
 .th-pais-inner {
   padding: 8px 12px;
@@ -638,9 +631,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   right: 0;
   background: white;
-  z-index: 55;
+  z-index: 4;
   border-left: 2px solid var(--cinza-claro);
-  box-shadow: -6px 0 8px -8px rgba(0,0,0,.15);
 }
 .th-total-inner {
   padding: 8px 6px;
@@ -679,7 +671,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   left: 0;
   background: white;
-  z-index: 35;
+  z-index: 2;
   min-width: var(--col-pais-w);
   width: var(--col-pais-w);
   border-right: 2px solid var(--cinza-claro);
@@ -690,7 +682,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   text-overflow: ellipsis;
   font-size: var(--text-sm);
   transition: background var(--transition-fast);
-  box-shadow: 6px 0 8px -8px rgba(0,0,0,.15);
 }
 .grelha-tabela tbody tr:hover .td-pais { background: rgba(245,235,224,0.55); }
 .grelha-tabela tbody tr.linha-destaque .td-pais {
@@ -722,8 +713,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 /* Input dentro das células */
 .cel-input {
   width: 100%;
-  position: relative;
-  z-index: 1;
   border: 1.5px solid transparent;
   border-radius: 5px;
   background: transparent;
@@ -775,7 +764,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   right: 0;
   background: white;
-  z-index: 34;
+  z-index: 2;
   min-width: var(--col-tot-w);
   width: var(--col-tot-w);
   border-left: 2px solid var(--cinza-claro);
@@ -786,7 +775,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   height: var(--cel-h);
   border-bottom: 1px solid rgba(0,0,0,0.04);
   transition: background var(--transition-fast);
-  box-shadow: -6px 0 8px -8px rgba(0,0,0,.15);
 }
 .grelha-tabela tbody tr.linha-destaque .td-total {
   background: rgba(201,149,42,0.06);
