@@ -760,6 +760,7 @@ input:-webkit-autofill:focus {
   color: var(--azul);
   line-height: 1.5;
   margin-top: 6px;
+  margin-bottom: 12px;
 }
  
 /* ── Checkbox com label estilizado ───────────────────────── */
