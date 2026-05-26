@@ -66,12 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
                        || perfil.acessoEditor === true;
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
+        
+          activarApp();
+          
         })
-        .catch(function(err) {
-          console.warn('[Perfil] Erro ao verificar role:', err);
+        .catch(function() {
+          mostrarEcraLogin();
         });
-
-      activarApp();
     } else {
       if (user) apiLogout();
       mostrarEcraLogin();
