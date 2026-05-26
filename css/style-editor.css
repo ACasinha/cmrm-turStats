@@ -683,10 +683,16 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   font-size: var(--text-sm);
   transition: background var(--transition-fast);
 }
+.grelha-tabela tbody tr:hover .td-pais { background: rgba(245,235,224,0.55); }
 .grelha-tabela tbody tr.linha-destaque .td-pais {
+  background: rgba(201,149,42,0.07);
   font-weight: 700; color: var(--terra);
 }
+.grelha-tabela tbody tr.linha-destaque:hover .td-pais {
+  background: rgba(201,149,42,0.14);
+}
 .grelha-tabela tbody tr.linha-totais .td-pais {
+  background: rgba(61,90,62,0.08);
   color: var(--verde-dark);
   border-top: 2px solid var(--verde-light);
 }
@@ -774,6 +780,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   background: rgba(201,149,42,0.06);
 }
 .grelha-tabela tbody tr.linha-totais .td-total {
+  background: rgba(61,90,62,0.10);
   color: var(--verde-dark); font-size: var(--text-base);
   border-top: 2px solid var(--verde-light);
 }
@@ -917,97 +924,4 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
     --col-pais-w: 110px;
     --col-tot-w:  44px;
   }
-}
-
-/* ── Wrapper: apenas scroll horizontal, sem altura forçada ──
-   O scroll vertical é da página (window) — não alteramos.    */
-.grelha-wrapper {
-  overflow-x: auto;
-  overflow-y: visible;        /* garante que não há max-height */
-  max-height: none;           /* remove o max-height do patch anterior */
-  position: relative;         /* contexto para o sticky left funcionar */
-}
- 
-/* ── Coluna dos países — sticky à esquerda ──────────────────
-   Funciona porque o scroll container de X é .grelha-wrapper.  */
-.grelha-tabela tbody .td-pais,
-.grelha-tabela thead .th-pais {
-  position: sticky;
-  left: 0;
-  z-index: 3;
-  background: white;
-  border-right: 2px solid var(--cinza-claro);
-  box-shadow: 2px 0 5px rgba(0,0,0,0.07);
-}
- 
-.grelha-tabela thead .th-pais {
-  z-index: 5;   /* thead por cima do tbody */
-}
- 
-/* Fundos por tipo de linha */
-.grelha-tabela tbody tr.linha-destaque .td-pais          { background: rgba(201,149,42,0.07); }
-.grelha-tabela tbody tr.linha-destaque:hover .td-pais    { background: rgba(201,149,42,0.14); }
-.grelha-tabela tbody tr:hover .td-pais                   { background: rgba(245,235,224,0.96); }
-.grelha-tabela tbody tr.linha-totais .td-pais            { border-top: 2px solid var(--verde-light); }
-.grelha-tabela tbody tr.linha-separador .td-pais         { background: rgba(0,0,0,0.03); box-shadow: none; }
- 
-/* ── Coluna do total — sticky à direita ─────────────────────  */
-.grelha-tabela tbody .td-total,
-.grelha-tabela thead .th-total {
-  position: sticky;
-  right: 0;
-  z-index: 3;
-  background: white;
-  border-left: 2px solid var(--cinza-claro);
-  box-shadow: -2px 0 5px rgba(0,0,0,0.07);
-}
-.grelha-tabela thead .th-total { z-index: 5; }
- 
-.grelha-tabela tbody tr.linha-destaque .td-total         { background: rgba(201,149,42,0.07); }
-.grelha-tabela tbody tr:hover .td-total                  { background: rgba(245,235,224,0.96); }
-.grelha-tabela tbody tr.linha-totais .td-total           { border-top: 2px solid var(--verde-light); box-shadow: -2px 0 6px rgba(0,0,0,0.10); }
-.grelha-tabela tbody tr.linha-separador .td-total        { background: rgba(0,0,0,0.03); box-shadow: none; }
- 
-/* ── thead original — SEM sticky (o JS cria um clone fixo) ──
-   Mantemos o cabeçalho normal no fluxo da tabela.             */
-.grelha-tabela thead th {
-  position: static;   /* reverte o sticky top que não funciona */
-  background: white;
-  border-bottom: 2px solid var(--verde-light);
-}
-/* Mas th-pais e th-total precisam de sticky left/right → já cobertos acima */
-.grelha-tabela thead .th-pais,
-.grelha-tabela thead .th-total {
-  position: sticky;   /* repor sticky só para esquerda/direita */
-}
- 
-/* ── Clone do thead criado pelo JS ─────────────────────────
-   Fica fixo no topo da viewport, por cima da tabela.         */
-.grelha-thead-clone {
-  position: fixed;
-  top: 0;           /* o JS ajusta este valor dinamicamente */
-  left: 0;
-  z-index: 200;
-  pointer-events: none;   /* cliques passam para a tabela real */
-  overflow: hidden;
-  background: white;
-  border-bottom: 2px solid var(--verde-light);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.10);
-  /* width e transform-translateX definidos pelo JS */
-}
-.grelha-thead-clone table {
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: fixed;
-}
-/* O clone herda os th-pais / th-total sticky do scroll horizontal
-   mas como é position:fixed, o left/right sticky dentro dele
-   é relativo ao clone — o JS posiciona o clone correctamente. */
-.grelha-thead-clone .th-pais,
-.grelha-thead-clone .th-total {
-  position: static !important;   /* dentro do clone não queremos sticky */
-  box-shadow: none;
-}
-.grelha-thead-clone th {
-  background: white !important;
 }
