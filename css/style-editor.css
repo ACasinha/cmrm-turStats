@@ -546,7 +546,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
    GRELHA MENSAL — tabela de scroll horizontal
 ============================================================ */
 .grelha-wrapper {
-  overflow-x: auto;
+  overflow: auto;
+   max-height: calc(100vh - 260px);
    position: relative;
    isolation: isolate;
   -webkit-overflow-scrolling: touch;
@@ -573,7 +574,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   top: 0;
   background: white;
-  z-index: 30;
+  z-index: 40;
   padding: 0;
   border-bottom: 2px solid var(--verde);
 }
@@ -582,8 +583,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .th-pais {
   min-width: var(--col-pais-w);
   width: var(--col-pais-w);
+  position:sticky;
   left: 0;
-  z-index: 60 !important; /* acima dos outros th */
+  top: 0;
+  z-index: 100; 
   border-right: 2px solid var(--cinza-claro);
   background: white !important;
   box-shadow: 6px 0 8px -8px rgba(0,0,0,.15);
@@ -676,7 +679,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   left: 0;
   background: white;
-  z-index: 25;
+  z-index: 35;
   min-width: var(--col-pais-w);
   width: var(--col-pais-w);
   border-right: 2px solid var(--cinza-claro);
@@ -772,7 +775,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   position: sticky;
   right: 0;
   background: white;
-  z-index: 24;
+  z-index: 34;
   min-width: var(--col-tot-w);
   width: var(--col-tot-w);
   border-left: 2px solid var(--cinza-claro);
