@@ -117,6 +117,12 @@
     <!-- ÁREA DA GRELHA -->
     <div id="areaPrincipal">
 
+      <!-- Loading -->
+      <div class="grelha-loading" id="grelhaLoading">
+        <div class="spinner"></div>
+        <div>A carregar dados do mês...</div>
+      </div>
+         
       <!-- Estado inicial / vazio -->
       <div class="secao-card" id="estadoVazioCard">
         <div class="grelha-vazia">
@@ -126,18 +132,12 @@
         </div>
       </div>
 
-      <!-- Loading -->
-      <div class="grelha-loading" id="grelhaLoading">
-        <div class="spinner"></div>
-        <div>A carregar dados do mês...</div>
-      </div>
-
       <!-- Barra de acções da grelha (visível após carregar) -->
       <div class="grelha-acoes" id="grelhaAcoes" style="display:none">
         <div class="grelha-info" id="grelhaInfoTexto">—</div>
         <span class="alteracoes-badge" id="alteracoesBadge"></span>
         <button class="btn-limpar-alteracoes" onclick="descartarAlteracoes()" title="Descartar todas as alterações não guardadas">
-          ↩ Descartar
+          🗑 Descartar alterações
         </button>
         <button class="btn-guardar-tudo" id="btnGuardarTudo"
                 onclick="confirmarGuardar()" disabled>
@@ -199,7 +199,7 @@
 <div class="modal-overlay" id="modalGuardar">
   <div class="modal-box">
     <div class="modal-header">
-      <h2>💾 Confirmar Guardagem</h2>
+      <h2>💾 Confirmar Registo de Alterações</h2>
     </div>
     <div class="modal-body">
       <p>Está prestes a guardar alterações na base de dados. Esta operação <strong>sobrescreve</strong> os valores existentes para cada dia alterado.</p>
