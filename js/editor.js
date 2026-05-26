@@ -7,23 +7,21 @@
 
 'use strict';
 
-// ── Estado global ────────────────────────────────────────────
-var _perfilAtual      = null;
-var _isAdmin          = false;
-var _isEditor         = false;
-var _appInicializada  = false;
+var _perfilAtual     = null;
+var _isAdmin         = false;
+var _isEditor        = false;
+var _appInicializada = false;
 
-var _localAtual       = '';
-var _mesAtual         = '';   // 'YYYY-MM'
-var _dadosMes         = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
-var _alteracoes       = {};   // { 'DD/MM/YYYY': { pais: valor, ... } } — só células alteradas
-var _totalAlteracoes  = 0;
+var _localAtual      = '';
+var _mesAtual        = '';   // 'YYYY-MM'
+var _dadosMes        = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
+var _alteracoes      = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
+var _totalAlteracoes = 0;
 
 var DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // ============================================================
 // HELPER — verifica se o perfil tem acesso ao editor
-// Têm acesso: administrador, ou utilizador com acessoEditor: true
 // ============================================================
 function _temAcessoEditor(perfil) {
   return perfil.role === 'administrador' || perfil.acessoEditor === true;
@@ -34,7 +32,7 @@ function _temAcessoEditor(perfil) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  var hoje = new Date();
+  var hoje   = new Date();
   var mesStr = hoje.getFullYear() + '-' +
                String(hoje.getMonth() + 1).padStart(2, '0');
   var inputMes = document.getElementById('inputMes');
@@ -57,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
             apiLogout();
             return;
           }
-
           activarEditor(perfil);
         })
         .catch(function() { mostrarEcraLogin(); });
@@ -91,13 +88,13 @@ function fazerLogin() {
     return;
   }
 
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'A autenticar...';
   erro.classList.remove('visivel');
 
   apiAutenticar(email, pass,
     function onSuccess() {
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Entrar →';
 
       obterPerfilUtilizador()
@@ -118,7 +115,6 @@ function fazerLogin() {
             apiLogout();
             return;
           }
-
           activarEditor(perfil);
         })
         .catch(function(err) {
@@ -128,7 +124,7 @@ function fazerLogin() {
         });
     },
     function onFailure(err) {
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Entrar →';
       erro.textContent = err.message;
       erro.classList.add('visivel');
@@ -164,7 +160,7 @@ function activarEditor(perfil) {
 
   var badgeModo = document.getElementById('badgeModo');
   if (badgeModo) {
-    badgeModo.className = 'modo-badge ' + (_isAdmin ? 'admin' : 'editor');
+    badgeModo.className  = 'modo-badge ' + (_isAdmin ? 'admin' : 'editor');
     badgeModo.textContent = _isAdmin ? '🛡️ Administrador' : '✏️ Editor';
   }
 
@@ -172,12 +168,12 @@ function activarEditor(perfil) {
 }
 
 // ============================================================
-// CARREGAR DADOS DO MÊS
+// CARREGAR DADOS DO MÊS — 1 única chamada à Cloud Function
 // ============================================================
 
 function carregarMes() {
   var local = document.getElementById('selectorLocal').value;
-  var mes   = document.getElementById('inputMes').value;
+  var mes   = document.getElementById('inputMes').value;  // 'YYYY-MM'
 
   if (!local) {
     mostrarToast('Escolha um local / posto.', 'erro');
@@ -189,50 +185,36 @@ function carregarMes() {
     document.getElementById('inputMes').focus();
     return;
   }
-
   if (_totalAlteracoes > 0) {
-    if (!confirm('Tem alterações por guardar. Se continuar, essas alterações serão perdidas. Continuar?')) return;
+    if (!confirm('Tem alterações por guardar. Se continuar serão perdidas. Continuar?')) return;
   }
 
-  _localAtual = local;
-  _mesAtual   = mes;
-  _dadosMes   = {};
-  _alteracoes = {};
+  _localAtual      = local;
+  _mesAtual        = mes;
+  _dadosMes        = {};
+  _alteracoes      = {};
   _totalAlteracoes = 0;
   atualizarBarraAlteracoes();
-
   mostrarGrelhaLoading(true);
 
-  var partes  = mes.split('-');
-  var ano     = parseInt(partes[0], 10);
-  var mesNum  = parseInt(partes[1], 10);
-  var numDias = new Date(ano, mesNum, 0).getDate();
-
-  var datas = [];
-  for (var d = 1; d <= numDias; d++) {
-    datas.push(
-      String(d).padStart(2, '0') + '/' +
-      String(mesNum).padStart(2, '0') + '/' + ano
-    );
-  }
-
-  var promessas = datas.map(function(data) {
-    return new Promise(function(resolve) {
-      chamarAPI('verificarDados', { local: local, data: data })
-        .then(function(resp) {
-          resolve({
-            data:   data,
-            paises: (resp.sucesso && resp.existe && resp.paises) ? resp.paises : {}
-          });
-        })
-        .catch(function() { resolve({ data: data, paises: {} }); });
-    });
-  });
-
-  Promise.all(promessas)
-    .then(function(resultados) {
-      resultados.forEach(function(r) { _dadosMes[r.data] = r.paises; });
+  // Uma única chamada que devolve todos os dias do mês de uma vez
+  chamarAPI('obterDadosMes', { local: local, mes: mes })
+    .then(function(resp) {
       mostrarGrelhaLoading(false);
+
+      if (!resp.sucesso) {
+        mostrarToast('Erro: ' + resp.mensagem, 'erro');
+        return;
+      }
+
+      // resp.dados = { 'DD/MM/YYYY': { pais: valor, ... }, ... }
+      _dadosMes = resp.dados || {};
+
+      var partes  = mes.split('-');
+      var ano     = parseInt(partes[0], 10);
+      var mesNum  = parseInt(partes[1], 10);
+      var numDias = new Date(ano, mesNum, 0).getDate();
+
       construirGrelha(local, ano, mesNum, numDias);
     })
     .catch(function(err) {
@@ -249,8 +231,8 @@ function construirGrelha(local, ano, mesNum, numDias) {
   var wrapper = document.getElementById('grelhaWrapper');
   wrapper.innerHTML = '';
 
-  var simples   = (typeof modoSimplificado === 'function') && modoSimplificado(local);
-  var listaPais = simples ? PAISES_SIMPLES : PAISES;
+  var simples    = (typeof modoSimplificado === 'function') && modoSimplificado(local);
+  var listaPais  = simples ? PAISES_SIMPLES : PAISES;
 
   var hoje     = new Date();
   var hojeAno  = hoje.getFullYear();
@@ -287,10 +269,10 @@ function construirGrelha(local, ano, mesNum, numDias) {
     var inner = document.createElement('div');
     inner.className = 'th-dia-inner';
     var numEl = document.createElement('span');
-    numEl.className = 'th-dia-num';
+    numEl.className   = 'th-dia-num';
     numEl.textContent = d;
     var semEl = document.createElement('span');
-    semEl.className = 'th-dia-sem';
+    semEl.className   = 'th-dia-sem';
     semEl.textContent = DIAS_SEM[diaSem];
     inner.appendChild(numEl);
     inner.appendChild(semEl);
@@ -302,7 +284,7 @@ function construirGrelha(local, ano, mesNum, numDias) {
   thTot.className = 'th-total';
   thTot.setAttribute('scope', 'col');
   var thTotInner = document.createElement('div');
-  thTotInner.className = 'th-total-inner';
+  thTotInner.className  = 'th-total-inner';
   thTotInner.textContent = 'Total';
   thTot.appendChild(thTotInner);
   trHead.appendChild(thTot);
@@ -311,7 +293,7 @@ function construirGrelha(local, ano, mesNum, numDias) {
   tabela.appendChild(thead);
 
   // ── CORPO ─────────────────────────────────────────────────
-  var tbody         = document.createElement('tbody');
+  var tbody          = document.createElement('tbody');
   var paisesDestaque = listaPais.filter(function(p) { return p.destaque; });
   var paisesResto    = listaPais.filter(function(p) { return !p.destaque; });
   var totaisDia      = {};
@@ -322,9 +304,9 @@ function construirGrelha(local, ano, mesNum, numDias) {
     if (isDestaque) tr.classList.add('linha-destaque');
 
     var tdPais = document.createElement('td');
-    tdPais.className = 'td-pais';
+    tdPais.className   = 'td-pais';
     tdPais.textContent = pais.nome;
-    tdPais.title = pais.nome;
+    tdPais.title       = pais.nome;
     tr.appendChild(tdPais);
 
     var totalLinha = 0;
@@ -332,15 +314,15 @@ function construirGrelha(local, ano, mesNum, numDias) {
     for (var d = 1; d <= numDias; d++) {
       var dataFmt = String(d).padStart(2, '0') + '/' +
                     String(mesNum).padStart(2, '0') + '/' + ano;
-      var dObj    = new Date(ano, mesNum - 1, d);
-      var dSem    = dObj.getDay();
-      var eFDS    = dSem === 0 || dSem === 6;
-      var eHoje   = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
+      var dObj  = new Date(ano, mesNum - 1, d);
+      var dSem  = dObj.getDay();
+      var eFDS  = dSem === 0 || dSem === 6;
+      var eHoje = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
 
       var valor = (_dadosMes[dataFmt] && _dadosMes[dataFmt][pais.nome])
                   ? (_dadosMes[dataFmt][pais.nome] || 0) : 0;
-      totalLinha += valor;
-      totaisDia[d] = (totaisDia[d] || 0) + valor;
+      totalLinha        += valor;
+      totaisDia[d]       = (totaisDia[d] || 0) + valor;
 
       var td = document.createElement('td');
       td.className = 'td-valor' +
@@ -348,11 +330,11 @@ function construirGrelha(local, ano, mesNum, numDias) {
                      (eHoje ? ' hoje-col'   : '');
 
       var inp = document.createElement('input');
-      inp.type = 'number';
-      inp.inputMode = 'numeric';
-      inp.min = '0';
-      inp.className = 'cel-input' + (valor > 0 ? ' tem-valor' : '');
-      inp.value = valor > 0 ? String(valor) : '';
+      inp.type       = 'number';
+      inp.inputMode  = 'numeric';
+      inp.min        = '0';
+      inp.className  = 'cel-input' + (valor > 0 ? ' tem-valor' : '');
+      inp.value      = valor > 0 ? String(valor) : '';
       inp.placeholder = '0';
       inp.dataset.data = dataFmt;
       inp.dataset.pais = pais.nome;
@@ -367,9 +349,9 @@ function construirGrelha(local, ano, mesNum, numDias) {
     }
 
     var tdTot = document.createElement('td');
-    tdTot.className = 'td-total';
-    tdTot.dataset.paisTotal = pais.nome;
-    tdTot.textContent = totalLinha > 0 ? totalLinha : '—';
+    tdTot.className          = 'td-total';
+    tdTot.dataset.paisTotal  = pais.nome;
+    tdTot.textContent        = totalLinha > 0 ? totalLinha : '—';
     tr.appendChild(tdTot);
 
     tbody.appendChild(tr);
@@ -393,7 +375,7 @@ function construirGrelha(local, ano, mesNum, numDias) {
   trTotais.className = 'linha-totais';
 
   var tdTotLabel = document.createElement('td');
-  tdTotLabel.className = 'td-pais';
+  tdTotLabel.className   = 'td-pais';
   tdTotLabel.textContent = 'Total do dia';
   trTotais.appendChild(tdTotLabel);
 
@@ -402,17 +384,17 @@ function construirGrelha(local, ano, mesNum, numDias) {
     var t = totaisDia[d] || 0;
     totalGeral += t;
     var tdT = document.createElement('td');
-    tdT.className = 'td-valor';
+    tdT.className        = 'td-valor';
     tdT.dataset.totalDia = d;
-    tdT.style.cssText = 'text-align:center;font-weight:700;font-size:var(--text-xs);color:' +
-                        (t > 0 ? 'var(--verde)' : 'var(--cinza)');
+    tdT.style.cssText    = 'text-align:center;font-weight:700;font-size:var(--text-xs);color:' +
+                           (t > 0 ? 'var(--verde)' : 'var(--cinza)');
     tdT.textContent = t > 0 ? t : '—';
     trTotais.appendChild(tdT);
   }
 
   var tdTotGeral = document.createElement('td');
-  tdTotGeral.className = 'td-total';
-  tdTotGeral.id = 'totalGeralGrelha';
+  tdTotGeral.className   = 'td-total';
+  tdTotGeral.id          = 'totalGeralGrelha';
   tdTotGeral.textContent = totalGeral > 0 ? totalGeral : '—';
   trTotais.appendChild(tdTotGeral);
 
@@ -522,13 +504,13 @@ function recalcularTotalDia(dataFmt) {
   var dia    = parseInt(dataFmt.split('/')[0], 10);
   var tabela = document.querySelector('.grelha-tabela');
   if (!tabela) return;
-  var total  = 0;
+  var total = 0;
   tabela.querySelectorAll('.cel-input[data-data="' + dataFmt + '"]')
         .forEach(function(i) { total += parseInt(i.value, 10) || 0; });
   var el = tabela.querySelector('td[data-total-dia="' + dia + '"]');
   if (el) {
-    el.textContent  = total > 0 ? total : '—';
-    el.style.color  = total > 0 ? 'var(--verde)' : 'var(--cinza)';
+    el.textContent = total > 0 ? total : '—';
+    el.style.color = total > 0 ? 'var(--verde)' : 'var(--cinza)';
   }
 }
 
@@ -548,31 +530,33 @@ function contarAlteracoes() {
 }
 
 function atualizarBarraAlteracoes() {
-  var badge      = document.getElementById('alteracoesBadge');
-  var btnGuardar = document.getElementById('btnGuardarTudo');
+  var badge  = document.getElementById('alteracoesBadge');
+  var btnG   = document.getElementById('btnGuardarTudo');
   if (_totalAlteracoes > 0) {
     badge.classList.add('visivel');
     badge.textContent = '✏️ ' + _totalAlteracoes +
       (_totalAlteracoes === 1 ? ' alteração' : ' alterações') + ' por guardar';
-    if (btnGuardar) btnGuardar.disabled = false;
+    if (btnG) btnG.disabled = false;
   } else {
     badge.classList.remove('visivel');
-    if (btnGuardar) btnGuardar.disabled = true;
+    if (btnG) btnG.disabled = true;
   }
 }
 
 // ============================================================
-// GUARDAR ALTERAÇÕES
+// GUARDAR ALTERAÇÕES — agrupa dias em lotes, 1 call por dia alterado
+// (muito melhor do que as 31 calls anteriores — só envia os dias
+//  que foram efectivamente modificados)
 // ============================================================
 
 function confirmarGuardar() {
   if (_totalAlteracoes === 0) { mostrarToast('Não há alterações para guardar.', 'info'); return; }
   var diasAlterados = Object.keys(_alteracoes).length;
   document.getElementById('modalResumoTexto').textContent =
-    '📍 Local: ' + _localAtual + '\n' +
-    '📅 Mês: ' + formatarMesLegivel(_mesAtual) + '\n' +
+    '📍 Local: '  + _localAtual + '\n' +
+    '📅 Mês: '    + formatarMesLegivel(_mesAtual) + '\n' +
     '📊 Dias com alterações: ' + diasAlterados + '\n' +
-    '✏️ Total de células alteradas: ' + _totalAlteracoes;
+    '✏️ Células alteradas: '   + _totalAlteracoes;
   document.getElementById('modalGuardar').classList.add('show');
 }
 
@@ -587,10 +571,11 @@ function executarGuardar() {
 
   var btnG = document.getElementById('btnGuardarTudo');
   if (btnG) { btnG.disabled = true; btnG.textContent = '⏳ A guardar...'; }
-  mostrarToast('A guardar ' + datas.length + ' dia(s)...', 'info');
+  mostrarToast('A guardar ' + datas.length + ' dia(s) alterado(s)...', 'info');
 
+  // Apenas os dias alterados geram chamadas (N << 31 na maioria dos casos)
   var promessas = datas.map(function(data) {
-    var existentes  = _dadosMes[data] || {};
+    var existentes    = _dadosMes[data] || {};
     var alteracoesDia = _alteracoes[data] || {};
     var finais = {};
     Object.keys(existentes).forEach(function(p) {
@@ -613,6 +598,7 @@ function executarGuardar() {
       if (btnG) { btnG.disabled = false; btnG.textContent = '💾 Guardar alterações'; }
 
       if (falhou === 0) {
+        // Actualizar _dadosMes com os valores guardados
         datas.forEach(function(data) {
           if (!_dadosMes[data]) _dadosMes[data] = {};
           Object.keys(_alteracoes[data] || {}).forEach(function(p) {
@@ -661,16 +647,15 @@ function descartarAlteracoes() {
 
 function mostrarGrelhaLoading(mostrar) {
   document.getElementById('grelhaLoading').classList.toggle('show', mostrar);
-  document.getElementById('grelhaWrapper').innerHTML = mostrar ? '' : document.getElementById('grelhaWrapper').innerHTML;
-  document.getElementById('grelhaAcoes').style.display = mostrar ? 'none' : '';
   if (mostrar) document.getElementById('grelhaWrapper').innerHTML = '';
+  document.getElementById('grelhaAcoes').style.display = mostrar ? 'none' : '';
 }
 
 function formatarMesLegivel(mesStr) {
   if (!mesStr) return '';
   var p = mesStr.split('-');
-  var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1);
-  return d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1)
+    .toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 }
 
 function voltarParaApp() {
@@ -689,7 +674,7 @@ function esc(str) {
 function mostrarToast(msg, tipo) {
   var t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast ' + (tipo || 'info') + ' show';
+  t.className   = 'toast ' + (tipo || 'info') + ' show';
   clearTimeout(t._timer);
   t._timer = setTimeout(function() { t.classList.remove('show'); }, 4000);
 }
@@ -697,9 +682,13 @@ function mostrarToast(msg, tipo) {
 document.addEventListener('DOMContentLoaded', function() {
   var overlay = document.getElementById('modalGuardar');
   if (overlay) {
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) fecharModalGuardar(); });
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) fecharModalGuardar();
+    });
   }
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') fecharModalGuardar(); });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharModalGuardar();
+  });
   window.addEventListener('beforeunload', function(e) {
     if (_totalAlteracoes > 0) {
       e.preventDefault();
