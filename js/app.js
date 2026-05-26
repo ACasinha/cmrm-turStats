@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
         
-          activarApp(perfil);
+          activarApp();
           
         })
         .catch(function() {
