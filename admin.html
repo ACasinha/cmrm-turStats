@@ -68,12 +68,6 @@
     <button class="btn-novo-user btn-voltar" onclick="voltarParaApp()">
       ← Voltar à App
     </button>
-    <button class="btn-novo-user btn-dashboard" onclick="irParaDashboard()">
-      📊 Dashboard
-    </button>
-    <button class="btn-novo-user btn-editor" onclick="irParaEditor()">
-      ✏️ Editor Mensal
-    </button>
     <button class="btn-novo-user" onclick="abrirModalNovoUtilizador()">
       ➕ Novo Utilizador
     </button>
@@ -249,6 +243,12 @@
       <span class="rodape-versao" id="rodapeVersao">v1</span>
       <button class="btn-rodape" id="btnVerificarUpdate" onclick="verificarAtualizacao()" title="Verificar atualização">
         🔄 Verificar atualização
+      </button>
+      <button class="btn-rodape" id="btnEditor" style="display:none" onclick="irParaEditor()">
+        ✏️ Editor Mensal
+      </button>
+      <button class="btn-rodape" id="btnDashboard" style="display:none" onclick="irParaDashboard()" title="Dashboard de análise">
+        📊 Dashboard
       </button>
     </div>
   </div>
