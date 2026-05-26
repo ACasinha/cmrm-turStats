@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
           _perfilAtual = perfil;
           _isAdmin      = perfil.role === 'administrador';
           _isUtilizador = perfil.role === 'administrador'
-                       || perfil.role === 'utilizador'
+                       || perfil.role === 'utilizador';
 
           if (!_isUtilizador) {
             // Sem permissão
