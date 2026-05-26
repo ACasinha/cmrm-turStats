@@ -10,9 +10,8 @@ var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
 var appInicializada       = false;
-var dadosAlterados        = false;  // true se houver dados não guardados
+var dadosAlterados        = false;
 
-// Lembrete ao fechar/sair da página com dados por guardar
 window.addEventListener('beforeunload', function(e) {
   if (dadosAlterados) {
     e.preventDefault();
@@ -21,30 +20,20 @@ window.addEventListener('beforeunload', function(e) {
   }
 });
 
-// Estado de edição:
-//   null  → sem dados existentes (novo registo)
-//   false → dados existentes mas de outro dia (bloqueado)
-//   true  → dados existentes do próprio dia (permitido editar)
-var edicaoPermitida       = null;
+var edicaoPermitida = null;
 
 // ============================================================
 // ARRANQUE
-//
-// Usamos um único onAuthStateChanged para determinar o estado
-// inicial. Após o primeiro disparo, desligamo-lo e registamos
-// um segundo observador mais simples apenas para logout externo.
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
 
-  // Passo 1: determinar estado inicial (sessão existente ou não)
   var unsubInicial = firebaseAuth.onAuthStateChanged(function(user) {
-    unsubInicial(); // disparar apenas uma vez
+    unsubInicial();
 
     if (user && sessaoValida()) {
       nomeFuncionarioAtual = user.displayName || user.email;
 
-      // Verificar perfil completo (role, ativo, acessoDashboard)
       obterPerfilUtilizador()
         .then(function(perfil) {
           // Botão admin
@@ -53,16 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (btnAdmin) btnAdmin.style.display = '';
           }
 
-          // Botão dashboard ──────────────────────
+          // Botão dashboard
           var temDash = perfil.role === 'administrador'
                      || perfil.role === 'visualizador'
                      || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
-         
-          // Botão editor ──────────────────────
+
+          // Botão editor mensal
           var temEditor = perfil.role === 'administrador'
-                     || perfil.acessoEditor === true;
+                       || perfil.acessoEditor === true;
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
         })
@@ -72,12 +61,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       activarApp();
     } else {
-      if (user) apiLogout(); // sessão Firebase existe mas as 10h expiraram
+      if (user) apiLogout();
       mostrarEcraLogin();
     }
 
-    // Passo 2: após estado inicial resolvido, observar apenas
-    // logout externo (token revogado, signOut noutro separador)
     firebaseAuth.onAuthStateChanged(function(u) {
       if (!u && appInicializada) {
         limparSessao();
@@ -115,12 +102,10 @@ function fazerLogin() {
       btn.disabled    = false;
       btn.textContent = 'Entrar →';
 
-      // Carregar perfil do utilizador do Firestore
       obterPerfilUtilizador()
         .then(function(perfil) {
           nomeFuncionarioAtual = perfil.nome || resp.nomeFuncionario;
 
-          // Verificar se está ativo
           if (!perfil.ativo) {
             erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
             erro.classList.add('visivel');
@@ -134,19 +119,23 @@ function fazerLogin() {
             if (btnAdmin) btnAdmin.style.display = '';
           }
 
-          // ── Ponto 4 — botão dashboard ──────────────────────
+          // Botão dashboard
           var temDash = perfil.role === 'administrador'
                      || perfil.role === 'visualizador'
                      || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
-          // ───────────────────────────────────────────────────
+
+          // Botão editor mensal
+          var temEditor = perfil.role === 'administrador'
+                       || perfil.acessoEditor === true;
+          var btnEditor = document.getElementById('btnEditor');
+          if (btnEditor && temEditor) btnEditor.style.display = '';
 
           activarApp();
         })
         .catch(function(err) {
           console.error('[Perfil] Erro ao carregar:', err);
-          // Mesmo com erro no perfil, permitir login (fallback)
           nomeFuncionarioAtual = resp.nomeFuncionario;
           activarApp();
         });
@@ -169,26 +158,17 @@ function fazerLogin() {
 function fazerLogout() {
   if (!confirm('Deseja terminar a sessão?')) return;
   appInicializada = false;
-  limparCacheUtilizador(); // Limpar cache do Firestore
+  limparCacheUtilizador();
   apiLogout().then(function() { mostrarEcraLogin(); });
 }
 
 // ============================================================
-// NAVEGAÇÃO ADMIN, DASHBOARD e EDITOR
+// NAVEGAÇÃO
 // ============================================================
 
-function irParaAdmin() {
-  window.location.href = 'admin.html';
-}
-
-function irParaDashboard() {
-  window.location.href = 'dashboard.html';
-}
-
-function irParaEditor() {
-  window.location.href = 'editor.html';
-}
-// ────────────────────────────────────────────────────────────
+function irParaAdmin()     { window.location.href = 'admin.html'; }
+function irParaDashboard() { window.location.href = 'dashboard.html'; }
+function irParaEditor()    { window.location.href = 'editor.html'; }
 
 // ============================================================
 // ACTIVAR / MOSTRAR LOGIN
@@ -208,14 +188,14 @@ function mostrarEcraLogin() {
   document.getElementById('loginErro').classList.remove('visivel');
   document.getElementById('loginPass').value = '';
 
-  // Esconder botão admin
   var btnAdmin = document.getElementById('btnAdmin');
   if (btnAdmin) btnAdmin.style.display = 'none';
 
-  // ── Ponto 6 — esconder botão dashboard ──────────────────
   var btnDashboard = document.getElementById('btnDashboard');
   if (btnDashboard) btnDashboard.style.display = 'none';
-  // ────────────────────────────────────────────────────────
+
+  var btnEditor = document.getElementById('btnEditor');
+  if (btnEditor) btnEditor.style.display = 'none';
 
   limparFormularioParcial();
   mostrarBanner('', '');
@@ -232,7 +212,6 @@ function inicializarApp() {
   construirTabelaPaises();
   construirTabelaOperadores(NUM_LINHAS_OP);
   construirTabelaSugestoes(NUM_LINHAS_SUG);
-  // Observar alterações na textarea de observações
   document.getElementById('observacoes').addEventListener('input', function() {
     if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
       this.value = '';
@@ -240,8 +219,6 @@ function inicializarApp() {
     }
     dadosAlterados = true;
   });
-  // Obrigatoriedade de local em campos de texto livres (operadores e sugestões)
-  // via delegação no contentor principal
   document.querySelector('.container').addEventListener('input', function(e) {
     var alvo = e.target;
     if (alvo.classList.contains('op-nome') || alvo.classList.contains('sug-nac')) {
@@ -255,18 +232,17 @@ function inicializarApp() {
 }
 
 // ============================================================
-// VERIFICAÇÃO AUTOMÁTICA (ao mudar local/data)
+// VERIFICAÇÃO AUTOMÁTICA
 // ============================================================
 
 function agendarVerificacao() {
-  ultimoLocalVerificado = '';  // ← forçar re-verificação
-  ultimaDataVerificada  = '';  // ← forçar re-verificação
+  ultimoLocalVerificado = '';
+  ultimaDataVerificada  = '';
   if (typeof construirTabelaPaises === 'function') construirTabelaPaises();
   clearTimeout(verificacaoTimer);
   verificacaoTimer = setTimeout(verificarDados, 600);
 }
 
-// Verificar se local foi escolhido antes de permitir edição
 function verificarLocalEscolhido() {
   var local = document.getElementById('local').value.trim();
   if (!local) {
@@ -290,7 +266,6 @@ function verificarDados() {
   document.getElementById('btnGuardar').disabled = false;
   mostrarBanner('verificando', '⏳ A verificar dados existentes...');
 
-  // Converter "2026-05-11" para "11/05/2026"
   var partes = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
@@ -304,10 +279,10 @@ function verificarDados() {
       if (resp.existe) {
         carregarDados(resp);
 
-        var hoje       = new Date();
-        var hojeStr    = hoje.getFullYear() + '-' +
-                         String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
-                         String(hoje.getDate()).padStart(2, '0');
+        var hoje      = new Date();
+        var hojeStr   = hoje.getFullYear() + '-' +
+                        String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(hoje.getDate()).padStart(2, '0');
         var dataRegisto = document.getElementById('data').value;
         edicaoPermitida = (dataRegisto === hojeStr);
 
@@ -385,12 +360,12 @@ function guardarDados() {
   btn.textContent = '⏳ A guardar...';
   mostrarToast('A guardar...', 'info');
 
-  // Converter "2026-05-11" para "11/05/2026"
   var partes = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
   apiGuardarRegisto(
-    { data: dataFormatada, local: local, paises: paises, operadores: operadores, sugestoes: sugestoes, observacoes: observacoes },
+    { data: dataFormatada, local: local, paises: paises,
+      operadores: operadores, sugestoes: sugestoes, observacoes: observacoes },
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
