@@ -815,6 +815,9 @@ input:-webkit-autofill:focus {
 @media (max-width: 600px) {
   .roles-legenda { flex-direction: column; gap: 8px; }
   .role-item     { white-space: normal; }
+  .admin-header { flex-direction: column; }
+  .admin-header-actions { width: 100%; }
+  .btn-voltar { flex: 1; justify-content: center; }
 }
 
 /* ── Botão Editor Mensal na barra de ações ──────────────── */
