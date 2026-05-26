@@ -683,16 +683,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   font-size: var(--text-sm);
   transition: background var(--transition-fast);
 }
-.grelha-tabela tbody tr:hover .td-pais { background: rgba(245,235,224,0.55); }
 .grelha-tabela tbody tr.linha-destaque .td-pais {
-  background: rgba(201,149,42,0.07);
   font-weight: 700; color: var(--terra);
 }
-.grelha-tabela tbody tr.linha-destaque:hover .td-pais {
-  background: rgba(201,149,42,0.14);
-}
 .grelha-tabela tbody tr.linha-totais .td-pais {
-  background: rgba(61,90,62,0.08);
   color: var(--verde-dark);
   border-top: 2px solid var(--verde-light);
 }
@@ -780,7 +774,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   background: rgba(201,149,42,0.06);
 }
 .grelha-tabela tbody tr.linha-totais .td-total {
-  background: rgba(61,90,62,0.10);
   color: var(--verde-dark); font-size: var(--text-base);
   border-top: 2px solid var(--verde-light);
 }
@@ -955,7 +948,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .grelha-tabela tbody tr.linha-destaque .td-pais          { background: rgba(201,149,42,0.07); }
 .grelha-tabela tbody tr.linha-destaque:hover .td-pais    { background: rgba(201,149,42,0.14); }
 .grelha-tabela tbody tr:hover .td-pais                   { background: rgba(245,235,224,0.96); }
-.grelha-tabela tbody tr.linha-totais .td-pais            { background: rgba(61,90,62,0.09); border-top: 2px solid var(--verde-light); }
+.grelha-tabela tbody tr.linha-totais .td-pais            { border-top: 2px solid var(--verde-light); }
 .grelha-tabela tbody tr.linha-separador .td-pais         { background: rgba(0,0,0,0.03); box-shadow: none; }
  
 /* ── Coluna do total — sticky à direita ─────────────────────  */
@@ -972,7 +965,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
  
 .grelha-tabela tbody tr.linha-destaque .td-total         { background: rgba(201,149,42,0.07); }
 .grelha-tabela tbody tr:hover .td-total                  { background: rgba(245,235,224,0.96); }
-.grelha-tabela tbody tr.linha-totais .td-total           { background: rgba(61,90,62,0.10); border-top: 2px solid var(--verde-light); box-shadow: -2px 0 6px rgba(0,0,0,0.10); }
+.grelha-tabela tbody tr.linha-totais .td-total           { border-top: 2px solid var(--verde-light); box-shadow: -2px 0 6px rgba(0,0,0,0.10); }
 .grelha-tabela tbody tr.linha-separador .td-total        { background: rgba(0,0,0,0.03); box-shadow: none; }
  
 /* ── thead original — SEM sticky (o JS cria um clone fixo) ──
