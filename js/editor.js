@@ -158,12 +158,6 @@ function activarEditor(perfil) {
   document.getElementById('headerNomeFuncionario').textContent =
     perfil.nome || perfil.email || '—';
 
-  var badgeModo = document.getElementById('badgeModo');
-  if (badgeModo) {
-    badgeModo.className  = 'modo-badge ' + (_isAdmin ? 'admin' : 'editor');
-    badgeModo.textContent = _isAdmin ? '🛡️ Administrador' : '✏️ Editor';
-  }
-
   _appInicializada = true;
 }
 
