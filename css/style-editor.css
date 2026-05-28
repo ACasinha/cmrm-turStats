@@ -925,3 +925,99 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
     --col-tot-w:  44px;
   }
 }
+
+/* ── .grelha-wrapper: apenas scroll horizontal ──────────────
+   Remover qualquer max-height ou overflow-y do patch anterior */
+.grelha-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  max-height: none;
+  position: relative;
+}
+
+/* ── Coluna dos países — sticky à esquerda ──────────────────
+   Funciona porque o scroll de X é do .grelha-wrapper          */
+.grelha-tabela tbody .td-pais,
+.grelha-tabela thead .th-pais {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  background: white;
+  border-right: 2px solid var(--cinza-claro);
+  box-shadow: 2px 0 5px rgba(0,0,0,0.07);
+}
+.grelha-tabela thead .th-pais { z-index: 5; }
+
+/* Fundos por tipo de linha */
+.grelha-tabela tbody tr:hover .td-pais                { background: rgba(245,235,224,0.97); }
+.grelha-tabela tbody tr.linha-destaque .td-pais       { background: rgba(201,149,42,0.07);  }
+.grelha-tabela tbody tr.linha-destaque:hover .td-pais { background: rgba(201,149,42,0.14);  }
+.grelha-tabela tbody tr.linha-totais .td-pais         { background: rgba(61,90,62,0.09); border-top: 2px solid var(--verde-light); }
+.grelha-tabela tbody tr.linha-separador .td-pais      { background: rgba(0,0,0,0.03); box-shadow: none; }
+
+/* ── Coluna Total — sticky à direita ────────────────────────  */
+.grelha-tabela tbody .td-total,
+.grelha-tabela thead .th-total {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: white;
+  border-left: 2px solid var(--cinza-claro);
+  box-shadow: -2px 0 5px rgba(0,0,0,0.07);
+}
+.grelha-tabela thead .th-total { z-index: 5; }
+
+.grelha-tabela tbody tr:hover .td-total                { background: rgba(245,235,224,0.97); }
+.grelha-tabela tbody tr.linha-destaque .td-total       { background: rgba(201,149,42,0.07);  }
+.grelha-tabela tbody tr.linha-totais .td-total         { background: rgba(61,90,62,0.10); border-top: 2px solid var(--verde-light); box-shadow: -2px 0 6px rgba(0,0,0,0.10); }
+.grelha-tabela tbody tr.linha-separador .td-total      { background: rgba(0,0,0,0.03); box-shadow: none; }
+
+/* ── thead original: sem sticky vertical (o JS trata disso) ─  */
+.grelha-tabela thead th {
+  position: static;
+  background: white;
+  border-bottom: 2px solid var(--verde-light);
+}
+/* Repor sticky left/right nos cantos do thead */
+.grelha-tabela thead .th-pais,
+.grelha-tabela thead .th-total {
+  position: sticky;
+}
+
+/* ── Clone do thead criado pelo JS ─────────────────────────
+   Começa oculto (display:none posto pelo JS na criação).
+   O JS controla display, top, left e width.                  */
+.grelha-thead-clone {
+  position: fixed;
+  z-index: 150;           /* abaixo do header (z-index:100) — NÃO, precisa estar acima */
+  /* NOTA: o header tem z-index:100 e é sticky, não fixed.
+     O clone é fixed com top = header.bottom, por isso não se sobrepõem.
+     z-index:150 garante que fica acima de outros elementos da página
+     mas o posicionamento (top=headerH) impede sobreposição visual. */
+  pointer-events: none;
+  overflow: hidden;
+  background: white;
+  border-bottom: 2px solid var(--verde-light);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+.grelha-thead-clone table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  /* width definido pelo JS */
+}
+/* Dentro do clone, th-pais e th-total NÃO são sticky
+   (o clone inteiro já está posicionado correctamente pelo JS) */
+.grelha-thead-clone .th-pais,
+.grelha-thead-clone .th-total {
+  position: static !important;
+  box-shadow: none !important;
+  border-right: 2px solid var(--cinza-claro);
+}
+.grelha-thead-clone .th-total {
+  border-right: none;
+  border-left: 2px solid var(--cinza-claro);
+}
+.grelha-thead-clone th {
+  background: white !important;
+}
