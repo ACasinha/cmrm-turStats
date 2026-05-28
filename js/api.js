@@ -150,7 +150,23 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
     onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação.' });
   }, 15000);
 
-  _persistenciaPronte
+  var msgs = {
+    'auth/invalid-email':          'Endereço de email inválido.',
+    'auth/user-disabled':          'Esta conta foi desativada.',
+    'auth/user-not-found':         'Utilizador não encontrado.',
+    'auth/wrong-password':         'Password incorreta.',
+    'auth/invalid-credential':     'Email ou password incorretos.',
+    'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
+    'auth/network-request-failed': 'Sem ligação à internet.',
+    'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
+    'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
+  };
+
+  // Garantir signOut limpo antes de novo signIn —
+  // evita estado residual de tentativas anteriores com permissões negadas
+  firebaseAuth.signOut()
+    .catch(function() { /* já desautenticado — ignorar */ })
+    .then(function() { return _persistenciaPronte; })
     .then(function() {
       return firebaseAuth.signInWithEmailAndPassword(email, password);
     })
@@ -171,17 +187,6 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
       if (respondido) return;
       respondido = true;
       clearTimeout(timeoutId);
-      var msgs = {
-        'auth/invalid-email':          'Endereço de email inválido.',
-        'auth/user-disabled':          'Esta conta foi desativada.',
-        'auth/user-not-found':         'Utilizador não encontrado.',
-        'auth/wrong-password':         'Password incorreta.',
-        'auth/invalid-credential':     'Email ou password incorretos.',
-        'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
-        'auth/network-request-failed': 'Sem ligação à internet.',
-        'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
-        'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
-      };
       onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
     });
 }
