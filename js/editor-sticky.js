@@ -74,7 +74,7 @@
 
     // Actualizar visibilidade
     if (deveEstarAtivo !== _ativo) {
-      _clone.style.display = deveEstarAtivo ? '' : 'none';
+      _clone.style.display = deveEstarAtivo ? 'block' : 'none';
       _ativo = deveEstarAtivo;
     }
 
@@ -120,21 +120,27 @@
   }
 
   // ── Hook na função construirGrelha do editor.js ───────────
+  // Flag garante que só se envolve uma vez mesmo que construirGrelha
+  // já tenha sido envolvida pelo bloco <script> do editor.html.
+  var _hookFeito = false;
+
   function hookConstruirGrelha() {
     if (typeof construirGrelha === 'undefined') {
       setTimeout(hookConstruirGrelha, 100);
       return;
     }
+    if (_hookFeito) return;
+    _hookFeito = true;
 
     var _orig = construirGrelha;
     construirGrelha = function() {
       _orig.apply(this, arguments);
-      // DOM reconstruído — recriar clone após render
+      // DOM reconstruído — recriar clone após o browser renderizar
       _wrapperScrollBound = false;
       setTimeout(function() {
         criarClone();
         ligarScrollWrapper();
-      }, 0);
+      }, 50);
     };
   }
 
