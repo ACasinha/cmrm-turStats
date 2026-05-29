@@ -17,6 +17,8 @@ const STATIC_ASSETS = [
   './js/admin.js',
   './manifest.json',
   './css/style.css',
+  './js/nav-menu.js',
+  './css/nav-menu.css',
   './css/style-admin.css',
   './js/login.js',
   './js/data.js',
