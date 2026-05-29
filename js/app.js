@@ -172,20 +172,36 @@ function activarApp(perfil) {
 }
 
 function mostrarEcraLogin() {
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  // dashboard.js usa dashboardWrap, editor.js usa editorWrap
-  document.getElementById('dashboardWrap').style.display = 'none'; // adaptar por ficheiro
-  document.getElementById('loginPass').value = '';
+  var loginOverlay = document.getElementById('loginOverlay');
+  if (loginOverlay) loginOverlay.classList.remove('hidden');
 
-  var erro = document.getElementById('loginErro');
-  if (erro) {
-    if (_erroLoginPendente) {
-      erro.textContent = _erroLoginPendente;
-      erro.classList.add('visivel');
-      _erroLoginPendente = '';
-    } else {
-      erro.classList.remove('visivel');
-    }
+  var loginErro = document.getElementById('loginErro');
+  if (loginErro) loginErro.classList.remove('visivel');
+
+  var btnAdmin = document.getElementById('btnAdmin');
+  if (btnAdmin) btnAdmin.style.display = 'none';
+  var btnDashboard = document.getElementById('btnDashboard');
+  if (btnDashboard) btnDashboard.style.display = 'none';
+  var btnEditor = document.getElementById('btnEditor');
+  if (btnEditor) btnEditor.style.display = 'none';
+
+  // Só limpar o formulário se já foi inicializado
+  if (appInicializada) {
+    limparFormularioParcial();
+    mostrarBanner('', '');
+  }
+
+  ultimoLocalVerificado = '';
+  ultimaDataVerificada  = '';
+
+  var loginPass = document.getElementById('loginPass');
+  if (loginPass) loginPass.value = '';
+
+  // Restaurar erro pendente (conta sem permissão)
+  if (_erroLoginPendente && loginErro) {
+    loginErro.textContent = _erroLoginPendente;
+    loginErro.classList.add('visivel');
+    _erroLoginPendente = '';
   }
 
   var btn = document.getElementById('btnLogin');
