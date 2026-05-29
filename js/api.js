@@ -187,6 +187,16 @@ function apiLogout() {
   return firebaseAuth.signOut();
 }
 
+function apiObservarAuth(callback) {
+  return firebaseAuth.onAuthStateChanged(function(user) {
+    if (user && !sessaoValida()) {
+      apiLogout();
+      return;
+    }
+    callback(user);
+  });
+}
+
 // ============================================================
 // FUNÇÕES PÚBLICAS
 // ============================================================
