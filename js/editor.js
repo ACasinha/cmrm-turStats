@@ -76,6 +76,8 @@ function activarEditor(perfil) {
     badgeModo.textContent = _isAdmin ? '🛡️ Administrador' : '✏️ Editor';
   }
 
+  if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
+
   _appInicializada = true;
 }
 
