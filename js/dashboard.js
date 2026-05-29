@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // LOGOUT
 // ============================================================
 
-function logout() {
+function fazerLogout() {
   logout(false); // do login.js
 }
 
