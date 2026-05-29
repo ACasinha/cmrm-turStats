@@ -88,11 +88,11 @@
     btn.innerHTML =
       '<span class="nav-menu-icon">' +
         '<span></span><span></span><span></span>' +
-      '</span>';
+      '</span>' +
+      '<span class="nav-menu-btn-label">Menu</span>';
 
-    // Inserir antes do user-info
-    var userInfo = headerRight.querySelector('.user-info');
-    headerRight.insertBefore(btn, userInfo || headerRight.firstChild);
+    // Adicionar ao fim do header-right — fica sempre o elemento mais à direita
+    headerRight.appendChild(btn);
 
     // Painel dropdown
     var painel = document.createElement('div');
