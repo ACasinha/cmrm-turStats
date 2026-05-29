@@ -27,6 +27,8 @@ var SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
 var REQUEST_TIMEOUT_MS = 20000;
 var CHAVE_LOGIN_TS     = 'rmz_login_ts';
 
+var loginEmCurso = false;
+
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================================
