@@ -19,9 +19,15 @@
 var SESSAO_MAX_MS  = 10 * 60 * 60 * 1000; // 10 horas
 var CHAVE_LOGIN_TS = 'rmz_login_ts';
 
+// Flag que silencia o onAuthStateChanged durante o fluxo de
+// signInWithEmailAndPassword. Sem isto, o signOut preventivo
+// que limpa o estado anterior faz o listener reagir com
+// user=null a meio do login, repondo o formulário
+// prematuramente.
+var _loginEmCurso = false;
+
 // ============================================================
 // Gestão do timestamp de sessão
-// Guardado em localStorage; expirado após SESSAO_MAX_MS.
 // ============================================================
 
 function registarInicioSessao() {
@@ -40,9 +46,6 @@ function limparSessao() {
 
 // ============================================================
 // obterIdToken — usado exclusivamente por api.js / chamarAPI()
-//
-// Valida a sessão local antes de pedir o JWT ao Firebase.
-// Tenta primeiro o token em cache; forças refresh só se falhar.
 // ============================================================
 
 function obterIdToken() {
@@ -63,7 +66,6 @@ function obterIdToken() {
     );
   }
 
-  // getIdToken(false) → usa cache; (true) → força refresh no servidor
   return user.getIdToken(false).catch(function () {
     return user.getIdToken(true);
   });
@@ -72,14 +74,17 @@ function obterIdToken() {
 // ============================================================
 // apiAutenticar — chamado por login.js ao submeter o formulário
 //
-// Fluxo:
-//   1. signOut preventivo (garante estado limpo)
+// Fluxo sem signOut preventivo:
+//   1. Activa _loginEmCurso para silenciar o listener
 //   2. signInWithEmailAndPassword
 //   3. Regista timestamp de sessão
-//   4. Chama onSuccess com dados básicos do utilizador
+//   4. Desactiva _loginEmCurso
+//   5. Chama onSuccess — login.js notifica a página
 //
-// O onAuthStateChanged em login.js detecta a mudança e obtém
-// o perfil completo do Firestore (via users.js).
+// O onAuthStateChanged em apiObservarAuth NÃO é o caminho
+// de sucesso do login; é apenas para sessões persistidas
+// (refresh de página) e para logout. O login activo é
+// tratado inteiramente aqui através do callback onSuccess.
 // ============================================================
 
 function apiAutenticar(email, password, onSuccess, onFailure) {
@@ -87,18 +92,18 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
 
   var timeoutId = setTimeout(function () {
     if (respondido) return;
-    respondido = true;
+    respondido  = true;
+    _loginEmCurso = false;
     onFailure({ message: 'Sem resposta do servidor de autenticação.' });
   }, 15000);
 
-  firebaseAuth.signOut()
-    .catch(function () {})                            // ignorar erro de signOut preventivo
-    .then(function () {
-      return firebaseAuth.signInWithEmailAndPassword(email, password);
-    })
+  _loginEmCurso = true;
+
+  firebaseAuth.signInWithEmailAndPassword(email, password)
     .then(function (credencial) {
       if (respondido) return;
-      respondido = true;
+      respondido    = true;
+      _loginEmCurso = false;
       clearTimeout(timeoutId);
 
       registarInicioSessao();
@@ -112,7 +117,8 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
     })
     .catch(function (err) {
       if (respondido) return;
-      respondido = true;
+      respondido    = true;
+      _loginEmCurso = false;
       clearTimeout(timeoutId);
       onFailure({ message: _mensagemErroAuth(err) });
     });
@@ -130,18 +136,29 @@ function apiLogout() {
 // ============================================================
 // apiObservarAuth — subscreve mudanças de estado de auth
 //
-// Antes de propagar o utilizador, verifica se a sessão local
-// ainda é válida. Se não for, faz logout silencioso.
-// Usado por login.js para reagir a login/logout/expiração.
+// Usado para dois cenários:
+//   A) Refresh de página com sessão persistida — Firebase
+//      entrega o utilizador imediatamente; o listener
+//      desbloqueia a página sem pedir login.
+//   B) Logout — Firebase entrega user=null; o listener
+//      mostra o ecrã de login.
+//
+// NÃO é o caminho de sucesso do login activo (tratado em
+// apiAutenticar via callback). Quando _loginEmCurso=true
+// ignora disparos intermédios causados por estados
+// transitórios do Firebase.
 // ============================================================
 
 function apiObservarAuth(callback) {
   return firebaseAuth.onAuthStateChanged(function (user) {
+    if (_loginEmCurso) return;
+
     if (user && !sessaoValida()) {
       limparSessao();
       firebaseAuth.signOut();
-      return; // onAuthStateChanged disparará novamente com user=null
+      return;
     }
+
     callback(user);
   });
 }
@@ -151,13 +168,13 @@ function apiObservarAuth(callback) {
 // ============================================================
 
 function _mensagemErroAuth(err) {
-  // Traduzir os códigos de erro mais comuns para português
   var mapa = {
-    'auth/user-not-found':      'Email não registado.',
-    'auth/wrong-password':      'Password incorrecta.',
-    'auth/invalid-email':       'Email inválido.',
-    'auth/user-disabled':       'Conta desactivada. Contacte o administrador.',
-    'auth/too-many-requests':   'Demasiadas tentativas. Aguarde uns momentos.',
+    'auth/user-not-found':         'Email não registado.',
+    'auth/wrong-password':         'Password incorrecta.',
+    'auth/invalid-credential':     'Email ou password incorrectos.',
+    'auth/invalid-email':          'Email inválido.',
+    'auth/user-disabled':          'Conta desactivada. Contacte o administrador.',
+    'auth/too-many-requests':      'Demasiadas tentativas. Aguarde uns momentos.',
     'auth/network-request-failed': 'Sem ligação à Internet.'
   };
   return mapa[err.code] || err.message;
