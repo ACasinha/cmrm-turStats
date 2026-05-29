@@ -130,55 +130,8 @@ function fazerLogin() {
   erro.classList.remove('visivel');
 
   apiAutenticar(email, pass,
-    function onSuccess(resp) {
-      btn.disabled    = false;
-      btn.textContent = 'Entrar →';
-
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual = perfil;
-          _isAdmin      = perfil.role === 'administrador';
-          _isUtilizador = perfil.role === 'administrador'
-                       || perfil.role === 'utilizador';
-
-          if (!perfil.ativo) {
-            erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-
-          if (!_isUtilizador) {
-            erro.textContent = 'Esta conta não tem acesso à aplicação. Contacte o administrador.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-
-          // Botão admin
-          if (perfil.role === 'administrador') {
-            var btnAdmin = document.getElementById('btnAdmin');
-            if (btnAdmin) btnAdmin.style.display = '';
-          }
-
-          // Botão dashboard
-          var temDash = perfil.role === 'administrador'
-                     || perfil.acessoDashboard === true;
-          var btnDash = document.getElementById('btnDashboard');
-          if (btnDash && temDash) btnDash.style.display = '';
-
-          // Botão editor mensal
-          var temEditor = perfil.role === 'administrador'
-                       || perfil.acessoEditor === true;
-          var btnEditor = document.getElementById('btnEditor');
-          if (btnEditor && temEditor) btnEditor.style.display = '';
-
-          activarApp(perfil);
-        })
-        .catch(function(err) {
-          console.error('[Perfil] Erro ao carregar:', err);
-          activarApp(perfil);
-        });
+    function onSuccess() {
+      // Não fazer nada aqui — o onAuthStateChanged trata de tudo
     },
     function onFailure(err) {
       btn.disabled    = false;
