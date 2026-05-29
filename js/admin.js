@@ -42,7 +42,7 @@ function atualizarCheckboxesEditar() {
 // LOGOUT e BOTÃO VOLTAR PARA A APP
 // ============================================================
 
-function logout() {
+function fazerLogout() {
   logout(false); // do login.js
 }
 
