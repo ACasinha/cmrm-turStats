@@ -1,11 +1,6 @@
 // ============================================================
 // api.js — Ligação à Cloud Function com Firebase Auth
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
-//
-// CONFIGURAÇÃO:
-//   1. Substitua FIREBASE_CONFIG com os valores do seu projecto
-//   2. Substitua CLOUD_FUNCTION_URL com o URL da Cloud Function
-//      (após deploy: https://REGION-PROJECT.cloudfunctions.net/rmz-api)
 // ============================================================
 
 'use strict';
@@ -161,7 +156,7 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
   };
 
   firebaseAuth.signOut()
-    .catch(function() { /* já desautenticado — ignorar */ })
+    .catch(function() { })
     .then(function() { return _persistenciaPronte; })
     .then(function() {
       return firebaseAuth.signInWithEmailAndPassword(email, password);
