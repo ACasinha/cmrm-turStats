@@ -135,50 +135,50 @@ function chamarAPI(action, payload) {
 // ============================================================
 
 function apiAutenticar(email, password, onSuccess, onFailure) {
+
   var respondido = false;
 
   var timeoutId = setTimeout(function() {
     if (respondido) return;
     respondido = true;
-    onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação.' });
+    onFailure({ message: 'Sem resposta do servidor de autenticação.' });
   }, 15000);
 
-  var msgs = {
-    'auth/invalid-email':          'Endereço de email inválido.',
-    'auth/user-disabled':          'Esta conta foi desativada.',
-    'auth/user-not-found':         'Utilizador não encontrado.',
-    'auth/wrong-password':         'Password incorreta.',
-    'auth/invalid-credential':     'Email ou password incorretos.',
-    'auth/too-many-requests':      'Demasiadas tentativas. Tente mais tarde.',
-    'auth/network-request-failed': 'Sem ligação à internet.',
-    'auth/operation-not-allowed':  'Autenticação por email não está ativa no Firebase Console.',
-    'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
-  };
-
-  firebaseAuth.signOut()
-    .catch(function() { })
-    .then(function() { return _persistenciaPronte; })
+  Promise.resolve()
+    .then(function() {
+      // GARANTE estado limpo, mas NÃO bloqueia fluxo
+      return firebaseAuth.signOut().catch(function() {});
+    })
+    .then(function() {
+      return firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    })
     .then(function() {
       return firebaseAuth.signInWithEmailAndPassword(email, password);
     })
     .then(function(credencial) {
+
       if (respondido) return;
       respondido = true;
       clearTimeout(timeoutId);
+
       registarInicioSessao();
-      var user = credencial.user;
+
       onSuccess({
-        sucesso:         true,
-        nomeFuncionario: user.displayName || user.email,
-        email:           user.email,
-        uid:             user.uid
+        sucesso: true,
+        nomeFuncionario: credencial.user.displayName || credencial.user.email,
+        email: credencial.user.email,
+        uid: credencial.user.uid
       });
+
     })
     .catch(function(err) {
       if (respondido) return;
       respondido = true;
       clearTimeout(timeoutId);
-      onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
+
+      onFailure({
+        message: err.message
+      });
     });
 }
 
