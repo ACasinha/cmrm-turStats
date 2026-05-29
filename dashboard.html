@@ -186,6 +186,32 @@
 <script src="js/sw-update.js"></script>
 <script src="js/users.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/login.js"></script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+  inicializarLogin({
+    idWrap:            'dashboardWrap',
+    verificarAcesso:   function(perfil) {
+      return perfil.role === 'administrador'
+          || perfil.role === 'visualizador'
+          || perfil.acessoDashboard === true;
+    },
+    mensagemSemAcesso: 'Acesso negado. Não tem permissão para aceder ao dashboard.',
+    onSucesso:         function(perfil) {
+      _perfilAtual    = perfil;
+      _isAdmin        = perfil.role === 'administrador';
+      _isVisualizador = true;
+      activarDashboard(perfil);
+    },
+    onSessaoTerminada: function() {
+      _appInicializada = false;
+    }
+  });
+});
+     
+</script>
 
 </body>
 </html>
