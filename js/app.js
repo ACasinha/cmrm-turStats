@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fazerLogout() {
-  fazerLogout(false);
+  logout(false);
 }
 
 
