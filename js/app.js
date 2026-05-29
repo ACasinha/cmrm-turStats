@@ -13,7 +13,6 @@ var _isAdmin              = false;
 var _isUtilizador         = false;
 var appInicializada       = false;
 var dadosAlterados        = false;
-var _erroLoginPendente = '';
 
 window.addEventListener('beforeunload', function(e) {
   if (dadosAlterados) {
@@ -29,125 +28,61 @@ var edicaoPermitida = null;
 // ARRANQUE
 // ============================================================
 
-// js/app.js — substituir o bloco DOMContentLoaded completo
-
 document.addEventListener('DOMContentLoaded', function() {
-  // Observador permanente — ativo durante toda a sessão
-  firebaseAuth.onAuthStateChanged(function(user) {
-    if (user && sessaoValida()) {
-      // Utilizador autenticado — verificar permissões
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual = perfil;
-          _isAdmin      = perfil.role === 'administrador';
-          _isUtilizador = perfil.role === 'administrador'
-                       || perfil.role === 'utilizador';
+  inicializarLogin({
+    idWrap:            null, // app.js não tem um wrap único — o login overlay já cobre tudo
+    verificarAcesso:   function(perfil) {
+      return perfil.role === 'administrador'
+          || perfil.role === 'utilizador';
+    },
+    mensagemSemAcesso: 'Esta conta não tem acesso à aplicação. Contacte o administrador.',
+    onSucesso:         function(perfil) {
+      _perfilAtual  = perfil;
+      _isAdmin      = perfil.role === 'administrador';
+      _isUtilizador = true;
 
-          if (!perfil.ativo) {
-            _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
-            limparCacheUtilizador();
-            firebaseAuth.signOut();
-            return;
-          }
-
-          if (!_isUtilizador) {
-            _mostrarErroLogin('Esta conta apenas tem acesso ao dashboard. Contacte o administrador.');
-            limparCacheUtilizador();
-            firebaseAuth.signOut();
-            return;
-          }
-
-          // Botão admin
-          if (perfil.role === 'administrador') {
-            var btnAdmin = document.getElementById('btnAdmin');
-            if (btnAdmin) btnAdmin.style.display = '';
-          }
-
-          // Botão dashboard
-          var temDash = perfil.role === 'administrador' || perfil.acessoDashboard === true;
-          var btnDash = document.getElementById('btnDashboard');
-          if (btnDash && temDash) btnDash.style.display = '';
-
-          // Botão editor mensal
-          var temEditor = perfil.role === 'administrador' || perfil.acessoEditor === true;
-          var btnEditor = document.getElementById('btnEditor');
-          if (btnEditor && temEditor) btnEditor.style.display = '';
-
-          activarApp(perfil);
-        })
-        .catch(function() {
-          mostrarEcraLogin();
-        });
-
-    } else {
-      // Sem utilizador ou sessão expirada
-      if (user) {
-        limparSessao();
-        firebaseAuth.signOut();
+      // Botão admin
+      if (perfil.role === 'administrador') {
+        var btnAdmin = document.getElementById('btnAdmin');
+        if (btnAdmin) btnAdmin.style.display = '';
       }
-      if (appInicializada) {
-        appInicializada = false;
-        mostrarBanner('', '');
-        mostrarToast('Sessão terminada. Por favor faça login novamente.', 'info');
+
+      // Botão dashboard
+      if (perfil.role === 'administrador' || perfil.acessoDashboard === true) {
+        var btnDash = document.getElementById('btnDashboard');
+        if (btnDash) btnDash.style.display = '';
       }
-      mostrarEcraLogin();
+
+      // Botão editor
+      if (perfil.role === 'administrador' || perfil.acessoEditor === true) {
+        var btnEditor = document.getElementById('btnEditor');
+        if (btnEditor) btnEditor.style.display = '';
+      }
+
+      activarApp(perfil);
+    },
+    onSessaoTerminada: function() {
+      appInicializada = false;
+      mostrarBanner('', '');
+      ultimoLocalVerificado = '';
+      ultimaDataVerificada  = '';
+
+      var btnAdmin = document.getElementById('btnAdmin');
+      if (btnAdmin) btnAdmin.style.display = 'none';
+      var btnDashboard = document.getElementById('btnDashboard');
+      if (btnDashboard) btnDashboard.style.display = 'none';
+      var btnEditor = document.getElementById('btnEditor');
+      if (btnEditor) btnEditor.style.display = 'none';
+
+      if (appInicializada) limparFormularioParcial();
     }
   });
 });
 
-// Função auxiliar para mostrar erro no login sem apagar as credenciais
-function _mostrarErroLogin(mensagem) {
-  // Guardar a mensagem — será restaurada após o signOut disparar onAuthStateChanged
-  _erroLoginPendente = mensagem;
-  var btn = document.getElementById('btnLogin');
-  if (btn) { btn.disabled = false; btn.textContent = 'Entrar →'; }
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-
-function fazerLogin() {
-  var email = document.getElementById('loginUser').value.trim();
-  var pass  = document.getElementById('loginPass').value;
-  var erro  = document.getElementById('loginErro');
-  var btn   = document.getElementById('btnLogin');
-
-  if (!email || !pass) {
-    erro.textContent = 'Por favor preencha todos os campos.';
-    erro.classList.add('visivel');
-    return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = 'A autenticar...';
-  erro.classList.remove('visivel');
-
-  apiAutenticar(email, pass,
-    function onSuccess() {
-      // Não fazer nada aqui — o onAuthStateChanged trata de tudo
-    },
-    function onFailure(err) {
-      btn.disabled    = false;
-      btn.textContent = 'Entrar →';
-      erro.textContent = err.message;
-      erro.classList.add('visivel');
-      document.getElementById('loginPass').value = '';
-      document.getElementById('loginPass').focus();
-    }
-  );
-}
-
-// ============================================================
-// LOGOUT
-// ============================================================
-
 function fazerLogout() {
-  if (!confirm('Deseja terminar a sessão?')) return;
-  appInicializada = false;
-  limparCacheUtilizador();
-  apiLogout().then(function() { mostrarEcraLogin(); });
+  fazerLogout(false);
 }
+
 
 // ============================================================
 // NAVEGAÇÃO
@@ -162,50 +97,12 @@ function irParaEditor()    { window.location.href = 'editor.html'; }
 // ============================================================
 
 function activarApp(perfil) {
-  document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('headerNomeFuncionario').textContent =
     perfil.nome || perfil.email || '—';
   if (!appInicializada) {
     inicializarApp();
     appInicializada = true;
   }
-}
-
-function mostrarEcraLogin() {
-  var loginOverlay = document.getElementById('loginOverlay');
-  if (loginOverlay) loginOverlay.classList.remove('hidden');
-
-  var loginErro = document.getElementById('loginErro');
-  if (loginErro) loginErro.classList.remove('visivel');
-
-  var btnAdmin = document.getElementById('btnAdmin');
-  if (btnAdmin) btnAdmin.style.display = 'none';
-  var btnDashboard = document.getElementById('btnDashboard');
-  if (btnDashboard) btnDashboard.style.display = 'none';
-  var btnEditor = document.getElementById('btnEditor');
-  if (btnEditor) btnEditor.style.display = 'none';
-
-  // Só limpar o formulário se já foi inicializado
-  if (appInicializada) {
-    limparFormularioParcial();
-    mostrarBanner('', '');
-  }
-
-  ultimoLocalVerificado = '';
-  ultimaDataVerificada  = '';
-
-  var loginPass = document.getElementById('loginPass');
-  if (loginPass) loginPass.value = '';
-
-  // Restaurar erro pendente (conta sem permissão)
-  if (_erroLoginPendente && loginErro) {
-    loginErro.textContent = _erroLoginPendente;
-    loginErro.classList.add('visivel');
-    _erroLoginPendente = '';
-  }
-
-  var btn = document.getElementById('btnLogin');
-  if (btn) { btn.disabled = false; btn.textContent = 'Entrar →'; }
 }
 
 // ============================================================
