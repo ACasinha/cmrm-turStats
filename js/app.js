@@ -28,12 +28,13 @@ var edicaoPermitida = null;
 // ARRANQUE
 // ============================================================
 
+// js/app.js — substituir o bloco DOMContentLoaded completo
+
 document.addEventListener('DOMContentLoaded', function() {
-  var unsubInicial = firebaseAuth.onAuthStateChanged(function(user) {
-    unsubInicial();
-
+  // Observador permanente — ativo durante toda a sessão
+  firebaseAuth.onAuthStateChanged(function(user) {
     if (user && sessaoValida()) {
-
+      // Utilizador autenticado — verificar permissões
       obterPerfilUtilizador()
         .then(function(perfil) {
           _perfilAtual = perfil;
@@ -41,15 +42,20 @@ document.addEventListener('DOMContentLoaded', function() {
           _isUtilizador = perfil.role === 'administrador'
                        || perfil.role === 'utilizador';
 
-          if (!_isUtilizador) {
-            // Sem permissão
-            document.getElementById('loginOverlay').classList.remove('hidden');
-            document.getElementById('loginErro').textContent = 'Esta conta apenas tem acesso ao dashboard. Contacte o administrador.';
-            document.getElementById('loginErro').classList.add('visivel');
-            apiLogout();
+          if (!perfil.ativo) {
+            _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
+            limparCacheUtilizador();
+            firebaseAuth.signOut();
             return;
           }
-          
+
+          if (!_isUtilizador) {
+            _mostrarErroLogin('Esta conta apenas tem acesso ao dashboard. Contacte o administrador.');
+            limparCacheUtilizador();
+            firebaseAuth.signOut();
+            return;
+          }
+
           // Botão admin
           if (perfil.role === 'administrador') {
             var btnAdmin = document.getElementById('btnAdmin');
@@ -57,39 +63,51 @@ document.addEventListener('DOMContentLoaded', function() {
           }
 
           // Botão dashboard
-          var temDash = perfil.role === 'administrador'
-                     || perfil.acessoDashboard === true;
+          var temDash = perfil.role === 'administrador' || perfil.acessoDashboard === true;
           var btnDash = document.getElementById('btnDashboard');
           if (btnDash && temDash) btnDash.style.display = '';
 
           // Botão editor mensal
-          var temEditor = perfil.role === 'administrador'
-                       || perfil.acessoEditor === true;
+          var temEditor = perfil.role === 'administrador' || perfil.acessoEditor === true;
           var btnEditor = document.getElementById('btnEditor');
           if (btnEditor && temEditor) btnEditor.style.display = '';
-        
+
           activarApp(perfil);
-          
         })
         .catch(function() {
           mostrarEcraLogin();
         });
-    } else {
-      if (user) apiLogout();
-      mostrarEcraLogin();
-    }
 
-    firebaseAuth.onAuthStateChanged(function(u) {
-      if (!u && appInicializada) {
+    } else {
+      // Sem utilizador ou sessão expirada
+      if (user) {
         limparSessao();
+        firebaseAuth.signOut();
+      }
+      if (appInicializada) {
         appInicializada = false;
         mostrarBanner('', '');
-        mostrarEcraLogin();
         mostrarToast('Sessão terminada. Por favor faça login novamente.', 'info');
       }
-    });
+      mostrarEcraLogin();
+    }
   });
 });
+
+// Função auxiliar para mostrar erro no login sem apagar as credenciais
+function _mostrarErroLogin(mensagem) {
+  var erro = document.getElementById('loginErro');
+  if (erro) {
+    erro.textContent = mensagem;
+    erro.classList.add('visivel');
+  }
+  // Repor o botão de login
+  var btn = document.getElementById('btnLogin');
+  if (btn) {
+    btn.disabled    = false;
+    btn.textContent = 'Entrar →';
+  }
+}
 
 // ============================================================
 // LOGIN
