@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================================
 
 function fazerLogout() {
-  fazerLogout(false); // do login.js
+  logout(false); // do login.js
 }
 
 
