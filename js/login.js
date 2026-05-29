@@ -97,7 +97,7 @@ function fazerLogin() {
 // FAZER LOGOUT — chamado pelo botão de cada página
 // ============================================================
 
-function fazerLogout(temAlteracoes) {
+function logout(temAlteracoes) {
   if (temAlteracoes) {
     if (!confirm('Tem alterações por guardar. Tem a certeza que quer sair?')) return;
   } else {
