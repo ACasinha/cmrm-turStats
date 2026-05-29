@@ -148,7 +148,7 @@
     btnSair.innerHTML   = '<span class="nav-menu-item-label">↩ Terminar sessão</span>';
     btnSair.addEventListener('click', function() {
       fecharMenu();
-      if (typeof logout === 'function') fazerLogout();
+      if (typeof logout === 'function') logout();
     });
     painel.appendChild(btnSair);
 
