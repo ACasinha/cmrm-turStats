@@ -1,102 +1,94 @@
 // ============================================================
-// users.js — Gestão de utilizadores e roles com Firestore
+// users.js — Perfis e gestão de utilizadores (Firestore)
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
+//
+// Responsabilidade:
+//   • Expor a instância única de Firestore (var db)
+//   • Ler e guardar perfis de utilizador
+//   • Listar, criar, activar e desactivar utilizadores (admins)
+//   • Cache de perfil com TTL de 5 minutos
+//
+// NÃO contém: Firebase init (api.js), autenticação/sessão
+// (auth.js), UI (login.js / admin.js), lógica de negócio
+// das páginas (app.js / editor.js).
+//
+// Dependências em tempo de execução (devem carregar antes):
+//   api.js  → firebase (app já inicializado), chamarAPI
+//   auth.js → firebaseAuth
 // ============================================================
 
 'use strict';
 
-var _cacheUtilizador  = null;
-var _cacheValidadeMs  = 5 * 60 * 1000;  // 5 minutos
-var _timestampCache   = 0;
-var _isAdmin          = false;
+// ── Instância única de Firestore ─────────────────────────────
+// api.js já chamou firebase.initializeApp(); aqui apenas
+// obtemos a referência à base de dados.
+var db = firebase.firestore();
 
+// ── Cache de perfil ──────────────────────────────────────────
+
+var _cacheUtilizador = null;
+var _timestampCache  = 0;
+var CACHE_TTL_MS     = 5 * 60 * 1000; // 5 minutos
+
+// Roles aceites pela aplicação
 var ROLES_VALIDAS = ['utilizador', 'visualizador', 'administrador'];
 
 // ============================================================
-// INICIALIZAR FIRESTORE
-// ============================================================
-
-if (!firebase.apps.length) {
-  firebase.initializeApp(FIREBASE_CONFIG);
-}
-
-var db = firebase.firestore();
-
-// ============================================================
-// OBTER PERFIL DO UTILIZADOR (com cache de 5min)
+// obterPerfilUtilizador
+//
+// Lê o documento do utilizador autenticado em /users/{uid}.
+// Se não existir, cria um perfil base com role 'utilizador'.
+// Resultado em cache durante CACHE_TTL_MS.
+//
+// forcar = true → ignora cache (útil após edição de perfil)
 // ============================================================
 
 function obterPerfilUtilizador(forcar) {
   var agora = Date.now();
 
-  if (!forcar && _cacheUtilizador && (agora - _timestampCache < _cacheValidadeMs)) {
+  if (!forcar && _cacheUtilizador && (agora - _timestampCache < CACHE_TTL_MS)) {
     return Promise.resolve(_cacheUtilizador);
   }
 
   var user = firebaseAuth.currentUser;
   if (!user) {
-    return Promise.reject(new Error('Utilizador não autenticado'));
+    return Promise.reject(new Error('Utilizador não autenticado.'));
   }
 
   return db.collection('users').doc(user.uid).get()
-    .then(function(doc) {
+    .then(function (doc) {
       if (!doc.exists) {
-        var novoPerfil = {
-          email:           user.email,
-          nome:            user.displayName || user.email.split('@')[0],
-          role:            'utilizador',
-          acessoDashboard: false,
-          acessoEditor:    false,
-          criadoEm:        firebase.firestore.FieldValue.serverTimestamp(),
-          atualizadoEm:    firebase.firestore.FieldValue.serverTimestamp(),
-          ativo:           true
-        };
-        return db.collection('users').doc(user.uid).set(novoPerfil)
-          .then(function() {
-            novoPerfil.uid   = user.uid;
-            _cacheUtilizador = novoPerfil;
-            _timestampCache  = agora;
-            _isAdmin         = false;
-            return novoPerfil;
-          });
+        return _criarPerfilBase(user);
       }
 
-      var perfil   = doc.data();
-      perfil.uid   = doc.id;
-
-      // Garantir que os campos booleanos existem (retrocompatibilidade)
-      if (perfil.acessoDashboard === undefined) perfil.acessoDashboard = false;
-      if (perfil.acessoEditor    === undefined) perfil.acessoEditor    = false;
-
+      var perfil = doc.data();
+      perfil.uid = doc.id;
+      return _normalizarPerfil(perfil);
+    })
+    .then(function (perfil) {
       _cacheUtilizador = perfil;
-      _timestampCache  = agora;
-      _isAdmin         = perfil.role === 'administrador';
-
+      _timestampCache  = Date.now();
       return perfil;
     })
-    .catch(function(err) {
-      console.error('[Firestore] Erro ao obter perfil:', err);
+    .catch(function (err) {
+      console.error('[users] Erro ao obter perfil:', err);
       throw err;
     });
 }
 
-function verificarSeAdmin() {
-  if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
-    return Promise.resolve(_cacheUtilizador.role === 'administrador');
-  }
-  return obterPerfilUtilizador()
-    .then(function(perfil) { return perfil.role === 'administrador'; })
-    .catch(function() { return false; });
+// ============================================================
+// limparCacheUtilizador — chamado por auth.js no logout
+// ============================================================
+
+function limparCacheUtilizador() {
+  _cacheUtilizador = null;
+  _timestampCache  = 0;
 }
 
-function verificarAcessoDashboard() {
-  if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
-    return Promise.resolve(_temAcessoDashboard(_cacheUtilizador));
-  }
-  return obterPerfilUtilizador()
-    .then(function(perfil) { return _temAcessoDashboard(perfil); })
-    .catch(function() { return false; });
-}
+// ============================================================
+// Helpers de acesso — evitam repetição de lógica de role
+// Cada um aceita um objecto perfil e devolve boolean.
+// ============================================================
 
 function _temAcessoDashboard(perfil) {
   return perfil.role === 'administrador'
@@ -104,78 +96,77 @@ function _temAcessoDashboard(perfil) {
       || perfil.acessoDashboard === true;
 }
 
-// ── NOVO: verificar acesso ao editor mensal ───────────────────
-function verificarAcessoEditor() {
-  if (_cacheUtilizador && (Date.now() - _timestampCache < _cacheValidadeMs)) {
-    return Promise.resolve(_temAcessoEditor(_cacheUtilizador));
-  }
-  return obterPerfilUtilizador()
-    .then(function(perfil) { return _temAcessoEditor(perfil); })
-    .catch(function() { return false; });
-}
-
 function _temAcessoEditor(perfil) {
-  return perfil.role === 'administrador' || perfil.acessoEditor === true;
+  return perfil.role === 'administrador'
+      || perfil.acessoEditor === true;
 }
-// ─────────────────────────────────────────────────────────────
 
-function limparCacheUtilizador() {
-  _cacheUtilizador = null;
-  _timestampCache  = 0;
-  _isAdmin         = false;
+function _eAdmin(perfil) {
+  return perfil.role === 'administrador';
+}
+
+// Versões assíncronas — usadas quando o perfil ainda não está em cache
+function verificarSeAdmin() {
+  return obterPerfilUtilizador().then(_eAdmin).catch(function () { return false; });
+}
+
+function verificarAcessoDashboard() {
+  return obterPerfilUtilizador().then(_temAcessoDashboard).catch(function () { return false; });
+}
+
+function verificarAcessoEditor() {
+  return obterPerfilUtilizador().then(_temAcessoEditor).catch(function () { return false; });
 }
 
 // ============================================================
-// GESTÃO DE UTILIZADORES (apenas administradores)
+// Gestão de utilizadores — apenas administradores
 // ============================================================
+
+// ── Listar todos os utilizadores ─────────────────────────────
 
 function listarUtilizadores() {
-  return verificarSeAdmin()
-    .then(function(isAdmin) {
-      if (!isAdmin) {
-        throw new Error('Acesso negado. Apenas administradores podem listar utilizadores.');
-      }
+  return _exigirAdmin()
+    .then(function () {
       return db.collection('users').orderBy('email').get();
     })
-    .then(function(snapshot) {
+    .then(function (snapshot) {
       var users = [];
-      snapshot.forEach(function(doc) {
+      snapshot.forEach(function (doc) {
         var data = doc.data();
         data.uid = doc.id;
-        // Retrocompatibilidade — garantir campos booleanos
-        if (data.acessoDashboard === undefined) data.acessoDashboard = false;
-        if (data.acessoEditor    === undefined) data.acessoEditor    = false;
-        users.push(data);
+        users.push(_normalizarPerfil(data));
       });
       return users;
     });
 }
 
-function atualizarUtilizador(uid, dados) {
-  return verificarSeAdmin()
-    .then(function(isAdmin) {
-      var user = firebaseAuth.currentUser;
+// ── Actualizar campos de um utilizador ───────────────────────
 
-      if (!isAdmin && user.uid !== uid) {
+function atualizarUtilizador(uid, dados) {
+  var user = firebaseAuth.currentUser;
+  if (!user) return Promise.reject(new Error('Utilizador não autenticado.'));
+
+  return obterPerfilUtilizador()
+    .then(function (perfilAtual) {
+      var eOProprio = user.uid === uid;
+      var eAdmin    = _eAdmin(perfilAtual);
+
+      if (!eAdmin && !eOProprio) {
         throw new Error('Sem permissão para editar este utilizador.');
       }
 
-      // Utilizador normal não pode mudar campos sensíveis
-      if (!isAdmin) {
-        delete dados.role;
-        delete dados.ativo;
-        delete dados.acessoDashboard;
-        delete dados.acessoEditor;
+      // Utilizador comum só pode alterar o próprio nome
+      var dadosFiltrados = eAdmin ? dados : { nome: dados.nome };
+
+      if (dadosFiltrados.role && ROLES_VALIDAS.indexOf(dadosFiltrados.role) === -1) {
+        throw new Error('Role inválida: ' + dadosFiltrados.role);
       }
 
-      if (dados.role && ROLES_VALIDAS.indexOf(dados.role) === -1) {
-        throw new Error('Role inválida: ' + dados.role);
-      }
-
-      dados.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
-      return db.collection('users').doc(uid).update(dados);
+      dadosFiltrados.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
+      return db.collection('users').doc(uid).update(dadosFiltrados);
     })
-    .then(function() {
+    .then(function () {
+      // Invalidar cache se for o próprio utilizador
       if (firebaseAuth.currentUser && firebaseAuth.currentUser.uid === uid) {
         limparCacheUtilizador();
       }
@@ -183,12 +174,13 @@ function atualizarUtilizador(uid, dados) {
     });
 }
 
+// ── Criar utilizador (via Cloud Function — admin only) ───────
+// A criação no Firebase Auth só pode ser feita server-side;
+// chamarAPI delega em auth.js para obter o JWT.
+
 function criarUtilizador(dados) {
-  return verificarSeAdmin()
-    .then(function(isAdmin) {
-      if (!isAdmin) {
-        throw new Error('Apenas administradores podem criar utilizadores.');
-      }
+  return _exigirAdmin()
+    .then(function () {
       if (dados.role && ROLES_VALIDAS.indexOf(dados.role) === -1) {
         throw new Error('Role inválida: ' + dados.role);
       }
@@ -196,16 +188,63 @@ function criarUtilizador(dados) {
     });
 }
 
-function desativarUtilizador(uid) {
-  return atualizarUtilizador(uid, { ativo: false });
-}
+// ── Activar / desactivar ──────────────────────────────────────
 
 function ativarUtilizador(uid) {
   return atualizarUtilizador(uid, { ativo: true });
 }
 
+function desativarUtilizador(uid) {
+  return atualizarUtilizador(uid, { ativo: false });
+}
+
+// ── Atalho para o utilizador alterar o próprio nome ──────────
+
 function atualizarMeuNome(novoNome) {
   var user = firebaseAuth.currentUser;
-  if (!user) return Promise.reject(new Error('Utilizador não autenticado'));
+  if (!user) return Promise.reject(new Error('Utilizador não autenticado.'));
   return atualizarUtilizador(user.uid, { nome: novoNome.trim() });
+}
+
+// ============================================================
+// Auxiliares privados
+// ============================================================
+
+// Garante que o utilizador actual é administrador antes de
+// executar operações sensíveis. Lança erro se não for.
+function _exigirAdmin() {
+  return obterPerfilUtilizador().then(function (perfil) {
+    if (!_eAdmin(perfil)) {
+      throw new Error('Acesso negado. Apenas administradores podem executar esta operação.');
+    }
+  });
+}
+
+// Cria um perfil base no Firestore para utilizadores que
+// autenticaram mas ainda não têm documento (primeiro login).
+function _criarPerfilBase(user) {
+  var perfil = {
+    email:           user.email,
+    nome:            user.displayName || user.email.split('@')[0],
+    role:            'utilizador',
+    acessoDashboard: false,
+    acessoEditor:    false,
+    criadoEm:        firebase.firestore.FieldValue.serverTimestamp(),
+    atualizadoEm:    firebase.firestore.FieldValue.serverTimestamp(),
+    ativo:           true
+  };
+  return db.collection('users').doc(user.uid).set(perfil)
+    .then(function () {
+      perfil.uid = user.uid;
+      return _normalizarPerfil(perfil);
+    });
+}
+
+// Garante retrocompatibilidade: campos booleanos opcionais
+// podem estar ausentes em documentos criados antes da sua adição.
+function _normalizarPerfil(perfil) {
+  if (perfil.acessoDashboard === undefined) perfil.acessoDashboard = false;
+  if (perfil.acessoEditor    === undefined) perfil.acessoEditor    = false;
+  if (perfil.ativo           === undefined) perfil.ativo           = true;
+  return perfil;
 }
