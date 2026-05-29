@@ -146,10 +146,17 @@ function chamarAPI(action, payload) {
 function apiAutenticar(email, password, onSuccess, onFailure) {
   var respondido = false;
 
+  loginEmCurso = true;
+
   var timeoutId = setTimeout(function() {
     if (respondido) return;
+
     respondido = true;
-    onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação.' });
+    loginEmCurso = false;
+
+    onFailure({
+      message: 'Sem resposta do servidor de autenticação. Verifique a ligação.'
+    });
   }, 15000);
 
   var msgs = {
@@ -164,32 +171,46 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
     'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
   };
 
-  // Garantir signOut limpo antes de novo signIn —
-  // evita estado residual de tentativas anteriores com permissões negadas
   firebaseAuth.signOut()
-    .catch(function() { /* já desautenticado — ignorar */ })
-    .then(function() { return _persistenciaPronte; })
+    .catch(function() {
+      // ignorar
+    })
+    .then(function() {
+      return _persistenciaPronte;
+    })
     .then(function() {
       return firebaseAuth.signInWithEmailAndPassword(email, password);
     })
     .then(function(credencial) {
       if (respondido) return;
+
       respondido = true;
+      loginEmCurso = false;
+
       clearTimeout(timeoutId);
+
       registarInicioSessao();
+
       var user = credencial.user;
+
       onSuccess({
-        sucesso:         true,
+        sucesso: true,
         nomeFuncionario: user.displayName || user.email,
-        email:           user.email,
-        uid:             user.uid
+        email: user.email,
+        uid: user.uid
       });
     })
     .catch(function(err) {
       if (respondido) return;
+
       respondido = true;
+      loginEmCurso = false;
+
       clearTimeout(timeoutId);
-      onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
+
+      onFailure({
+        message: msgs[err.code] || ('Erro (' + err.code + '): ' + err.message)
+      });
     });
 }
 
@@ -200,10 +221,17 @@ function apiLogout() {
 
 function apiObservarAuth(callback) {
   return firebaseAuth.onAuthStateChanged(function(user) {
+
+    // Ignorar mudanças intermédias durante login
+    if (loginEmCurso) {
+      return;
+    }
+
     if (user && !sessaoValida()) {
       apiLogout();
       return;
     }
+
     callback(user);
   });
 }
