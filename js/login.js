@@ -15,20 +15,11 @@ function inicializarLogin(opcoes) {
 
   firebaseAuth.onAuthStateChanged(function(user) {
 
-  // BLOQUEIO de eventos duplicados
-  if (authProcessing) return;
-  authProcessing = true;
-
-  setTimeout(function() {
-    authProcessing = false;
-  }, 50);
-
   if (user) {
 
     if (!sessaoValida()) {
       limparSessao();
       firebaseAuth.signOut();
-      _mostrarEcraLogin();
       return;
     }
 
@@ -42,13 +33,14 @@ function inicializarLogin(opcoes) {
         }
 
         if (!opcoes.verificarAcesso(perfil)) {
-          _mostrarErroLogin(opcoes.mensagemSemAcesso || 'Acesso negado.');
+          _mostrarErroLogin('Acesso negado.');
           _fazerSignOut();
           return;
         }
 
         _esconderEcraLogin();
         opcoes.onSucesso(perfil);
+
       })
       .catch(function() {
         _mostrarEcraLogin();
@@ -57,7 +49,7 @@ function inicializarLogin(opcoes) {
   } else {
     _mostrarEcraLogin();
   }
-    
+
 });
   
 }
