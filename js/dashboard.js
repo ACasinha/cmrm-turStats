@@ -83,123 +83,34 @@ var ESTRUTURA_PADRAO = [
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  var unsubInicial = firebaseAuth.onAuthStateChanged(function(user) {
-    unsubInicial();
-
-    if (user && sessaoValida()) {
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual = perfil;
-          _isAdmin        = perfil.role === 'administrador';
-          _isVisualizador = perfil.role === 'administrador'
-                         || perfil.role === 'visualizador'
-                         || perfil.acessoDashboard === true;
-
-          if (!_isVisualizador) {
-            // Sem permissão
-            document.getElementById('loginOverlay').classList.remove('hidden');
-            document.getElementById('loginErro').textContent = 'Acesso negado. Não tem permissão para aceder ao dashboard.';
-            document.getElementById('loginErro').classList.add('visivel');
-            apiLogout();
-            return;
-          }
-
-          activarDashboard(perfil);
-        })
-        .catch(function() {
-          mostrarEcraLogin();
-        });
-    } else {
-      if (user) apiLogout();
-      mostrarEcraLogin();
+  inicializarLogin({
+    idWrap:            'dashboardWrap',
+    verificarAcesso:   function(perfil) {
+      return perfil.role === 'administrador'
+          || perfil.role === 'visualizador'
+          || perfil.acessoDashboard === true;
+    },
+    mensagemSemAcesso: 'Acesso negado. Não tem permissão para aceder ao dashboard.',
+    onSucesso:         function(perfil) {
+      _perfilAtual    = perfil;
+      _isAdmin        = perfil.role === 'administrador';
+      _isVisualizador = true;
+      activarDashboard(perfil);
+    },
+    onSessaoTerminada: function() {
+      _appInicializada = false;
     }
-
-    // Observar logout externo
-    firebaseAuth.onAuthStateChanged(function(u) {
-      if (!u && _appInicializada) {
-        _appInicializada = false;
-        mostrarEcraLogin();
-      }
-    });
   });
 });
 
 // ============================================================
-// LOGIN
+// LOGOUT
 // ============================================================
 
-function fazerLogin() {
-  var email = document.getElementById('loginUser').value.trim();
-  var pass  = document.getElementById('loginPass').value;
-  var erro  = document.getElementById('loginErro');
-  var btn   = document.getElementById('btnLogin');
-
-  if (!email || !pass) {
-    erro.textContent = 'Por favor preencha todos os campos.';
-    erro.classList.add('visivel');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'A autenticar...';
-  erro.classList.remove('visivel');
-
-  apiAutenticar(email, pass,
-    function onSuccess() {
-      btn.disabled = false;
-      btn.textContent = 'Entrar →';
-
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual    = perfil;
-          _isAdmin        = perfil.role === 'administrador';
-          _isVisualizador = perfil.role === 'administrador'
-                         || perfil.role === 'visualizador'
-                         || perfil.acessoDashboard === true;
-
-          if (!perfil.ativo) {
-            erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-          if (!_isVisualizador) {
-            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao dashboard.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-
-          activarDashboard(perfil);
-        })
-        .catch(function(err) {
-          erro.textContent = 'Erro ao verificar permissões: ' + err.message;
-          erro.classList.add('visivel');
-          apiLogout();
-        });
-    },
-    function onFailure(err) {
-      btn.disabled = false;
-      btn.textContent = 'Entrar →';
-      erro.textContent = err.message;
-      erro.classList.add('visivel');
-      document.getElementById('loginPass').value = '';
-    }
-  );
-}
-
 function fazerLogout() {
-  if (!confirm('Deseja terminar a sessão?')) return;
-  _appInicializada = false;
-  limparCacheUtilizador();
-  apiLogout().then(function() { mostrarEcraLogin(); });
+  fazerLogout(false); // do login.js
 }
 
-function mostrarEcraLogin() {
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  document.getElementById('dashboardWrap').style.display = 'none';
-  document.getElementById('loginPass').value = '';
-}
 
 // ============================================================
 // ACTIVAR DASHBOARD
