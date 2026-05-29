@@ -13,6 +13,7 @@ var _isAdmin              = false;
 var _isUtilizador         = false;
 var appInicializada       = false;
 var dadosAlterados        = false;
+var _erroLoginPendente = '';
 
 window.addEventListener('beforeunload', function(e) {
   if (dadosAlterados) {
@@ -96,17 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Função auxiliar para mostrar erro no login sem apagar as credenciais
 function _mostrarErroLogin(mensagem) {
-  var erro = document.getElementById('loginErro');
-  if (erro) {
-    erro.textContent = mensagem;
-    erro.classList.add('visivel');
-  }
-  // Repor o botão de login
+  // Guardar a mensagem — será restaurada após o signOut disparar onAuthStateChanged
+  _erroLoginPendente = mensagem;
   var btn = document.getElementById('btnLogin');
-  if (btn) {
-    btn.disabled    = false;
-    btn.textContent = 'Entrar →';
-  }
+  if (btn) { btn.disabled = false; btn.textContent = 'Entrar →'; }
 }
 
 // ============================================================
@@ -179,22 +173,23 @@ function activarApp(perfil) {
 
 function mostrarEcraLogin() {
   document.getElementById('loginOverlay').classList.remove('hidden');
-  document.getElementById('loginErro').classList.remove('visivel');
+  // dashboard.js usa dashboardWrap, editor.js usa editorWrap
+  document.getElementById('dashboardWrap').style.display = 'none'; // adaptar por ficheiro
   document.getElementById('loginPass').value = '';
 
-  var btnAdmin = document.getElementById('btnAdmin');
-  if (btnAdmin) btnAdmin.style.display = 'none';
+  var erro = document.getElementById('loginErro');
+  if (erro) {
+    if (_erroLoginPendente) {
+      erro.textContent = _erroLoginPendente;
+      erro.classList.add('visivel');
+      _erroLoginPendente = '';
+    } else {
+      erro.classList.remove('visivel');
+    }
+  }
 
-  var btnDashboard = document.getElementById('btnDashboard');
-  if (btnDashboard) btnDashboard.style.display = 'none';
-
-  var btnEditor = document.getElementById('btnEditor');
-  if (btnEditor) btnEditor.style.display = 'none';
-
-  limparFormularioParcial();
-  mostrarBanner('', '');
-  ultimoLocalVerificado = '';
-  ultimaDataVerificada  = '';
+  var btn = document.getElementById('btnLogin');
+  if (btn) { btn.disabled = false; btn.textContent = 'Entrar →'; }
 }
 
 // ============================================================
