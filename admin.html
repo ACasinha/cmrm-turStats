@@ -268,6 +268,7 @@
 <script src="js/api.js"></script>
 <script src="js/sw-update.js"></script>
 <script src="js/users.js"></script>
+<script src="js/login.js"></script>
 
 <script>
 'use strict';
@@ -306,73 +307,14 @@ function atualizarCheckboxesEditar() {
 }
 
 // ============================================================
-// LOGIN
+// LOGOUT e BOTÃO VOLTAR PARA A APP
 // ============================================================
 
-function fazerLogin() {
-  var email = document.getElementById('loginUser').value.trim();
-  var pass  = document.getElementById('loginPass').value;
-  var erro  = document.getElementById('loginErro');
-  var btn   = document.getElementById('btnLogin');
-
-  if (!email || !pass) {
-    erro.textContent = 'Por favor preencha todos os campos.';
-    erro.classList.add('visivel');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'A autenticar...';
-  erro.classList.remove('visivel');
-
-  apiAutenticar(email, pass,
-    function onSuccess() {
-      verificarSeAdmin()
-        .then(function(isAdmin) {
-          if (!isAdmin) {
-            btn.disabled = false;
-            btn.textContent = 'Entrar →';
-            erro.textContent = 'Acesso negado. Apenas administradores podem aceder a esta área.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-          document.getElementById('loginOverlay').classList.add('hidden');
-          document.getElementById('adminContainer').style.display = 'block';
-          mostrarNomeUtilizador();
-          carregarUtilizadores();
-        })
-        .catch(function(err) {
-          btn.disabled = false;
-          btn.textContent = 'Entrar →';
-          erro.textContent = 'Erro ao verificar permissões: ' + err.message;
-          erro.classList.add('visivel');
-          apiLogout();
-        });
-    },
-    function onFailure(err) {
-      btn.disabled = false;
-      btn.textContent = 'Entrar →';
-      erro.textContent = err.message;
-      erro.classList.add('visivel');
-      document.getElementById('loginPass').value = '';
-      document.getElementById('loginPass').focus();
-    }
-  );
-}
-
 function fazerLogout() {
-  if (!confirm('Deseja terminar a sessão?')) return;
-  apiLogout().then(function() {
-    document.getElementById('loginOverlay').classList.remove('hidden');
-    document.getElementById('adminContainer').style.display = 'none';
-    document.getElementById('loginPass').value = '';
-  });
+  fazerLogout(false); // do login.js
 }
 
 function voltarParaApp()   { window.location.href = 'index.html'; }
-function irParaDashboard() { window.location.href = 'dashboard.html'; }
-function irParaEditor()    { window.location.href = 'editor.html'; }
 
 // ============================================================
 // NOME NO HEADER
@@ -643,23 +585,19 @@ function mostrarToast(msg, tipo) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  firebaseAuth.onAuthStateChanged(function(user) {
-    if (user && sessaoValida()) {
-      verificarSeAdmin()
-        .then(function(isAdmin) {
-          if (isAdmin) {
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('adminContainer').style.display = 'block';
-            mostrarNomeUtilizador();
-            carregarUtilizadores();
-          } else {
-            apiLogout();
-          }
-        })
-        .catch(function() { apiLogout(); });
+  inicializarLogin({
+    idWrap:            'adminContainer',
+    verificarAcesso:   function(perfil) {
+      return perfil.role === 'administrador';
+    },
+    mensagemSemAcesso: 'Acesso negado. Apenas administradores podem aceder a esta área.',
+    onSucesso:         function(perfil) {
+      mostrarNomeUtilizador();
+      carregarUtilizadores();
     }
   });
 });
+  
 </script>
 
 </body>
