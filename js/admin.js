@@ -326,6 +326,8 @@ document.addEventListener('DOMContentLoaded', function() {
     onSucesso:         function(perfil) {
       mostrarNomeUtilizador();
       carregarUtilizadores();
+
+      if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
     }
   });
 });
