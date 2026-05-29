@@ -43,7 +43,7 @@ function atualizarCheckboxesEditar() {
 // ============================================================
 
 function fazerLogout() {
-  fazerLogout(false); // do login.js
+  logout(false); // do login.js
 }
 
 function voltarParaApp()   { window.location.href = 'index.html'; }
