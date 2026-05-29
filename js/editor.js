@@ -32,131 +32,49 @@ function _temAcessoEditor(perfil) {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Preencher o mês actual no input
   var hoje   = new Date();
   var mesStr = hoje.getFullYear() + '-' +
                String(hoje.getMonth() + 1).padStart(2, '0');
   var inputMes = document.getElementById('inputMes');
   if (inputMes) inputMes.value = mesStr;
 
-  var unsubInicial = firebaseAuth.onAuthStateChanged(function(user) {
-    unsubInicial();
-
-    if (user && sessaoValida()) {
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual = perfil;
-          _isAdmin     = perfil.role === 'administrador';
-          _isEditor    = _temAcessoEditor(perfil);
-
-          if (!_isEditor) {
-            var erro = document.getElementById('loginErro');
-            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao editor mensal.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-          activarEditor(perfil);
-        })
-        .catch(function() { mostrarEcraLogin(); });
-    } else {
-      if (user) apiLogout();
-      mostrarEcraLogin();
+  inicializarLogin({
+    idWrap:            'editorWrap',
+    verificarAcesso:   function(perfil) {
+      return _temAcessoEditor(perfil);
+    },
+    mensagemSemAcesso: 'Acesso negado. Não tem permissão para aceder ao editor mensal.',
+    onSucesso:         function(perfil) {
+      _perfilAtual = perfil;
+      _isAdmin     = perfil.role === 'administrador';
+      _isEditor    = true;
+      activarEditor(perfil);
+    },
+    onSessaoTerminada: function() {
+      _appInicializada = false;
     }
-
-    firebaseAuth.onAuthStateChanged(function(u) {
-      if (!u && _appInicializada) {
-        _appInicializada = false;
-        mostrarEcraLogin();
-      }
-    });
   });
 });
 
-// ============================================================
-// LOGIN
-// ============================================================
-
-function fazerLogin() {
-  var email = document.getElementById('loginUser').value.trim();
-  var pass  = document.getElementById('loginPass').value;
-  var erro  = document.getElementById('loginErro');
-  var btn   = document.getElementById('btnLogin');
-
-  if (!email || !pass) {
-    erro.textContent = 'Por favor preencha todos os campos.';
-    erro.classList.add('visivel');
-    return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = 'A autenticar...';
-  erro.classList.remove('visivel');
-
-  apiAutenticar(email, pass,
-    function onSuccess() {
-      btn.disabled    = false;
-      btn.textContent = 'Entrar →';
-
-      obterPerfilUtilizador()
-        .then(function(perfil) {
-          _perfilAtual = perfil;
-          _isAdmin     = perfil.role === 'administrador';
-          _isEditor    = _temAcessoEditor(perfil);
-
-          if (!perfil.ativo) {
-            erro.textContent = 'Esta conta foi desativada. Contacte o administrador.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-          if (!_isEditor) {
-            erro.textContent = 'Acesso negado. Não tem permissão para aceder ao editor mensal.';
-            erro.classList.add('visivel');
-            apiLogout();
-            return;
-          }
-          activarEditor(perfil);
-        })
-        .catch(function(err) {
-          erro.textContent = 'Erro ao verificar permissões: ' + err.message;
-          erro.classList.add('visivel');
-          apiLogout();
-        });
-    },
-    function onFailure(err) {
-      btn.disabled    = false;
-      btn.textContent = 'Entrar →';
-      erro.textContent = err.message;
-      erro.classList.add('visivel');
-      document.getElementById('loginPass').value = '';
-    }
-  );
-}
-
 function fazerLogout() {
-  if (_totalAlteracoes > 0) {
-    if (!confirm('Tem alterações por guardar. Tem a certeza que quer sair?')) return;
-  }
-  _appInicializada = false;
-  limparCacheUtilizador();
-  apiLogout().then(function() { mostrarEcraLogin(); });
+  fazerLogout(_totalAlteracoes > 0);
 }
 
-function mostrarEcraLogin() {
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  document.getElementById('editorWrap').style.display = 'none';
-  document.getElementById('loginPass').value = '';
-}
 
 // ============================================================
 // ACTIVAR
 // ============================================================
 
 function activarEditor(perfil) {
-  document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('editorWrap').style.display = '';
   document.getElementById('headerNomeFuncionario').textContent =
     perfil.nome || perfil.email || '—';
+
+  var badgeModo = document.getElementById('badgeModo');
+  if (badgeModo) {
+    badgeModo.className   = 'modo-badge ' + (_isAdmin ? 'admin' : 'editor');
+    badgeModo.textContent = _isAdmin ? '🛡️ Administrador' : '✏️ Editor';
+  }
 
   _appInicializada = true;
 }
