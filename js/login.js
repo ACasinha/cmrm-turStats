@@ -12,44 +12,43 @@ function inicializarLogin(opcoes) {
   _opcoesLogin = opcoes;
 
   firebaseAuth.onAuthStateChanged(function(user) {
-    if (user) {
-      if (!sessaoValida()) {
-      limparSessao();
-      firebaseAuth.signOut();
-      _mostrarEcraLogin();
-      return;
+
+  if (!user) {
+    _mostrarEcraLogin();
+    return;
+  }
+
+  // sessão expirada → logout controlado
+  if (!sessaoValida()) {
+    limparSessao();
+    firebaseAuth.signOut();
+    _mostrarEcraLogin();
+    return;
+  }
+
+  obterPerfilUtilizador()
+    .then(function(perfil) {
+
+      if (!perfil.ativo) {
+        _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
+        _fazerSignOut();
+        return;
       }
-      
-      obterPerfilUtilizador()
-        .then(function(perfil) {
 
-          if (!perfil.ativo) {
-            _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
-            _fazerSignOut();
-            return;
-          }
-
-          if (!opcoes.verificarAcesso(perfil)) {
-            _mostrarErroLogin(opcoes.mensagemSemAcesso || 'Acesso negado.');
-            _fazerSignOut();
-            return;
-          }
-
-          _esconderEcraLogin();
-          opcoes.onSucesso(perfil);
-        })
-        .catch(function() {
-          _mostrarEcraLogin();
-        });
-
-    } else {
-      if (user) {
-        limparSessao();
-        firebaseAuth.signOut();
+      if (!opcoes.verificarAcesso(perfil)) {
+        _mostrarErroLogin(opcoes.mensagemSemAcesso || 'Acesso negado.');
+        _fazerSignOut();
+        return;
       }
+
+      _esconderEcraLogin();
+      opcoes.onSucesso(perfil);
+    })
+    .catch(function() {
       _mostrarEcraLogin();
-    }
-  });
+    });
+
+});
 }
 
 function fazerLogin() {
