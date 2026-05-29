@@ -7,28 +7,12 @@
 
 var _erroLoginPendente = '';
 var _opcoesLogin       = null;
-var authInicializado = false;
 
 function inicializarLogin(opcoes) {
   _opcoesLogin = opcoes;
 
   firebaseAuth.onAuthStateChanged(function(user) {
-
-    if (!authInicializado) {
-    authInicializado = true;
-    if (!user) {
-      _mostrarEcraLogin();
-    }
-    return;
-    }
-    
-    if (user) {
-      if (!sessaoValida()) {
-            limparSessao();
-            firebaseAuth.signOut();
-            _mostrarEcraLogin();
-            return;
-          }
+    if (user && sessaoValida()) {
       obterPerfilUtilizador()
         .then(function(perfil) {
 
