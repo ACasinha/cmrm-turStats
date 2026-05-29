@@ -55,7 +55,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fazerLogout() {
-  logout(false);
+  if (!confirm('Deseja terminar a sessão?')) return;
+  appInicializada = false;
+  limparCacheUtilizador();
+  apiLogout().then(function() { mostrarEcraLogin(); });
 }
 
 
