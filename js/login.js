@@ -8,18 +8,6 @@
 var _erroLoginPendente = '';
 var _opcoesLogin       = null;
 
-// ============================================================
-// INICIALIZAR — chamado por cada página com as suas opções
-//
-// opcoes = {
-//   idWrap:             'dashboardWrap',   // id do div principal
-//   verificarAcesso:    function(perfil),  // devolve true/false
-//   mensagemSemAcesso:  'Acesso negado.',
-//   onSucesso:          function(perfil),  // activar a página
-//   onSessaoTerminada:  function()         // opcional — limpeza extra
-// }
-// ============================================================
-
 function inicializarLogin(opcoes) {
   _opcoesLogin = opcoes;
 
@@ -40,7 +28,6 @@ function inicializarLogin(opcoes) {
             return;
           }
 
-          // Acesso válido — activar a página
           _esconderEcraLogin();
           opcoes.onSucesso(perfil);
         })
@@ -57,10 +44,6 @@ function inicializarLogin(opcoes) {
     }
   });
 }
-
-// ============================================================
-// FAZER LOGIN — chamado pelo botão de cada página
-// ============================================================
 
 function fazerLogin() {
   var email = document.getElementById('loginUser').value.trim();
@@ -83,8 +66,8 @@ function fazerLogin() {
       // onAuthStateChanged trata de tudo
     },
     function onFailure(err) {
-      btn.disabled    = false;
-      btn.textContent = 'Entrar →';
+      btn.disabled     = false;
+      btn.textContent  = 'Entrar →';
       erro.textContent = err.message;
       erro.classList.add('visivel');
       document.getElementById('loginPass').value = '';
@@ -92,10 +75,6 @@ function fazerLogin() {
     }
   );
 }
-
-// ============================================================
-// FAZER LOGOUT — chamado pelo botão de cada página
-// ============================================================
 
 function logout(temAlteracoes) {
   if (temAlteracoes) {
@@ -114,14 +93,9 @@ function logout(temAlteracoes) {
   });
 }
 
-// ============================================================
-// FUNÇÕES INTERNAS
-// ============================================================
-
 function _fazerSignOut() {
   if (typeof limparCacheUtilizador === 'function') limparCacheUtilizador();
   firebaseAuth.signOut();
-  // _mostrarEcraLogin() será chamado pelo onAuthStateChanged quando user = null
 }
 
 function _esconderEcraLogin() {
@@ -150,7 +124,7 @@ function _mostrarEcraLogin() {
   if (erro) {
     erro.classList.remove('visivel');
     if (_erroLoginPendente) {
-      erro.textContent = _erroLoginPendente;
+      erro.textContent   = _erroLoginPendente;
       erro.classList.add('visivel');
       _erroLoginPendente = '';
     }
@@ -161,8 +135,6 @@ function _mostrarEcraLogin() {
 }
 
 function _mostrarErroLogin(mensagem) {
-  // Guardar a mensagem — será restaurada quando onAuthStateChanged
-  // disparar com user = null e chamar _mostrarEcraLogin()
   _erroLoginPendente = mensagem;
   var btn = document.getElementById('btnLogin');
   if (btn) { btn.disabled = false; btn.textContent = 'Entrar →'; }
