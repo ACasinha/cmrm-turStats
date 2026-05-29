@@ -1,20 +1,35 @@
 // ============================================================
-// app.js — Lógica principal da aplicação
+// app.js — Lógica da página principal (index.html)
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
+//
+// Responsabilidade:
+//   • Arrancar a aplicação após login válido (activarApp)
+//   • Verificar/carregar dados do dia (verificarDados)
+//   • Guardar registo (guardarDados)
+//   • Bloquear/desbloquear formulário
+//
+// NÃO contém: Firebase init, JWT, sessão (auth.js),
+// UI de login (login.js), construção de tabelas (ui.js).
 // ============================================================
 
 'use strict';
+
+// ── Estado da página ─────────────────────────────────────────
 
 var verificacaoTimer      = null;
 var ultimoLocalVerificado = '';
 var ultimaDataVerificada  = '';
 var _perfilAtual          = null;
 var _isAdmin              = false;
-var _isUtilizador         = false;
 var appInicializada       = false;
 var dadosAlterados        = false;
 
-window.addEventListener('beforeunload', function(e) {
+// Tri-estado: null = desconhecido, true = pode editar, false = bloqueado
+var edicaoPermitida = null;
+
+// ── Aviso de dados por guardar ───────────────────────────────
+
+window.addEventListener('beforeunload', function (e) {
   if (dadosAlterados) {
     e.preventDefault();
     e.returnValue = 'Tem dados por guardar. Tem a certeza que quer sair?';
@@ -22,42 +37,31 @@ window.addEventListener('beforeunload', function(e) {
   }
 });
 
-var edicaoPermitida = null;
-
 // ============================================================
-// ARRANQUE
+// ARRANQUE — delegado em login.js + auth.js
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   inicializarLogin({
-    idWrap:            null, // app.js não tem um wrap único — o login overlay já cobre tudo
-    verificarAcesso:   function(perfil) {
-      return perfil.role === 'administrador'
-          || perfil.role === 'utilizador';
+    idWrap:            null,     // index.html não tem um wrap único
+    verificarAcesso:   function (perfil) {
+      return perfil.role === 'administrador' || perfil.role === 'utilizador';
     },
     mensagemSemAcesso: 'Esta conta não tem acesso à aplicação. Contacte o administrador.',
-    onSucesso:         function(perfil) {
-      _perfilAtual  = perfil;
-      _isAdmin      = perfil.role === 'administrador';
-      _isUtilizador = true;
-
+    onSucesso:         function (perfil) {
+      _perfilAtual = perfil;
+      _isAdmin     = perfil.role === 'administrador';
       activarApp(perfil);
     },
-    onSessaoTerminada: function() {
-      appInicializada = false;
-      mostrarBanner('', '');
+    onSessaoTerminada: function () {
+      appInicializada       = false;
+      dadosAlterados        = false;
       ultimoLocalVerificado = '';
       ultimaDataVerificada  = '';
-
-      if (appInicializada) limparFormularioParcial();
+      mostrarBanner('', '');
     }
   });
 });
-
-function fazerLogout() {
-  fazerLogout(false);
-}
-
 
 // ============================================================
 // NAVEGAÇÃO
@@ -68,41 +72,45 @@ function irParaDashboard() { window.location.href = 'dashboard.html'; }
 function irParaEditor()    { window.location.href = 'editor.html'; }
 
 // ============================================================
-// ACTIVAR / MOSTRAR LOGIN
+// ACTIVAR APP — chamado por login.js após autenticação válida
 // ============================================================
 
 function activarApp(perfil) {
-  document.getElementById('headerNomeFuncionario').textContent =
-    perfil.nome || perfil.email || '—';
+  var elNome = document.getElementById('headerNomeFuncionario');
+  if (elNome) elNome.textContent = perfil.nome || perfil.email || '—';
+
   if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
+
   if (!appInicializada) {
-    inicializarApp();
+    _inicializarFormulario();
     appInicializada = true;
   }
 }
 
 // ============================================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO DO FORMULÁRIO
+// Chamado uma única vez após o primeiro login bem-sucedido.
 // ============================================================
 
-function inicializarApp() {
+function _inicializarFormulario() {
   document.getElementById('data').valueAsDate = new Date();
   construirTabelaPaises();
   construirTabelaOperadores(NUM_LINHAS_OP);
   construirTabelaSugestoes(NUM_LINHAS_SUG);
-  document.getElementById('observacoes').addEventListener('input', function() {
-    if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
-      this.value = '';
-      return;
-    }
+
+  // Observações
+  document.getElementById('observacoes').addEventListener('input', function () {
+    if (!verificarLocalEscolhido()) { this.value = ''; return; }
     dadosAlterados = true;
   });
-  document.querySelector('.container').addEventListener('input', function(e) {
+
+  // Inputs de operadores e sugestões (delegação de eventos)
+  document.querySelector('.container').addEventListener('input', function (e) {
     var alvo = e.target;
     if (alvo.classList.contains('op-nome') || alvo.classList.contains('sug-nac')) {
-      if (typeof verificarLocalEscolhido === 'function' && !verificarLocalEscolhido()) {
+      if (!verificarLocalEscolhido()) {
         alvo.value = '';
-      } else if (typeof sinalizarAlteracao === 'function') {
+      } else {
         sinalizarAlteracao();
       }
     }
@@ -110,13 +118,16 @@ function inicializarApp() {
 }
 
 // ============================================================
-// VERIFICAÇÃO AUTOMÁTICA
+// VERIFICAÇÃO AUTOMÁTICA — agendada ao mudar local ou data
 // ============================================================
 
 function agendarVerificacao() {
+  // Resetar estado para forçar nova verificação
   ultimoLocalVerificado = '';
   ultimaDataVerificada  = '';
+
   if (typeof construirTabelaPaises === 'function') construirTabelaPaises();
+
   clearTimeout(verificacaoTimer);
   verificacaoTimer = setTimeout(verificarDados, 600);
 }
@@ -134,26 +145,33 @@ function verificarLocalEscolhido() {
 function verificarDados() {
   var local = document.getElementById('local').value.trim();
   var data  = document.getElementById('data').value;
+
   if (!local || !data) return;
+
+  // Evitar chamadas duplicadas para o mesmo local+data
   if (local === ultimoLocalVerificado && data === ultimaDataVerificada) return;
 
   ultimoLocalVerificado = local;
   ultimaDataVerificada  = data;
-  edicaoPermitida = null;
+  edicaoPermitida       = null;
+
   bloquearFormulario(false);
   document.getElementById('btnGuardar').disabled = false;
   mostrarBanner('verificando', '⏳ A verificar dados existentes...');
 
-  var partes = data.split('-');
+  var partes        = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
-  apiVerificarDados(local, dataFormatada,
+  apiVerificarDados(
+    local,
+    dataFormatada,
     function onSuccess(resp) {
       if (!resp.sucesso) {
         mostrarBanner('', '');
         mostrarToast('Erro: ' + resp.mensagem, 'erro');
         return;
       }
+
       if (resp.existe) {
         carregarDados(resp);
 
@@ -162,6 +180,7 @@ function verificarDados() {
                         String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
                         String(hoje.getDate()).padStart(2, '0');
         var dataRegisto = document.getElementById('data').value;
+
         edicaoPermitida = (dataRegisto === hojeStr);
 
         if (edicaoPermitida) {
@@ -169,7 +188,10 @@ function verificarDados() {
           mostrarToast('✓ Dados carregados. Edição permitida.', 'info');
           document.getElementById('btnGuardar').disabled = false;
         } else {
-          mostrarBanner('bloqueado', '🔒 Dados de ' + dataRegisto + ' carregados. Não é possível editar registos de dias anteriores.');
+          mostrarBanner(
+            'bloqueado',
+            '🔒 Dados de ' + dataRegisto + ' carregados. Não é possível editar registos de dias anteriores.'
+          );
           mostrarToast('Edição bloqueada — registo de dia anterior.', 'erro');
           document.getElementById('btnGuardar').disabled = true;
           bloquearFormulario(true);
@@ -184,6 +206,7 @@ function verificarDados() {
       }
     },
     function onFailure(err) {
+      // Resetar para que a próxima interacção dispare nova verificação
       ultimoLocalVerificado = '';
       ultimaDataVerificada  = '';
       mostrarBanner('', '');
@@ -206,12 +229,12 @@ function guardarDados() {
   var observacoes = document.getElementById('observacoes').value;
 
   if (!local) {
-    mostrarToast('Por favor, indique o local/posto.', 'erro');
+    mostrarToast('Por favor indique o local/posto.', 'erro');
     document.getElementById('local').focus();
     return;
   }
   if (!data) {
-    mostrarToast('Por favor, selecione a data.', 'erro');
+    mostrarToast('Por favor selecione a data.', 'erro');
     return;
   }
   if (edicaoPermitida === false) {
@@ -219,8 +242,9 @@ function guardarDados() {
     return;
   }
 
+  // Recolher países com valor > 0
   var paises = {};
-  document.querySelectorAll('.pais-input').forEach(function(inp) {
+  document.querySelectorAll('.pais-input').forEach(function (inp) {
     var v = parseInt(inp.value, 10) || 0;
     if (v > 0) paises[inp.dataset.pais] = v;
   });
@@ -238,20 +262,27 @@ function guardarDados() {
   btn.textContent = '⏳ A guardar...';
   mostrarToast('A guardar...', 'info');
 
-  var partes = data.split('-');
+  var partes        = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
   apiGuardarRegisto(
-    { data: dataFormatada, local: local, paises: paises,
-      operadores: operadores, sugestoes: sugestoes, observacoes: observacoes },
+    {
+      data:        dataFormatada,
+      local:       local,
+      paises:      paises,
+      operadores:  operadores,
+      sugestoes:   sugestoes,
+      observacoes: observacoes
+    },
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
+
       if (resp.sucesso) {
         dadosAlterados = false;
         mostrarToast('✓ ' + resp.mensagem, 'sucesso');
         mostrarBanner('carregado', '✅ Registo guardado com sucesso.');
-        document.querySelectorAll('.pais-input').forEach(function(inp) {
+        document.querySelectorAll('.pais-input').forEach(function (inp) {
           if ((parseInt(inp.value, 10) || 0) > 0) inp.classList.add('input-carregado');
         });
       } else {
@@ -272,11 +303,21 @@ function guardarDados() {
 
 function bloquearFormulario(bloquear) {
   var d = bloquear;
-  document.querySelectorAll('.pais-input').forEach(function(i){ i.disabled = d; });
-  document.querySelectorAll('.btn-stepper').forEach(function(b){ b.disabled = d; });
-  document.querySelectorAll('.op-nome, .op-total').forEach(function(i){ i.disabled = d; });
-  document.querySelectorAll('.op-nac-select, .op-nac-num').forEach(function(i){ i.disabled = d; });
-  document.querySelectorAll('.btn-add-nac, .btn-rem-nac').forEach(function(b){ b.disabled = d; });
-  document.querySelectorAll('.sug-texto, .sug-nac').forEach(function(i){ i.disabled = d; });
-  document.getElementById('observacoes').disabled = d;
+  document.querySelectorAll('.pais-input').forEach(function (i)  { i.disabled = d; });
+  document.querySelectorAll('.btn-stepper').forEach(function (b)  { b.disabled = d; });
+  document.querySelectorAll('.op-nome, .op-total').forEach(function (i) { i.disabled = d; });
+  document.querySelectorAll('.op-nac-select, .op-nac-num').forEach(function (i) { i.disabled = d; });
+  document.querySelectorAll('.btn-add-nac, .btn-rem-nac').forEach(function (b) { b.disabled = d; });
+  document.querySelectorAll('.sug-texto, .sug-nac').forEach(function (i) { i.disabled = d; });
+  var obsEl = document.getElementById('observacoes');
+  if (obsEl) obsEl.disabled = d;
+}
+
+// ============================================================
+// LOGOUT — exposto ao HTML via botão
+// Delega em login.js que delega em auth.js.
+// ============================================================
+
+function fazerLogout() {
+  logout(dadosAlterados);
 }
