@@ -41,24 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
       _isAdmin      = perfil.role === 'administrador';
       _isUtilizador = true;
 
-      // Botão admin
-      if (perfil.role === 'administrador') {
-        var btnAdmin = document.getElementById('btnAdmin');
-        if (btnAdmin) btnAdmin.style.display = '';
-      }
-
-      // Botão dashboard
-      if (perfil.role === 'administrador' || perfil.acessoDashboard === true) {
-        var btnDash = document.getElementById('btnDashboard');
-        if (btnDash) btnDash.style.display = '';
-      }
-
-      // Botão editor
-      if (perfil.role === 'administrador' || perfil.acessoEditor === true) {
-        var btnEditor = document.getElementById('btnEditor');
-        if (btnEditor) btnEditor.style.display = '';
-      }
-
       activarApp(perfil);
     },
     onSessaoTerminada: function() {
@@ -66,13 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
       mostrarBanner('', '');
       ultimoLocalVerificado = '';
       ultimaDataVerificada  = '';
-
-      var btnAdmin = document.getElementById('btnAdmin');
-      if (btnAdmin) btnAdmin.style.display = 'none';
-      var btnDashboard = document.getElementById('btnDashboard');
-      if (btnDashboard) btnDashboard.style.display = 'none';
-      var btnEditor = document.getElementById('btnEditor');
-      if (btnEditor) btnEditor.style.display = 'none';
 
       if (appInicializada) limparFormularioParcial();
     }
