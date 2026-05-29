@@ -171,16 +171,10 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
     'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
   };
 
-  firebaseAuth.signOut()
-    .catch(function() {
-      // ignorar
-    })
-    .then(function() {
-      return _persistenciaPronte;
-    })
-    .then(function() {
-      return firebaseAuth.signInWithEmailAndPassword(email, password);
-    })
+  _persistenciaPronte
+  .then(function() {
+    return firebaseAuth.signInWithEmailAndPassword(email, password);
+  })
     .then(function(credencial) {
       if (respondido) return;
 
@@ -220,12 +214,8 @@ function apiLogout() {
 }
 
 function apiObservarAuth(callback) {
-  return firebaseAuth.onAuthStateChanged(function(user) {
 
-    // Ignorar mudanças intermédias durante login
-    if (loginEmCurso) {
-      return;
-    }
+  return firebaseAuth.onAuthStateChanged(function(user) {
 
     if (user && !sessaoValida()) {
       apiLogout();
