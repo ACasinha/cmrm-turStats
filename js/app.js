@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-function fazerLogout() {
+function logout() {
   logout(false);
 }
 
