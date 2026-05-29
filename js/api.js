@@ -27,6 +27,8 @@ var SESSAO_MAX_MS      = 10 * 60 * 60 * 1000;  // 10 horas
 var REQUEST_TIMEOUT_MS = 20000;
 var CHAVE_LOGIN_TS     = 'rmz_login_ts';
 
+var loginEmCurso = false;
+
 // ============================================================
 // INICIALIZAÇÃO DO FIREBASE
 // ============================================================
@@ -86,9 +88,6 @@ function obterIdToken() {
 
 // ============================================================
 // FETCH PARA A CLOUD FUNCTION
-//
-// POST directo sem redirects — token seguro no body.
-// A Cloud Function responde com CORS correctamente configurado.
 // ============================================================
 
 function chamarAPI(action, payload) {
@@ -136,7 +135,6 @@ function chamarAPI(action, payload) {
     });
 }
 
-
 // ============================================================
 // AUTENTICAÇÃO
 // ============================================================
@@ -144,17 +142,10 @@ function chamarAPI(action, payload) {
 function apiAutenticar(email, password, onSuccess, onFailure) {
   var respondido = false;
 
-  loginEmCurso = true;
-
   var timeoutId = setTimeout(function() {
     if (respondido) return;
-
     respondido = true;
-    loginEmCurso = false;
-
-    onFailure({
-      message: 'Sem resposta do servidor de autenticação. Verifique a ligação.'
-    });
+    onFailure({ message: 'Sem resposta do servidor de autenticação. Verifique a ligação.' });
   }, 15000);
 
   var msgs = {
@@ -169,40 +160,30 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
     'auth/unauthorized-domain':    'Domínio não autorizado — adicione em Firebase Console → Authentication → Authorized domains.'
   };
 
-  _persistenciaPronte
-  .then(function() {
-    return firebaseAuth.signInWithEmailAndPassword(email, password);
-  })
+  firebaseAuth.signOut()
+    .catch(function() { /* já desautenticado — ignorar */ })
+    .then(function() { return _persistenciaPronte; })
+    .then(function() {
+      return firebaseAuth.signInWithEmailAndPassword(email, password);
+    })
     .then(function(credencial) {
       if (respondido) return;
-
       respondido = true;
-      loginEmCurso = false;
-
       clearTimeout(timeoutId);
-
       registarInicioSessao();
-
       var user = credencial.user;
-
       onSuccess({
-        sucesso: true,
+        sucesso:         true,
         nomeFuncionario: user.displayName || user.email,
-        email: user.email,
-        uid: user.uid
+        email:           user.email,
+        uid:             user.uid
       });
     })
     .catch(function(err) {
       if (respondido) return;
-
       respondido = true;
-      loginEmCurso = false;
-
       clearTimeout(timeoutId);
-
-      onFailure({
-        message: msgs[err.code] || ('Erro (' + err.code + '): ' + err.message)
-      });
+      onFailure({ message: msgs[err.code] || 'Erro (' + err.code + '): ' + err.message });
     });
 }
 
@@ -212,14 +193,11 @@ function apiLogout() {
 }
 
 function apiObservarAuth(callback) {
-
   return firebaseAuth.onAuthStateChanged(function(user) {
-
     if (user && !sessaoValida()) {
       apiLogout();
       return;
     }
-
     callback(user);
   });
 }
