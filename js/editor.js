@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fazerLogout() {
-  fazerLogout(_totalAlteracoes > 0);
+  logout(_totalAlteracoes > 0);
 }
 
 
