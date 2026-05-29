@@ -127,6 +127,8 @@ function activarDashboard(perfil) {
     document.getElementById('adminBar').classList.add('visivel');
   }
 
+  if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
+
   _appInicializada = true;
   carregarEstrutura();
 }
