@@ -70,10 +70,6 @@
       return item.visible(perfil);
     });
 
-    // Só mostra o menu se houver mais do que 1 item visível
-    // (a página actual já está implícita)
-    if (itemsVisiveis.length < 2) return;
-
     // Botão hamburger — injectado no header-right
     var headerRight = document.querySelector('.header-right');
     if (!headerRight) return;
