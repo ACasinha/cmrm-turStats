@@ -99,6 +99,7 @@ function irParaEditor()    { window.location.href = 'editor.html'; }
 function activarApp(perfil) {
   document.getElementById('headerNomeFuncionario').textContent =
     perfil.nome || perfil.email || '—';
+  if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
   if (!appInicializada) {
     inicializarApp();
     appInicializada = true;
