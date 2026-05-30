@@ -842,36 +842,15 @@ input:-webkit-autofill:focus {
 }
 
 /* ============================================================
-   TABELA DESKTOP — linha secundária (email + último login)
+   ÚLTIMO LOGIN — desktop (dentro da célula Estado)
 ============================================================ */
-.user-row-secundaria td {
-  padding-top: 0 !important;
-  padding-bottom: 10px !important;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-}
-
-/* Remover borda inferior da linha principal quando seguida
-   da linha secundária */
-.users-table tbody tr:not(.user-row-secundaria) td {
-  border-bottom: none;
-}
-
-.user-email-txt {
+.ultimo-login-inline {
+  display: block;
   font-size: var(--text-xs);
   color: var(--cinza);
-  margin-right: 16px;
-}
-
-.user-ultimo-login {
-  font-size: var(--text-xs);
-  color: var(--cinza);
-  opacity: 0.8;
-}
-
-/* Hover consistente entre as duas linhas do mesmo utilizador */
-.users-table tbody tr.user-row-secundaria:hover,
-.users-table tbody tr:not(.user-row-secundaria):hover + .user-row-secundaria {
-  background: rgba(245,235,224,0.5);
+  opacity: 0.75;
+  margin-top: 4px;
+  font-weight: 400;
 }
 
 /* ============================================================
@@ -888,12 +867,15 @@ input:-webkit-autofill:focus {
   gap: 5px;
 }
 
-/* Mostrar bloco mobile, ocultar em desktop */
 @media (min-width: 701px) {
   .user-card-ultimo-login { display: none !important; }
+  /* Ocultar o último login do badgeEstado nos cartões mobile
+     (já aparece no user-card-ultimo-login) */
+  .user-card-badges .ultimo-login-inline { display: none !important; }
 }
 
 @media (max-width: 700px) {
-  /* Ocultar linha secundária em mobile — info já está no cartão */
-  .user-row-secundaria { display: none !important; }
+  /* No cartão mobile o último login está no bloco dedicado,
+     não dentro dos badges */
+  .estado-pill .ultimo-login-inline { display: none !important; }
 }
