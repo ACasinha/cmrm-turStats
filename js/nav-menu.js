@@ -2,6 +2,7 @@
 // nav-menu.js — Menu de navegação contextual (header)
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 //
+// Partilhado por index.html, admin.html, dashboard.html, editor.html
 // Renderiza os itens de menu consoante o perfil do utilizador.
 // ============================================================
 
@@ -70,10 +71,16 @@
       return item.visible(perfil);
     });
 
+    // Destruir menu anterior se existir (re-login com perfil diferente)
+    var btnAntigo    = document.getElementById('navMenuBtn');
+    var painelAntigo = document.getElementById('navMenuPainel');
+    if (btnAntigo)    btnAntigo.parentNode.removeChild(btnAntigo);
+    if (painelAntigo) painelAntigo.parentNode.removeChild(painelAntigo);
+    _menuAberto = false;
+
     // Botão hamburger — injectado no header-right
     var headerRight = document.querySelector('.header-right');
     if (!headerRight) return;
-    if (document.getElementById('navMenuBtn')) return; // já existe
 
     var btn = document.createElement('button');
     btn.id        = 'navMenuBtn';
