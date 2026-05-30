@@ -124,8 +124,8 @@ function carregarUtilizadores() {
             '<span class="user-card-nome">' + nome + '</span>' +
             '<span class="user-card-badges">' + badgeRole + badgeEstado + '</span>' +
           '</div>' +
-          '<div class="user-card-email">' + email + '</div>' +
-          '<div class="user-card-ultimo-login"> ' + ultimoLogin + '</div>' +
+          '<div class="user-card-email">✉ ' + email + '</div>' +
+          '<div class="user-card-ultimo-login">🕐 ' + ultimoLogin + '</div>' +
           '<div class="user-card-actions">' + btnEditar + btnToggle + '</div>' +
 
           // ── Tabela desktop — linha 1: Nome, Role, Estado, Ações ──
