@@ -75,6 +75,7 @@ function formatarDataHora(ts) {
          d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 }
 
+
 function carregarUtilizadores() {
   var loading = document.getElementById('loadingUsers');
   var tbody   = document.getElementById('usersTableBody');
@@ -106,9 +107,8 @@ function carregarUtilizadores() {
           '<span class="estado-pill">' +
             '<span class="badge-status ' + (user.ativo ? 'ativo' : 'inativo') + '"></span>' +
             (user.ativo ? 'Ativo' : 'Inativo') +
-          '</span>';
-
-        var ultimoLogin = formatarDataHora(user.ultimoLoginEm);
+          '</span>' +
+          '<span class="ultimo-login-inline">Último Login: ' + formatarDataHora(user.ultimoLoginEm) + '</span>';
 
         var btnEditar =
           '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + uid + '\')">' +
@@ -124,31 +124,18 @@ function carregarUtilizadores() {
             '<span class="user-card-nome">' + nome + '</span>' +
             '<span class="user-card-badges">' + badgeRole + badgeEstado + '</span>' +
           '</div>' +
-          '<div class="user-card-email">✉ ' + email + '</div>' +
-          '<div class="user-card-ultimo-login">🕐 ' + ultimoLogin + '</div>' +
+          '<div class="user-card-email">' + email + '</div>' +
+          '<div class="user-card-ultimo-login">🕐 Último Login: ' + formatarDataHora(user.ultimoLoginEm) + '</div>' +
           '<div class="user-card-actions">' + btnEditar + btnToggle + '</div>' +
 
-          // ── Tabela desktop — linha 1: Nome, Role, Estado, Ações ──
-          '<td data-label="Nome" rowspan="2">' +
-            '<strong>' + nome + '</strong>' +
-          '</td>' +
+          // ── Tabela desktop ─────────────────────────────────
+          '<td data-label="Nome"><strong>' + nome + '</strong></td>' +
+          '<td data-label="Email">'  + email      + '</td>' +
           '<td data-label="Role">'   + badgeRole   + '</td>' +
           '<td data-label="Estado">' + badgeEstado + '</td>' +
-          '<td data-label="Ações" rowspan="2">' +
-            '<div class="user-actions">' + btnEditar + btnToggle + '</div>' +
-          '</td>';
-
-        // Linha 2: Email + Último Login (células separadas no DOM)
-        var tr2 = document.createElement('tr');
-        tr2.className = 'user-row-secundaria';
-        tr2.innerHTML =
-          '<td data-label="Email" colspan="2">' +
-            '<span class="user-email-txt">✉ ' + email + '</span>' +
-            '<span class="user-ultimo-login">🕐 ' + ultimoLogin + '</span>' +
-          '</td>';
+          '<td data-label="Ações"><div class="user-actions">' + btnEditar + btnToggle + '</div></td>';
 
         tbody.appendChild(tr);
-        tbody.appendChild(tr2);
       });
     })
     .catch(function(err) {
@@ -161,6 +148,7 @@ function carregarUtilizadores() {
         '</td></tr>';
     });
 }
+
 
 // Gera o HTML do badge de role, incluindo os ícones de acesso extra
 function badgeRoleHtml(role, acessoDashboard, acessoEditor) {
