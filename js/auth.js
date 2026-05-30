@@ -108,6 +108,14 @@ function apiAutenticar(email, password, onSuccess, onFailure) {
 
       registarInicioSessao();
 
+// Registar timestamp do login no Firestore
+  var uid = credencial.user.uid;
+  if (typeof db !== 'undefined') {
+    db.collection('users').doc(uid).update({
+      ultimoLoginEm: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function() {}); // falha silenciosa — não bloqueia o login
+  }
+
       onSuccess({
         sucesso:         true,
         nomeFuncionario: credencial.user.displayName || credencial.user.email,
