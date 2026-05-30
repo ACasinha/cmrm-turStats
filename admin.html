@@ -107,12 +107,13 @@
           <th>Email</th>
           <th>Role</th>
           <th>Estado</th>
-          <th style="text-align:right">Ações</th>
+          <th>Último Login</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="usersTableBody">
         <tr>
-          <td colspan="5" class="empty-state">
+          <td colspan="6" class="empty-state">
             <span class="empty-state-icon">👥</span>
             <div>A carregar utilizadores...</div>
           </td>
@@ -132,11 +133,11 @@
     <div class="modal-body">
       <div class="form-group">
         <label>Nome Completo *</label>
-        <input type="text" id="userNome" placeholder="João Silva" required>
+        <input type="text" id="userNome" placeholder="Nome e Sobrenome" required>
       </div>
       <div class="form-group">
         <label>Email *</label>
-        <input type="email" id="userEmail" placeholder="joao.silva@exemplo.pt" required>
+        <input type="email" id="userEmail" placeholder="utilizador@exemplo.pt" required>
       </div>
       <div class="form-group" id="passwordGroup">
         <label>Password *</label>
