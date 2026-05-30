@@ -68,6 +68,14 @@ function mostrarNomeUtilizador() {
 // CARREGAR UTILIZADORES
 // ============================================================
 
+function formatarDataHora(ts) {
+  if (!ts) return '—';
+  var d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('pt-PT') + ' ' +
+         d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+}
+
+
 function carregarUtilizadores() {
   var loading = document.getElementById('loadingUsers');
   var tbody   = document.getElementById('usersTableBody');
@@ -80,7 +88,7 @@ function carregarUtilizadores() {
 
       if (users.length === 0) {
         tbody.innerHTML =
-          '<tr><td colspan="5" class="empty-state">' +
+          '<tr><td colspan="6" class="empty-state">' +
             '<span class="empty-state-icon">👥</span>' +
             '<div>Nenhum utilizador encontrado.</div>' +
           '</td></tr>';
@@ -101,6 +109,8 @@ function carregarUtilizadores() {
             (user.ativo ? 'Ativo' : 'Inativo') +
           '</span>';
 
+        var ultimoLogin = formatarDataHora(user.ultimoLoginEm);
+
         var btnEditar =
           '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + uid + '\')">' +
             '✏️ Editar' +
@@ -120,6 +130,11 @@ function carregarUtilizadores() {
           '<td data-label="Email">'  + email      + '</td>' +
           '<td data-label="Role">'   + badgeRole   + '</td>' +
           '<td data-label="Estado">' + badgeEstado + '</td>' +
+          '<td data-label="Último Login">' +
+            '<span style="font-size:var(--text-xs);color:var(--cinza)">' +
+              ultimoLogin +
+            '</span>' +
+          '</td>' +
           '<td data-label="Ações"><div class="user-actions">' + btnEditar + btnToggle + '</div></td>';
 
         tbody.appendChild(tr);
@@ -129,12 +144,12 @@ function carregarUtilizadores() {
       loading.classList.remove('show');
       mostrarToast('Erro ao carregar utilizadores: ' + err.message, 'erro');
       tbody.innerHTML =
-        '<tr><td colspan="5" class="empty-state">' +
+        '<tr><td colspan="6" class="empty-state">' +
           '<span class="empty-state-icon">⚠️</span>' +
           '<div>Erro ao carregar utilizadores.</div>' +
         '</td></tr>';
     });
-}
+} 
 
 // Gera o HTML do badge de role, incluindo os ícones de acesso extra
 function badgeRoleHtml(role, acessoDashboard, acessoEditor) {
