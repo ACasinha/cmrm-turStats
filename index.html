@@ -122,26 +122,26 @@
   </div>
 
   <!-- PAÍSES -->
-<div class="section-card">
-  <div class="section-header">
-    <h2 id="tituloPaises">Países — Turistas e Visitantes</h2>
-    <span class="section-count" id="contadorPaises">0 registos</span>
-  </div>
-
-  <!-- Destaque + extra renderizados aqui pelo ui.js -->
-  <div id="paisesContainer"></div>
-
-  <!-- Painel de pesquisa — oculto no modo simplificado -->
-  <div id="zonaPesquisaPaises" class="zona-pesquisa-paises">
-    <div class="pesquisa-paises-wrap">
-      <span class="pesquisa-icone">🔍</span>
-      <input type="text" id="inputPesquisaPais"
-             placeholder="Adicionar outro país..."
-             autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="section-card">
+    <div class="section-header">
+      <h2 id="tituloPaises">Países — Turistas e Visitantes</h2>
+      <span class="section-count" id="contadorPaises">0 registos</span>
     </div>
-    <ul id="listaPesquisaPaises" class="lista-pesquisa-paises"></ul>
+
+    <!-- Destaque + extra renderizados aqui pelo ui.js -->
+    <div id="paisesContainer"></div>
+
+    <!-- Painel de pesquisa — oculto no modo simplificado -->
+    <div id="zonaPesquisaPaises" class="zona-pesquisa-paises">
+      <div class="pesquisa-paises-wrap">
+        <span class="pesquisa-icone">🔍</span>
+        <input type="text" id="inputPesquisaPais"
+               placeholder="Adicionar outro país..."
+               autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <ul id="listaPesquisaPaises" class="lista-pesquisa-paises"></ul>
+    </div>
   </div>
-</div>
 
   <!-- TOTAL -->
   <div class="totais-card">
@@ -152,23 +152,22 @@
     <div class="total-num" id="totalDiario">0</div>
   </div>
 
-  <!-- OPERADORES -->
+  <!-- ============================================================
+       OPERADORES E AGÊNCIAS
+       O conteúdo (#secaoOperadoresConteudo) é injectado por ui.js:
+         • Desktop: tabela clássica com linhas
+         • Mobile (≤640px): cartões visuais empilhados
+         • Botão "Novo Registo" no fundo (adapta-se ao breakpoint)
+  ============================================================ -->
   <div class="section-card">
-    <div class="section-header azul section-toggle" onclick="toggleSecao('corpoOperadores', 'iconeOperadores')">
+    <div class="section-header azul section-toggle"
+         onclick="toggleSecao('corpoOperadores', 'iconeOperadores')">
       <h2>Operadores e Agências</h2>
       <span class="toggle-icone" id="iconeOperadores">▼</span>
     </div>
-    <div class="verso-body" id="corpoOperadores" style="display:none">
-      <div class="table-scroll">
-        <table class="op-table">
-          <thead><tr>
-            <th>Operador / Agência</th>
-            <th>Nacionalidades</th>
-            <th>Total</th>
-          </tr></thead>
-          <tbody id="tabelaOperadores"></tbody>
-        </table>
-      </div>
+    <div id="corpoOperadores" style="display:none">
+      <!-- ui.js injeta: tabela desktop + cartões mobile + botão "Novo Registo" -->
+      <div id="secaoOperadoresConteudo"></div>
     </div>
   </div>
 
@@ -258,7 +257,6 @@
 <script src="js/app.js"></script>
 
 <script src="js/nav-menu.js"></script>
-
 
 </body>
 </html>
