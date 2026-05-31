@@ -887,6 +887,79 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   box-shadow:0 0 0 2px rgba(139,74,43,0.08);
 }
 
+/* ── Coluna e botão de remover linha (desktop) ─────────── */
+.op-remover-th {
+  width: 36px;
+}
+.op-remover-cell {
+  text-align: center;
+  width: 36px;
+}
+.btn-remover-op-linha {
+  background: none;
+  border: none;
+  color: var(--vermelho);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-remover-op-linha:hover {
+  opacity: 1;
+  background: rgba(192, 57, 43, 0.08);
+}
+
+/* ── Botão X remover cartão mobile ──────────────────────── */
+.btn-remover-op-cartao {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--vermelho);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 4px 7px;
+  border-radius: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  opacity: 0.55;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.btn-remover-op-cartao:hover {
+  opacity: 1;
+  background: rgba(192, 57, 43, 0.08);
+}
+
+/* O cartão precisa de position: relative para o X absoluto */
+.op-cartao {
+  position: relative;
+}
+
+/* ── Linha de nac mobile: padding horizontal ─────────────── */
+.op-cartao-nac-linha {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* Dar espaço ao nome para não sobrepor o X */
+.op-cartao-nome {
+  padding-right: 36px;
+}
+
 
 /* ============================================================
    OBSERVAÇÕES
