@@ -919,7 +919,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 
 /* ── Botão X remover cartão mobile ──────────────────────── */
 .btn-remover-op-cartao {
-  position: absolute;
+  position: static;
   top: 10px;
   right: 10px;
   background: none;
@@ -1361,7 +1361,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .op-cartao-total-wrap {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
   padding: 10px 14px;
   background: rgba(245, 235, 224, 0.35);
