@@ -107,8 +107,9 @@ function carregarUtilizadores() {
           '<span class="estado-pill">' +
             '<span class="badge-status ' + (user.ativo ? 'ativo' : 'inativo') + '"></span>' +
             (user.ativo ? 'Ativo' : 'Inativo') +
-          '</span>' +
-          '<span class="ultimo-login-inline">Último Login: ' + formatarDataHora(user.ultimoLoginEm) + '</span>';
+          '</span>';
+
+        var ultimoLogin = formatarDataHora(user.ultimoLoginEm);
 
         var btnEditar =
           '<button class="btn-action btn-editar" onclick="abrirModalEditar(\'' + uid + '\')">' +
@@ -125,15 +126,22 @@ function carregarUtilizadores() {
             '<span class="user-card-badges">' + badgeRole + badgeEstado + '</span>' +
           '</div>' +
           '<div class="user-card-email">' + email + '</div>' +
-          '<div class="user-card-ultimo-login">🕐 Último Login: ' + formatarDataHora(user.ultimoLoginEm) + '</div>' +
+          '<div class="user-card-ultimo-login">🕐 Último Login: ' + ultimoLogin + '</div>' +
           '<div class="user-card-actions">' + btnEditar + btnToggle + '</div>' +
 
           // ── Tabela desktop ─────────────────────────────────
-          '<td data-label="Nome"><strong>' + nome + '</strong></td>' +
-          '<td data-label="Email">'  + email      + '</td>' +
-          '<td data-label="Role">'   + badgeRole   + '</td>' +
-          '<td data-label="Estado">' + badgeEstado + '</td>' +
-          '<td data-label="Ações"><div class="user-actions">' + btnEditar + btnToggle + '</div></td>';
+          '<td data-label="Utilizador">' +
+            '<strong>' + nome + '</strong>' +
+            '<span class="user-email-sub">' + email + '</span>' +
+          '</td>' +
+          '<td data-label="Role">'         + badgeRole   + '</td>' +
+          '<td data-label="Estado">'       + badgeEstado + '</td>' +
+          '<td data-label="Último Login">' +
+            '<span class="ultimo-login-txt">' + ultimoLogin + '</span>' +
+          '</td>' +
+          '<td data-label="Ações">' +
+            '<div class="user-actions">' + btnEditar + btnToggle + '</div>' +
+          '</td>';
 
         tbody.appendChild(tr);
       });
