@@ -439,7 +439,6 @@ btnRemoverCartao.innerHTML = '✕';
 btnRemoverCartao.addEventListener('click', function() {
   cartao.remove();
 });
-cartao.appendChild(btnRemoverCartao);
 
   
   // Nome
@@ -495,6 +494,7 @@ cartao.appendChild(btnRemoverCartao);
   inputTotal.value = op.total || '';
   inputTotal.readOnly = true;
   inputTotal.setAttribute('readonly', '');
+  divTotal.appendChild(btnRemoverCartao);
   divTotal.appendChild(spanTotLabel);
   divTotal.appendChild(inputTotal);
   cartao.appendChild(divTotal);
