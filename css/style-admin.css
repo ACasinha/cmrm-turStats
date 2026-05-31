@@ -841,16 +841,32 @@ input:-webkit-autofill:focus {
   margin-top: 8px;
 }
 
+
+
 /* ============================================================
-   ÚLTIMO LOGIN — desktop (dentro da célula Estado)
+   TABELA DESKTOP — utilizador (nome + email)
 ============================================================ */
-.ultimo-login-inline {
+.user-email-sub {
   display: block;
   font-size: var(--text-xs);
   color: var(--cinza);
-  opacity: 0.75;
-  margin-top: 4px;
   font-weight: 400;
+  margin-top: 3px;
+  opacity: 0.85;
+}
+
+.ultimo-login-txt {
+  font-size: var(--text-xs);
+  color: var(--cinza);
+}
+
+/* Botões de ação lado a lado */
+.user-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 /* ============================================================
@@ -869,13 +885,9 @@ input:-webkit-autofill:focus {
 
 @media (min-width: 701px) {
   .user-card-ultimo-login { display: none !important; }
-  /* Ocultar o último login do badgeEstado nos cartões mobile
-     (já aparece no user-card-ultimo-login) */
-  .user-card-badges .ultimo-login-inline { display: none !important; }
 }
 
 @media (max-width: 700px) {
-  /* No cartão mobile o último login está no bloco dedicado,
-     não dentro dos badges */
-  .estado-pill .ultimo-login-inline { display: none !important; }
+  .ultimo-login-txt { display: none !important; }
 }
+
