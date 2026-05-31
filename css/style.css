@@ -1185,6 +1185,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 0 14px;
 }
 
 .op-cartao-nac-select {
