@@ -340,6 +340,7 @@ function construirTabelaOperadores(n, dados) {
     '</div>';
   secaoOp.appendChild(divDesktop);
 
+  
   // ── Área de cartões mobile ───────────────────────────────
   var divMobile = document.createElement('div');
   divMobile.className = 'op-mobile-wrap';
@@ -373,6 +374,11 @@ function construirTabelaOperadores(n, dados) {
     _adicionarLinhaDesktop(tbody, {});
     // Mobile começa vazio — utilizador carrega via botão
   }
+}
+
+function removerLinhaOperadorDesktop(btn) {
+  var tr = btn.closest('tr');
+  if (tr) tr.remove();
 }
 
 // ── Adicionar linha no desktop ──────────────────────────────
@@ -409,6 +415,12 @@ tbody.appendChild(tr);
   recalcularTotalOp(tr);
 }
 
+// ── Remover linha no desktop ──────────────────────────────
+function removerLinhaOperadorDesktop(btn) {
+  var tr = btn.closest('tr');
+  if (tr) tr.remove();
+}
+
 // ── Adicionar cartão mobile ──────────────────────────────────
 function _adicionarCartaoMobile(wrap, op) {
   op = op || {};
@@ -416,6 +428,7 @@ function _adicionarCartaoMobile(wrap, op) {
 
   var cartao = document.createElement('div');
   cartao.className = 'op-cartao';
+  
 
  // Botão Remover
   var btnRemoverCartao = document.createElement('button');
