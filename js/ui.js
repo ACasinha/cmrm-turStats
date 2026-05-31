@@ -333,6 +333,7 @@ function construirTabelaOperadores(n, dados) {
           '<th>Operador / Agência</th>' +
           '<th>Nacionalidades</th>' +
           '<th>Total</th>' +
+          '<th class="op-remover-th"></th>' +
         '</tr></thead>' +
         '<tbody id="tabelaOperadores"></tbody>' +
       '</table>' +
@@ -381,20 +382,23 @@ function _adicionarLinhaDesktop(tbody, op) {
   var pares = parsearNacionalidades(op.nacionalidades || '');
 
   var tr = document.createElement('tr');
-  tr.innerHTML =
-    '<td>' +
-      '<input type="text" class="op-nome ' + cls + '" placeholder="Nome do operador..."' +
-             ' value="' + esc(op.operador || '') + '">' +
-    '</td>' +
-    '<td class="op-nac-cell">' +
-      '<div class="op-nac-lista"></div>' +
-      '<button type="button" class="btn-add-nac" onclick="adicionarNacOp(this)">+ Adicionar nacionalidade</button>' +
-    '</td>' +
-    '<td>' +
-      '<input type="number" inputmode="numeric" class="op-total ' + cls + '"' +
-             ' min="0" placeholder="0" value="' + esc(String(op.total || '')) + '" readonly>' +
-    '</td>';
-  tbody.appendChild(tr);
+tr.innerHTML =
+  '<td>' +
+    '<input type="text" class="op-nome ' + cls + '" placeholder="Nome do operador..."' +
+           ' value="' + esc(op.operador || '') + '">' +
+  '</td>' +
+  '<td class="op-nac-cell">' +
+    '<div class="op-nac-lista"></div>' +
+    '<button type="button" class="btn-add-nac" onclick="adicionarNacOp(this)">+ Adicionar nacionalidade</button>' +
+  '</td>' +
+  '<td>' +
+    '<input type="number" inputmode="numeric" class="op-total ' + cls + '"' +
+           ' min="0" placeholder="0" value="' + esc(String(op.total || '')) + '" readonly>' +
+  '</td>' +
+  '<td class="op-remover-cell">' +
+    '<button type="button" class="btn-remover-op-linha" onclick="removerLinhaOperadorDesktop(this)" aria-label="Remover operador">✕</button>' +
+  '</td>';
+tbody.appendChild(tr);
 
   var lista = tr.querySelector('.op-nac-lista');
   if (pares.length > 0) {
@@ -413,6 +417,18 @@ function _adicionarCartaoMobile(wrap, op) {
   var cartao = document.createElement('div');
   cartao.className = 'op-cartao';
 
+ // Botão Remover
+  var btnRemoverCartao = document.createElement('button');
+btnRemoverCartao.type = 'button';
+btnRemoverCartao.className = 'btn-remover-op-cartao';
+btnRemoverCartao.setAttribute('aria-label', 'Remover operador');
+btnRemoverCartao.innerHTML = '✕';
+btnRemoverCartao.addEventListener('click', function() {
+  cartao.remove();
+});
+cartao.appendChild(btnRemoverCartao);
+
+  
   // Nome
   var divNome = document.createElement('div');
   divNome.className = 'op-cartao-secao';
