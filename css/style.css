@@ -1285,16 +1285,16 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 .op-cartao-nac-num {
-  width: 64px;
+  width: 64px !important;
   flex-shrink: 0;
-  border: 1.5px solid var(--cinza-claro);
-  border-radius: var(--radius-sm);
-  padding: 8px 4px;
+  border: 1.5px solid var(--cinza-claro) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 4px !important;
   text-align: center;
-  font-size: var(--text-sm);
+  font-size: var(--text-sm) !important;
   font-weight: 600;
-  background: var(--branco);
-  color: var(--cinza-escuro);
+  background: var(--branco) !important;
+  color: var(--cinza-escuro) !important;
   min-height: 40px;
   -webkit-appearance: none;
   -moz-appearance: textfield;
@@ -1379,14 +1379,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 }
 
 .op-cartao-total {
-  width: 80px;
-  border: 1.5px solid var(--cinza-claro);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
+  width: 80px !important;
+  border: 1.5px solid var(--cinza-claro) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 10px !important;
   text-align: center;
-  font-size: var(--text-base);
+  font-size: var(--text-base) !important;
   font-weight: 700;
-  color: var(--terra);
+  color: var(--terra) !important;
   background: white;
   min-height: 40px;
   -webkit-appearance: none;
