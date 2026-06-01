@@ -3,45 +3,44 @@
 // Registo Diário de Nacionalidades — Município de Reguengos de Monsaraz
 //
 // VERSÃO: incrementar CACHE_NAME a cada deploy para forçar update.
-// O pwa.js lê esta constante para mostrar a versão no rodapé.
+// O sw-update.js lê esta constante para mostrar a versão no rodapé.
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v1.4.7.e';
-const CACHE_STATIC = 'rmz-static-v1.4.7.e';
+const CACHE_NAME   = 'rmz-nacionalidades-v1.5.0.a';
+const CACHE_STATIC = 'rmz-static-v1.5.0.a';
 
-// Todos os assets necessários para a app funcionar offline.
-// Adicionar aqui qualquer novo ficheiro que seja criado.
 const STATIC_ASSETS = [
   './index.html',
   './admin.html',
-  './js/admin.js',
+  './dashboard.html',
+  './editor.html',
   './manifest.json',
   './css/style.css',
-  './js/nav-menu.js',
-  './css/nav-menu.css',
   './css/style-admin.css',
-  './js/login.js',
-  './js/data.js',
-  './js/ui.js',
+  './css/style-dashboard.css',
+  './css/style-editor.css',
+  './css/nav-menu.css',
   './js/api.js',
   './js/auth.js',
-  './js/app.js',
-  './js/pwa.js',
-  './js/sw-update.js',
-  './js/offline.js',
   './js/users.js',
-  './dashboard.html',
+  './js/login.js',
+  './js/app.js',
+  './js/admin.js',
   './js/dashboard.js',
-  './css/style-dashboard.css',
-  './editor.html',
   './js/editor.js',
   './js/editor-sticky.js',
-  './css/style-editor.css',
-  './js/cloud-function-users.js',
+  './js/data.js',
+  './js/ui.js',
+  './js/offline.js',
+  './js/pwa.js',
+  './js/sync.js',
+  './js/sw-update.js',
+  './js/nav-menu.js',
   './img/logo.png',
   './img/logo-small.png',
   './img/logo-turismo.png',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap',
+  'https://cdn.jsdelivr.net/npm/idb@8/build/umd.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
@@ -50,23 +49,21 @@ const STATIC_ASSETS = [
 ];
 
 // ── Pedidos que NUNCA devem ser interceptados pelo SW ────────
-// (requerem sempre rede — falham graciosamente se offline)
 function ehPedidoDeRede(url) {
-  return url.includes('cloudfunctions.net')      // Cloud Function
-      || url.includes('identitytoolkit.googleapis.com') // Firebase Auth API
-      || url.includes('securetoken.googleapis.com')      // Firebase token refresh
-      || url.includes('firebaseauth.googleapis.com');
+  return url.includes('cloudfunctions.net')
+      || url.includes('identitytoolkit.googleapis.com')
+      || url.includes('securetoken.googleapis.com')
+      || url.includes('firebaseauth.googleapis.com')
+      || url.includes('firestore.googleapis.com');
 }
 
 // ============================================================
-// INSTALL — pré-cachear todos os assets
+// INSTALL
 // ============================================================
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE_STATIC)
       .then(function(cache) {
-        // addAll falha se qualquer recurso não carregar.
-        // Usamos Promise.allSettled para não bloquear em assets opcionais.
         return Promise.allSettled(
           STATIC_ASSETS.map(function(url) {
             return cache.add(url).catch(function(err) {
@@ -80,7 +77,7 @@ self.addEventListener('install', function(e) {
 });
 
 // ============================================================
-// ACTIVATE — limpar caches de versões anteriores
+// ACTIVATE
 // ============================================================
 self.addEventListener('activate', function(e) {
   e.waitUntil(
@@ -100,25 +97,19 @@ self.addEventListener('activate', function(e) {
 });
 
 // ============================================================
-// FETCH — estratégias por tipo de pedido
+// FETCH
 // ============================================================
 self.addEventListener('fetch', function(e) {
-  // Ignorar métodos não-GET (POST, etc.)
   if (e.request.method !== 'GET') return;
 
   var url = e.request.url;
 
-  // ── 1. Pedidos de rede pura — nunca interceptar ──────────
-  // Se offline, o browser recebe o erro de rede normalmente
-  // e o offline.js trata de bloquear a UI.
   if (ehPedidoDeRede(url)) return;
 
-  // ── 2. Firebase SDK e Google Fonts — cache-first ─────────
-  // Recursos externos essenciais: cachear na primeira visita,
-  // servir da cache offline.
   if (url.includes('gstatic.com') ||
       url.includes('fonts.googleapis.com') ||
-      url.includes('fonts.gstatic.com')) {
+      url.includes('fonts.gstatic.com') ||
+      url.includes('jsdelivr.net')) {
     e.respondWith(
       caches.match(e.request).then(function(cached) {
         if (cached) return cached;
@@ -132,33 +123,24 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // ── 3. Assets estáticos locais — cache-first ─────────────
-  // CSS, JS, imagens, icons, manifest: servir da cache,
-  // actualizar em background (stale-while-revalidate).
-  if (url.includes('/css/')      ||
-      url.includes('/js/')       ||
-      url.includes('/img/')      ||
-      url.includes('/icons/')    ||
+  if (url.includes('/css/')   ||
+      url.includes('/js/')    ||
+      url.includes('/img/')   ||
+      url.includes('/icons/') ||
       url.endsWith('manifest.json')) {
     e.respondWith(
       caches.match(e.request).then(function(cached) {
-        // Actualizar em background mesmo servindo da cache
         var fetchPromise = fetch(e.request).then(function(resp) {
           var clone = resp.clone();
           caches.open(CACHE_STATIC).then(function(c) { c.put(e.request, clone); });
           return resp;
         }).catch(function() { return cached; });
-
-        // Servir imediatamente da cache se disponível
         return cached || fetchPromise;
       })
     );
     return;
   }
 
-  // ── 4. HTML principal — network-first com fallback ───────
-  // Tentar rede primeiro para ter sempre conteúdo actualizado.
-  // Se offline, servir da cache (a app abre na mesma).
   e.respondWith(
     fetch(e.request)
       .then(function(resp) {
@@ -175,7 +157,41 @@ self.addEventListener('fetch', function(e) {
 });
 
 // ============================================================
-// MENSAGENS — comunicação com o cliente (pwa.js)
+// BACKGROUND SYNC
+//
+// Disparado automaticamente pelo browser quando a rede
+// regressa (Android Chrome e outros que suportam SyncManager).
+// iOS Safari não suporta — o fallback é o evento 'online'
+// em offline.js que chama syncSincronizarFila() directamente.
+//
+// O SW não tem acesso ao IndexedDB do cliente directamente —
+// delega a sincronização para o cliente via postMessage.
+// O cliente (sync.js) é quem conhece a fila e sabe chamar
+// a Cloud Function com o token JWT correcto.
+// ============================================================
+self.addEventListener('sync', function(e) {
+  if (e.tag === 'rmz-sync') {
+    console.log('[SW] Background Sync disparado:', e.tag);
+    e.waitUntil(
+      // Notificar todos os clientes abertos para executar a sincronização
+      self.clients.matchAll({ includeUncontrolled: true, type: 'window' })
+        .then(function(clients) {
+          if (clients.length === 0) {
+            // Nenhum cliente aberto — a sincronização vai acontecer
+            // quando o utilizador abrir a app (evento 'online' + initSync)
+            console.log('[SW] Sem clientes abertos — sincronização adiada para próxima abertura.');
+            return;
+          }
+          // Enviar mensagem ao primeiro cliente activo
+          clients[0].postMessage({ type: 'EXECUTAR_SYNC' });
+          console.log('[SW] Mensagem EXECUTAR_SYNC enviada ao cliente.');
+        })
+    );
+  }
+});
+
+// ============================================================
+// MENSAGENS — comunicação com o cliente
 // ============================================================
 self.addEventListener('message', function(e) {
   if (e.data && e.data.type === 'SKIP_WAITING') {
