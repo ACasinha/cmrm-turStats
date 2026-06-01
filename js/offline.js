@@ -33,18 +33,19 @@ function verificarLigacao() {
   if (!online) {
     _estavaSemLigacao    = true;
     banner.style.display = 'flex';
-    var btnG = document.getElementById('btnGuardar');
-    if (btnG) btnG.disabled = true;
     if (typeof bloquearFormulario === 'function') bloquearFormulario(true);
     if (typeof mostrarToast === 'function') mostrarToast('Sem ligação à Internet.', 'erro');
   } else if (_estavaSemLigacao) {
-    _estavaSemLigacao    = false;
-    banner.style.display = 'none';
-    var btnG = document.getElementById('btnGuardar');
-    if (btnG) btnG.disabled = false;
-    if (typeof bloquearFormulario === 'function') bloquearFormulario(false);
-    resetarBotaoReconectar();
-    if (typeof mostrarToast === 'function') mostrarToast('Ligação restabelecida.', 'sucesso');
+  _estavaSemLigacao    = false;
+  banner.style.display = 'none';
+  var btnG = document.getElementById('btnGuardar');
+  if (btnG) btnG.disabled = false;
+  if (typeof bloquearFormulario === 'function') bloquearFormulario(false);
+  resetarBotaoReconectar();
+  if (typeof mostrarToast === 'function') mostrarToast('Ligação restabelecida.', 'sucesso');
+  // NOVO — sincronizar fila offline ao reconectar (fallback iOS Safari)
+  if (typeof syncSincronizarFila === 'function') {
+    syncSincronizarFila();
   }
 }
 
