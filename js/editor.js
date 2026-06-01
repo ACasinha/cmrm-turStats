@@ -320,6 +320,36 @@ function construirGrelha(local, ano, mesNum, numDias) {
     .toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
   document.getElementById('grelhaInfoTexto').innerHTML =
     'A editar: <strong>' + esc(local) + '</strong> — <strong>' + nomeMes + '</strong>';
+
+  if (_conflitosDoMes && Object.keys(_conflitosDoMes).length > 0) {
+    assinalarCelulasComConflito(_conflitosDoMes);
+  }
+}
+
+// ============================================================
+// ASSINALAR CONFLITOS NA GRELHA
+// ============================================================
+
+function assinalarCelulasComConflito(conflitos) {
+  Object.keys(conflitos).forEach(function(dataFmt) {
+    var conflito = conflitos[dataFmt];
+    
+    // Marcar toda a coluna do dia com indicador visual
+    var th = document.querySelector('th[data-data="' + dataFmt + '"]');
+    if (th) {
+      th.classList.add('tem-conflito');
+      th.title = 'Conflito pendente — clique para resolver';
+    }
+    
+    // Marcar células específicas que diferem
+    Object.keys(conflito.payloadNovo.paises).forEach(function(pais) {
+      var inp = document.querySelector(
+        '.cel-input[data-data="' + dataFmt + '"][data-pais="' + pais + '"]'
+      );
+      if (inp) inp.classList.add('celula-conflito');
+    });
+  });
+
 }
 
 // ============================================================
