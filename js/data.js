@@ -66,5 +66,5 @@ const PAISES = [
 ];
 
 /** Número de linhas em branco nas tabelas de Operadores e Sugestões */
-const NUM_LINHAS_OP  = 6;
-const NUM_LINHAS_SUG = 7;
+const NUM_LINHAS_OP  = 1;
+const NUM_LINHAS_SUG = 3;
