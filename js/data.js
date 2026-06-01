@@ -71,7 +71,6 @@ var PAISES_SIMPLES = [
 // ── Locais com lista detalhada de países ─────────────────────
 var LOCAIS_DETALHADOS = [
   'Posto de Turismo de Monsaraz',
-  'Museu do Fresco',
   'Posto de Turismo de Reguengos',
   'Museu José Mestre Batista',
   'Casa do Barro',
@@ -79,6 +78,7 @@ var LOCAIS_DETALHADOS = [
 
 // ── Locais com lista simplificada (Nacionais / Estrangeiros) ──
 var LOCAIS_SIMPLES = [
+  'Museu do Fresco',
   'Casa da Inquisição',
   'Igreja de Santiago',
   'Igreja da Misericórdia',
@@ -104,5 +104,5 @@ function listaPaises(local) {
   return modoSimplificado(local) ? PAISES_SIMPLES : PAISES;
 }
 
-var NUM_LINHAS_OP  = 6;
-var NUM_LINHAS_SUG = 7;
+var NUM_LINHAS_OP  = 1;
+var NUM_LINHAS_SUG = 3;
