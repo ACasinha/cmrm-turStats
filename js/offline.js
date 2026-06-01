@@ -48,6 +48,7 @@ function verificarLigacao() {
     syncSincronizarFila();
   }
 }
+}
 
 // ============================================================
 // RECONEXÃO (anti-abuso)
