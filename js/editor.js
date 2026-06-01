@@ -18,6 +18,8 @@ var _dadosMes        = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
 var _alteracoes      = {};   // { 'DD/MM/YYYY': { pais: valor, ... } }
 var _totalAlteracoes = 0;
 
+var _conflitoActivo = null;
+
 var DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // ============================================================
@@ -641,3 +643,152 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+// ============================================================
+// CONFLITOS NA GRELHA
+// ============================================================
+function abrirModalConflito(dataFmt) {
+  var conflito = _conflitosDoMes[dataFmt];
+  if (!conflito) return;
+  
+  _conflitoActivo = conflito;
+  
+  // Preencher metadados
+  document.getElementById('conflitoMeta').textContent =
+    _localAtual + ' — ' + dataFmt;
+  
+  document.getElementById('conflitoServidorAutor').textContent =
+    'por ' + (conflito.autorServidor || 'desconhecido') +
+    ' em ' + formatarDataHora(conflito.servidorEm);
+  
+  document.getElementById('conflitoOfflineAutor').textContent =
+    'por ' + conflito.autorOffline +
+    ' (offline) em ' + formatarDataHora(conflito.criadoOfflineEm);
+  
+  // Preencher tabelas de comparação
+  preencherTabelaConflito(
+    'conflitoTabelaServidor',
+    conflito.payloadExistente.paises
+  );
+  preencherTabelaConflito(
+    'conflitoTabelaOffline', 
+    conflito.payloadNovo.paises
+  );
+  
+  // Destacar diferenças
+  mostrarDiferencas(conflito);
+  
+  document.getElementById('modalConflito').classList.add('show');
+}
+
+function preencherTabelaConflito(tabelaId, paises) {
+  var tabela = document.getElementById(tabelaId);
+  var total  = 0;
+  var html   = '';
+  
+  Object.keys(paises).sort().forEach(function(pais) {
+    var v = paises[pais] || 0;
+    total += v;
+    html += '<tr><td>' + esc(pais) + '</td>' +
+            '<td class="conflito-num">' + v + '</td></tr>';
+  });
+  
+  tabela.innerHTML = html;
+  tabela.closest('.conflito-lado')
+        .querySelector('.conflito-total').textContent = 'Total: ' + total;
+}
+
+function mostrarDiferencas(conflito) {
+  var paisesServidor = conflito.payloadExistente.paises || {};
+  var paisesOffline  = conflito.payloadNovo.paises      || {};
+  var todosPaises    = new Set([
+    ...Object.keys(paisesServidor),
+    ...Object.keys(paisesOffline)
+  ]);
+  
+  var diferencas = [];
+  todosPaises.forEach(function(pais) {
+    var vS = paisesServidor[pais] || 0;
+    var vO = paisesOffline[pais]  || 0;
+    if (vS !== vO) {
+      diferencas.push({ pais, servidor: vS, offline: vO, delta: vO - vS });
+    }
+  });
+  
+  if (diferencas.length === 0) {
+    // Totais iguais mas chegaram por caminhos diferentes
+    document.getElementById('conflitoDiferencas').innerHTML =
+      '<div class="conflito-sem-dif">Os valores são idênticos — pode aceitar qualquer um.</div>';
+    return;
+  }
+  
+  var html = '<div class="conflito-dif-titulo">Diferenças:</div>';
+  diferencas.forEach(function(d) {
+    var sinal = d.delta > 0 ? '+' : '';
+    html += '<div class="conflito-dif-linha">' +
+              '<span>' + esc(d.pais) + '</span>' +
+              '<span>' + d.servidor + ' → ' + d.offline + '</span>' +
+              '<span class="conflito-dif-delta ' + 
+                (d.delta > 0 ? 'positivo' : 'negativo') + '">' +
+                sinal + d.delta +
+              '</span>' +
+            '</div>';
+  });
+  document.getElementById('conflitoDiferencas').innerHTML = html;
+}
+
+function resolverConflito(decisao) {
+  if (!_conflitoActivo) return;
+  
+  var payloadFinal;
+  if (decisao === 'manter_servidor') {
+    payloadFinal = _conflitoActivo.payloadExistente;
+  } else if (decisao === 'usar_offline') {
+    payloadFinal = _conflitoActivo.payloadNovo;
+  }
+  // 'editar_e_fundir' é tratado por activarModoFusao()
+  
+  chamarAPI('resolverConflito', {
+    conflitoId:   _conflitoActivo.id,
+    decisao:      decisao,
+    payloadFinal: payloadFinal
+  })
+  .then(function(resp) {
+    if (resp.sucesso) {
+      // Remover o conflito da lista local e actualizar a grelha
+      delete _conflitosDoMes[_conflitoActivo.data];
+      fecharModalConflito();
+      actualizarGrelhaAposResolucao(_conflitoActivo.data, payloadFinal.paises);
+      atualizarBadgeConflitos();
+      mostrarToast('✓ Conflito resolvido.', 'sucesso');
+    }
+  });
+}
+
+function activarModoFusao() {
+  fecharModalConflito();
+  
+  var dataFmt   = _conflitoActivo.data;
+  var paisesRef = _conflitoActivo.payloadNovo.paises;
+  
+  // Pré-preencher a coluna com os valores offline
+  Object.keys(paisesRef).forEach(function(pais) {
+    var inp = document.querySelector(
+      '.cel-input[data-data="' + dataFmt + '"][data-pais="' + pais + '"]'
+    );
+    if (inp) {
+      inp.value = paisesRef[pais] || '';
+      inp.classList.add('alterada', 'modo-fusao');
+      onCelChange(inp);  // recalcular totais
+    }
+  });
+  
+  // Scroll para a coluna
+  var th = document.querySelector('th[data-dia="' + parseInt(dataFmt) + '"]');
+  if (th) th.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+  
+  mostrarToast(
+    '✏️ Valores offline pré-preenchidos. Edite e guarde normalmente.',
+    'info'
+  );
+}
