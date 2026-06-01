@@ -208,68 +208,6 @@
   </div>
 </div>
 
-
-<!-- ============================================================
-     MODAL DE CONFLITOS
-============================================================ -->
-<div class="modal-overlay" id="modalConflito">
-  <div class="modal-box modal-conflito-box">
-    <div class="modal-header">
-      <h2>⚠️ Conflito de Dados</h2>
-      <div class="conflito-meta" id="conflitoMeta"></div>
-    </div>
-    <div class="modal-body">
-      
-      <div class="conflito-comparacao">
-        
-        <div class="conflito-lado" id="conflitoLadoServidor">
-          <div class="conflito-lado-titulo servidor">
-            📊 Dados actuais no servidor
-            <span class="conflito-lado-sub" id="conflitoServidorAutor"></span>
-          </div>
-          <table class="conflito-tabela" id="conflitoTabelaServidor"></table>
-          <div class="conflito-total" id="conflitoTotalServidor"></div>
-        </div>
-
-        <div class="conflito-vs">VS</div>
-
-        <div class="conflito-lado" id="conflitoLadoOffline">
-          <div class="conflito-lado-titulo offline">
-            📦 Registo offline
-            <span class="conflito-lado-sub" id="conflitoOfflineAutor"></span>
-          </div>
-          <table class="conflito-tabela" id="conflitoTabelaOffline"></table>
-          <div class="conflito-total" id="conflitoTotalOffline"></div>
-        </div>
-
-      </div>
-
-      <!-- Diferenças destacadas -->
-      <div class="conflito-diferencas" id="conflitoDiferencas"></div>
-
-    </div>
-    <div class="modal-actions">
-      <button class="btn-modal-cancelar" 
-              onclick="fecharModalConflito()">
-        Cancelar
-      </button>
-      <button class="btn-conflito-manter" 
-              onclick="resolverConflito('manter_servidor')">
-        ✓ Manter servidor
-      </button>
-      <button class="btn-conflito-offline" 
-              onclick="resolverConflito('usar_offline')">
-        ✓ Usar registo offline
-      </button>
-      <button class="btn-conflito-fundir" 
-              onclick="activarModoFusao()">
-        ✏️ Editar e fundir
-      </button>
-    </div>
-  </div>
-</div>
-     
-
 <div class="toast" id="toast"></div>
 
 <!-- Firebase SDK -->
