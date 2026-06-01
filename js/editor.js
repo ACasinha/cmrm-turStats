@@ -115,25 +115,26 @@ function carregarMes() {
   mostrarGrelhaLoading(true);
 
   // Uma única chamada que devolve todos os dias do mês de uma vez
-  chamarAPI('obterDadosMes', { local: local, mes: mes })
-    .then(function(resp) {
-      mostrarGrelhaLoading(false);
+  Promise.all([
+  chamarAPI('obterDadosMes',  { local: local, mes: mes }),
+  chamarAPI('obterConflitos', { local: local, mes: mes })
+])
+.then(function(resultados) {
+  mostrarGrelhaLoading(false);
+  var respDados     = resultados[0];
+  var respConflitos = resultados[1];
 
-      if (!resp.sucesso) {
-        mostrarToast('Erro: ' + resp.mensagem, 'erro');
-        return;
-      }
+  if (!respDados.sucesso) {
+    mostrarToast('Erro: ' + respDados.mensagem, 'erro');
+    return;
+  }
 
-      // resp.dados = { 'DD/MM/YYYY': { pais: valor, ... }, ... }
-      _dadosMes = resp.dados || {};
+  _dadosMes       = respDados.dados          || {};
+  _conflitosDoMes = respConflitos.conflitos  || {};
 
-      var partes  = mes.split('-');
-      var ano     = parseInt(partes[0], 10);
-      var mesNum  = parseInt(partes[1], 10);
-      var numDias = new Date(ano, mesNum, 0).getDate();
-
-      construirGrelha(local, ano, mesNum, numDias);
-    })
+  construirGrelha(local, ano, mesNum, numDias);
+  atualizarBadgeConflitos();
+})
     .catch(function(err) {
       mostrarGrelhaLoading(false);
       mostrarToast('Erro ao carregar dados: ' + err.message, 'erro');
