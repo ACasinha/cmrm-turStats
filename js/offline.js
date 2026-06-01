@@ -36,18 +36,18 @@ function verificarLigacao() {
     if (typeof bloquearFormulario === 'function') bloquearFormulario(true);
     if (typeof mostrarToast === 'function') mostrarToast('Sem ligação à Internet.', 'erro');
   } else if (_estavaSemLigacao) {
-  _estavaSemLigacao    = false;
-  banner.style.display = 'none';
-  var btnG = document.getElementById('btnGuardar');
-  if (btnG) btnG.disabled = false;
-  if (typeof bloquearFormulario === 'function') bloquearFormulario(false);
-  resetarBotaoReconectar();
-  if (typeof mostrarToast === 'function') mostrarToast('Ligação restabelecida.', 'sucesso');
-  // NOVO — sincronizar fila offline ao reconectar (fallback iOS Safari)
-  if (typeof syncSincronizarFila === 'function') {
-    syncSincronizarFila();
+    _estavaSemLigacao    = false;
+    banner.style.display = 'none';
+    var btnG = document.getElementById('btnGuardar');
+    if (btnG) btnG.disabled = false;
+    if (typeof bloquearFormulario === 'function') bloquearFormulario(false);
+    resetarBotaoReconectar();
+    if (typeof mostrarToast === 'function') mostrarToast('Ligação restabelecida.', 'sucesso');
+    // Sincronizar fila offline ao reconectar (fallback iOS Safari)
+    if (typeof syncSincronizarFila === 'function') {
+      syncSincronizarFila();
+    }
   }
-}
 }
 
 // ============================================================
