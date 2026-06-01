@@ -320,10 +320,51 @@ function construirGrelha(local, ano, mesNum, numDias) {
   tabela.appendChild(tbody);
   wrapper.appendChild(tabela);
 
+  if (Object.keys(_conflitosDoMes).length > 0) {
+  _assinalarConflitosNaGrelha();
+}
+
+  
+
   var nomeMes = new Date(ano, mesNum - 1, 1)
     .toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
   document.getElementById('grelhaInfoTexto').innerHTML =
     'A editar: <strong>' + esc(local) + '</strong> — <strong>' + nomeMes + '</strong>';
+}
+
+function _assinalarConflitosNaGrelha() {
+  Object.keys(_conflitosDoMes).forEach(function(dataFmt) {
+    var dia = parseInt(dataFmt.split('/')[0], 10);
+
+    // Marcar cabeçalho do dia
+    var ths = document.querySelectorAll('.th-dia');
+    ths.forEach(function(th) {
+      var numEl = th.querySelector('.th-dia-num');
+      if (numEl && parseInt(numEl.textContent, 10) === dia) {
+        th.classList.add('tem-conflito');
+        th.style.cursor = 'pointer';
+        th.title = 'Conflito pendente — clique para resolver';
+        th.addEventListener('click', function() {
+          abrirModalConflito(dataFmt);
+        });
+      }
+    });
+
+    // Marcar células com valores diferentes
+    var conflito     = _conflitosDoMes[dataFmt];
+    var paisesNovos  = (conflito.payloadNovo      || {}).paises || {};
+    var paisesExist  = (conflito.payloadExistente || {}).paises || {};
+    var todosPaises  = Object.keys(Object.assign({}, paisesNovos, paisesExist));
+
+    todosPaises.forEach(function(pais) {
+      if ((paisesNovos[pais] || 0) !== (paisesExist[pais] || 0)) {
+        var inp = document.querySelector(
+          '.cel-input[data-data="' + dataFmt + '"][data-pais="' + CSS.escape(pais) + '"]'
+        );
+        if (inp) inp.classList.add('celula-conflito');
+      }
+    });
+  });
 }
 
 // ============================================================
@@ -614,4 +655,193 @@ document.addEventListener('DOMContentLoaded', function() {
       return e.returnValue;
     }
   });
+
+var overlayConflito = document.getElementById('modalConflito');
+if (overlayConflito) {
+  overlayConflito.addEventListener('click', function(e) {
+    if (e.target === overlayConflito) fecharModalConflito();
+  });
+}
 });
+
+// ============================================================
+// MODAL CONFLITOS
+// ============================================================
+function abrirModalConflito(dataFmt) {
+  var conflito = _conflitosDoMes[dataFmt];
+  if (!conflito) return;
+  _conflitoActivo = conflito;
+
+  document.getElementById('conflitoMeta').textContent =
+    _localAtual + ' — ' + dataFmt;
+  document.getElementById('conflitoServidorAutor').textContent =
+    conflito.autorExistente
+      ? 'por ' + conflito.autorExistente + (conflito.servidorEm ? ' em ' + conflito.servidorEm : '')
+      : '';
+  document.getElementById('conflitoOfflineAutor').textContent =
+    'por ' + (conflito.email || '—') +
+    (conflito.criadoOfflineEm
+      ? ' (offline ' + new Date(conflito.criadoOfflineEm).toLocaleString('pt-PT') + ')'
+      : '');
+
+  _preencherTabelaConflito('conflitoTabelaServidor',
+    (conflito.payloadExistente || {}).paises || {}, 'conflitoTotalServidor');
+  _preencherTabelaConflito('conflitoTabelaOffline',
+    (conflito.payloadNovo || {}).paises || {}, 'conflitoTotalOffline');
+
+  _mostrarDiferencas(conflito);
+  document.getElementById('modalConflito').classList.add('show');
+}
+
+function fecharModalConflito() {
+  document.getElementById('modalConflito').classList.remove('show');
+  _conflitoActivo = null;
+}
+
+function _preencherTabelaConflito(tabelaId, paises, totalId) {
+  var tabela = document.getElementById(tabelaId);
+  var total  = 0;
+  var html   = '';
+  Object.keys(paises).sort().forEach(function(pais) {
+    var v = paises[pais] || 0;
+    total += v;
+    html += '<tr><td>' + esc(pais) + '</td>' +
+            '<td class="conflito-num">' + v + '</td></tr>';
+  });
+  tabela.innerHTML = html || '<tr><td colspan="2" style="opacity:0.5">Sem dados</td></tr>';
+  var totEl = document.getElementById(totalId);
+  if (totEl) totEl.textContent = 'Total: ' + total;
+}
+
+function _mostrarDiferencas(conflito) {
+  var paisesS = (conflito.payloadExistente || {}).paises || {};
+  var paisesO = (conflito.payloadNovo      || {}).paises || {};
+  var todos   = Object.keys(Object.assign({}, paisesS, paisesO));
+  var difs    = [];
+
+  todos.forEach(function(pais) {
+    var vS = paisesS[pais] || 0;
+    var vO = paisesO[pais] || 0;
+    if (vS !== vO) difs.push({ pais: pais, servidor: vS, offline: vO, delta: vO - vS });
+  });
+
+  var el = document.getElementById('conflitoDiferencas');
+  if (!difs.length) {
+    el.innerHTML = '<div class="conflito-sem-dif">Os valores são idênticos — qualquer opção produz o mesmo resultado.</div>';
+    return;
+  }
+  var html = '<div class="conflito-dif-titulo">Diferenças por país:</div>';
+  difs.forEach(function(d) {
+    var sinal = d.delta > 0 ? '+' : '';
+    html += '<div class="conflito-dif-linha">' +
+              '<span>' + esc(d.pais) + '</span>' +
+              '<span class="conflito-dif-valores">' + d.servidor + ' → ' + d.offline + '</span>' +
+              '<span class="conflito-dif-delta ' + (d.delta > 0 ? 'positivo' : 'negativo') + '">' +
+                sinal + d.delta +
+              '</span>' +
+            '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function resolverConflito(decisao) {
+  if (!_conflitoActivo) return;
+
+  var payloadFinal = decisao === 'usar_offline'
+    ? _conflitoActivo.payloadNovo
+    : _conflitoActivo.payloadExistente;
+
+  chamarAPI('resolverConflito', {
+    conflitoId:   _conflitoActivo.id,
+    decisao:      decisao,
+    payloadFinal: payloadFinal
+  })
+  .then(function(resp) {
+    if (!resp.sucesso) {
+      mostrarToast('Erro: ' + resp.mensagem, 'erro');
+      return;
+    }
+    var dataFmt = _conflitoActivo.data;
+    delete _conflitosDoMes[dataFmt];
+
+    // Actualizar grelha com os dados finais
+    var paisesFinais = decisao === 'manter_servidor'
+      ? (_conflitoActivo.payloadExistente || {}).paises || {}
+      : (_conflitoActivo.payloadNovo      || {}).paises || {};
+
+    _actualizarColunaAposResolucao(dataFmt, paisesFinais);
+    fecharModalConflito();
+    atualizarBadgeConflitos();
+    mostrarToast('✓ Conflito resolvido.', 'sucesso');
+  })
+  .catch(function(err) {
+    mostrarToast('Erro: ' + err.message, 'erro');
+  });
+}
+
+function activarModoFusao() {
+  if (!_conflitoActivo) return;
+  var dataFmt   = _conflitoActivo.data;
+  var paisesRef = (_conflitoActivo.payloadNovo || {}).paises || {};
+
+  fecharModalConflito();
+
+  // Pré-preencher coluna com valores offline para edição manual
+  Object.keys(paisesRef).forEach(function(pais) {
+    var inp = document.querySelector(
+      '.cel-input[data-data="' + dataFmt + '"][data-pais="' + CSS.escape(pais) + '"]'
+    );
+    if (!inp) return;
+    inp.value = paisesRef[pais] || '';
+    inp.classList.add('alterada', 'modo-fusao');
+    onCelChange(inp);
+  });
+
+  // Scroll para a coluna
+  var inp = document.querySelector('.cel-input[data-data="' + dataFmt + '"]');
+  if (inp) inp.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+  mostrarToast('✏️ Valores offline pré-preenchidos. Edite e guarde normalmente.', 'info');
+}
+
+function _actualizarColunaAposResolucao(dataFmt, paises) {
+  if (!_dadosMes[dataFmt]) _dadosMes[dataFmt] = {};
+  Object.assign(_dadosMes[dataFmt], paises);
+
+  // Actualizar inputs na grelha
+  Object.keys(paises).forEach(function(pais) {
+    var inp = document.querySelector(
+      '.cel-input[data-data="' + dataFmt + '"][data-pais="' + CSS.escape(pais) + '"]'
+    );
+    if (!inp) return;
+    var v = paises[pais] || 0;
+    inp.value = v > 0 ? String(v) : '';
+    inp.classList.remove('celula-conflito', 'alterada', 'modo-fusao');
+    inp.classList.toggle('tem-valor', v > 0);
+    recalcularTotalLinha(pais);
+    recalcularTotalDia(dataFmt);
+  });
+
+  // Remover marcação do cabeçalho do dia
+  var dia = parseInt(dataFmt.split('/')[0], 10);
+  document.querySelectorAll('.th-dia.tem-conflito').forEach(function(th) {
+    var numEl = th.querySelector('.th-dia-num');
+    if (numEl && parseInt(numEl.textContent, 10) === dia) {
+      th.classList.remove('tem-conflito');
+      th.style.cursor = '';
+      th.title = '';
+    }
+  });
+
+  recalcularTotalGeral();
+}
+
+function atualizarBadgeConflitos() {
+  var n     = Object.keys(_conflitosDoMes).length;
+  var aviso = document.getElementById('conflitosAviso');
+  var badge = document.getElementById('conflitosAvisoBadge');
+  if (!aviso) return;
+  aviso.style.display = n > 0 ? '' : 'none';
+  if (badge) badge.textContent = n;
+}
+
