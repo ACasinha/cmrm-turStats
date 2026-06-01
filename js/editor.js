@@ -20,6 +20,9 @@ var _totalAlteracoes = 0;
 
 var DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
+var _conflitosDoMes  = {};   // { 'DD/MM/YYYY': { id, payloadNovo, payloadExistente, ... } }
+var _conflitoActivo  = null; // conflito aberto no modal
+
 // ============================================================
 // HELPER — verifica se o perfil tem acesso ao editor
 // ============================================================
