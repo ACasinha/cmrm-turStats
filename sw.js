@@ -46,6 +46,7 @@ const STATIC_ASSETS = [
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',
   'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js',
+  'https://cdn.jsdelivr.net/npm/idb@8/build/umd.js',
 ];
 
 // ── Pedidos que NUNCA devem ser interceptados pelo SW ────────
