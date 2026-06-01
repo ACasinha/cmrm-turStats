@@ -5,11 +5,13 @@
 // Responsabilidade:
 //   • Arrancar a aplicação após login válido (activarApp)
 //   • Verificar/carregar dados do dia (verificarDados)
-//   • Guardar registo (guardarDados)
+//   • Guardar registo (guardarDados) — online via API, offline via sync.js
 //   • Bloquear/desbloquear formulário
+//   • Gerir badge de registos pendentes de sincronização
 //
 // NÃO contém: Firebase init, JWT, sessão (auth.js),
-// UI de login (login.js), construção de tabelas (ui.js).
+// UI de login (login.js), construção de tabelas (ui.js),
+// fila offline (sync.js).
 // ============================================================
 
 'use strict';
@@ -37,13 +39,40 @@ window.addEventListener('beforeunload', function (e) {
   }
 });
 
+// ── Listener de mensagens do Service Worker ──────────────────
+// Recebe EXECUTAR_SYNC quando o SW detecto rede (Background Sync)
+// e delega em sync.js — fallback principal para Android Chrome.
+
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'EXECUTAR_SYNC') {
+    console.log('[app] SW solicitou sincronização.');
+    if (typeof syncSincronizarFila === 'function') {
+      syncSincronizarFila().then(_actualizarBadgePendentes);
+    }
+  }
+});
+
+// ── Listeners de eventos de sincronização ────────────────────
+
+window.addEventListener('rmz-sync-update', function() {
+  _actualizarBadgePendentes();
+});
+
+window.addEventListener('rmz-sync-conflito', function(e) {
+  var detalhe = e.detail || {};
+  mostrarToast(
+    '⚠️ O registo de ' + detalhe.data + ' (' + detalhe.local + ') tem um conflito pendente de resolução no Editor Mensal.',
+    'info'
+  );
+});
+
 // ============================================================
 // ARRANQUE — delegado em login.js + auth.js
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function () {
   inicializarLogin({
-    idWrap:            null,     // index.html não tem um wrap único
+    idWrap:            null,
     verificarAcesso:   function (perfil) {
       return perfil.role === 'administrador' || perfil.role === 'utilizador';
     },
@@ -54,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function () {
       activarApp(perfil);
     },
     onSessaoTerminada: function () {
+      // NÃO limpar a fila offline — os dados persistem entre sessões
+      // para poderem ser sincronizados no próximo login.
       appInicializada       = false;
       dadosAlterados        = false;
       ultimoLocalVerificado = '';
@@ -85,11 +116,52 @@ function activarApp(perfil) {
     _inicializarFormulario();
     appInicializada = true;
   }
+
+  // Inicializar IndexedDB e processar pendentes desta sessão
+  if (typeof syncInit === 'function') {
+    syncInit()
+      .then(function() {
+        // Limpar registos resolvidos há mais de 7 dias (housekeeping)
+        if (typeof syncLimparResolvidos === 'function') syncLimparResolvidos();
+
+        // Actualizar badge imediatamente
+        _actualizarBadgePendentes();
+
+        // Se há rede, tentar sincronizar o que ficou pendente
+        if (navigator.onLine && typeof syncSincronizarFila === 'function') {
+          syncSincronizarFila().then(_actualizarBadgePendentes);
+        }
+      })
+      .catch(function(err) {
+        console.warn('[app] Erro ao inicializar sync:', err);
+      });
+  }
+}
+
+// ============================================================
+// BADGE DE PENDENTES
+// Mostra o número de registos locais ainda não sincronizados.
+// ============================================================
+
+function _actualizarBadgePendentes() {
+  if (typeof syncContarActivos !== 'function') return;
+
+  syncContarActivos().then(function(n) {
+    var badge = document.getElementById('badgePendentes');
+    if (!badge) return;
+
+    if (n > 0) {
+      badge.textContent = n;
+      badge.style.display = '';
+      badge.title = n + (n === 1 ? ' registo pendente de sincronização' : ' registos pendentes de sincronização');
+    } else {
+      badge.style.display = 'none';
+    }
+  });
 }
 
 // ============================================================
 // INICIALIZAÇÃO DO FORMULÁRIO
-// Chamado uma única vez após o primeiro login bem-sucedido.
 // ============================================================
 
 function _inicializarFormulario() {
@@ -98,13 +170,11 @@ function _inicializarFormulario() {
   construirTabelaOperadores(NUM_LINHAS_OP);
   construirTabelaSugestoes(NUM_LINHAS_SUG);
 
-  // Observações
   document.getElementById('observacoes').addEventListener('input', function () {
     if (!verificarLocalEscolhido()) { this.value = ''; return; }
     dadosAlterados = true;
   });
 
-  // Inputs de operadores e sugestões (delegação de eventos)
   document.querySelector('.container').addEventListener('input', function (e) {
     var alvo = e.target;
     if (alvo.classList.contains('op-nome') || alvo.classList.contains('sug-nac')) {
@@ -122,7 +192,6 @@ function _inicializarFormulario() {
 // ============================================================
 
 function agendarVerificacao() {
-  // Resetar estado para forçar nova verificação
   ultimoLocalVerificado = '';
   ultimaDataVerificada  = '';
 
@@ -147,13 +216,19 @@ function verificarDados() {
   var data  = document.getElementById('data').value;
 
   if (!local || !data) return;
-
-  // Evitar chamadas duplicadas para o mesmo local+data
   if (local === ultimoLocalVerificado && data === ultimaDataVerificada) return;
 
   ultimoLocalVerificado = local;
   ultimaDataVerificada  = data;
   edicaoPermitida       = null;
+
+  // Sem rede: não verificar (não há dados no servidor para comparar)
+  if (!navigator.onLine) {
+    mostrarBanner('novo', '📦 Sem ligação — os dados serão guardados localmente.');
+    document.getElementById('btnGuardar').disabled = false;
+    bloquearFormulario(false);
+    return;
+  }
 
   bloquearFormulario(false);
   document.getElementById('btnGuardar').disabled = false;
@@ -206,7 +281,6 @@ function verificarDados() {
       }
     },
     function onFailure(err) {
-      // Resetar para que a próxima interacção dispare nova verificação
       ultimoLocalVerificado = '';
       ultimaDataVerificada  = '';
       mostrarBanner('', '');
@@ -217,6 +291,9 @@ function verificarDados() {
 
 // ============================================================
 // GUARDAR REGISTO
+//
+// Online:  chama a Cloud Function directamente (comportamento anterior)
+// Offline: guarda na fila local via sync.js e sugere PDF
 // ============================================================
 
 function sinalizarAlteracao() {
@@ -242,7 +319,6 @@ function guardarDados() {
     return;
   }
 
-  // Recolher países com valor > 0
   var paises = {};
   document.querySelectorAll('.pais-input').forEach(function (inp) {
     var v = parseInt(inp.value, 10) || 0;
@@ -260,20 +336,56 @@ function guardarDados() {
   var btn = document.getElementById('btnGuardar');
   btn.disabled    = true;
   btn.textContent = '⏳ A guardar...';
-  mostrarToast('A guardar...', 'info');
 
   var partes        = data.split('-');
   var dataFormatada = partes[2] + '/' + partes[1] + '/' + partes[0];
 
+  var payload = {
+    data:        dataFormatada,
+    local:       local,
+    paises:      paises,
+    operadores:  operadores,
+    sugestoes:   sugestoes,
+    observacoes: observacoes
+  };
+
+  // ── Caminho offline ───────────────────────────────────────
+  if (!navigator.onLine) {
+    if (typeof syncGuardarNaFila !== 'function') {
+      mostrarToast('Módulo de sincronização não disponível.', 'erro');
+      btn.disabled    = false;
+      btn.textContent = '💾 Guardar Registo';
+      return;
+    }
+
+    syncGuardarNaFila(payload)
+      .then(function() {
+        btn.disabled    = false;
+        btn.textContent = '💾 Guardar Registo';
+        dadosAlterados  = false;
+        mostrarToast('📦 Registo guardado localmente. Será enviado ao reconectar.', 'info');
+        mostrarBanner('pendente', '📦 Registo guardado localmente — sem ligação à Internet.');
+        _actualizarBadgePendentes();
+
+        // Marcar inputs com estilo de "guardado localmente"
+        document.querySelectorAll('.pais-input').forEach(function (inp) {
+          if ((parseInt(inp.value, 10) || 0) > 0) inp.classList.add('input-pendente');
+        });
+      })
+      .catch(function(err) {
+        btn.disabled    = false;
+        btn.textContent = '💾 Guardar Registo';
+        mostrarToast('Erro ao guardar localmente: ' + err.message, 'erro');
+      });
+
+    return;
+  }
+
+  // ── Caminho online ────────────────────────────────────────
+  mostrarToast('A guardar...', 'info');
+
   apiGuardarRegisto(
-    {
-      data:        dataFormatada,
-      local:       local,
-      paises:      paises,
-      operadores:  operadores,
-      sugestoes:   sugestoes,
-      observacoes: observacoes
-    },
+    payload,
     function onSuccess(resp) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
@@ -292,7 +404,23 @@ function guardarDados() {
     function onFailure(err) {
       btn.disabled    = false;
       btn.textContent = '💾 Guardar Registo';
-      mostrarToast('Erro: ' + err.message, 'erro');
+
+      // Falha de rede durante tentativa online — oferecer guardar localmente
+      if (typeof syncGuardarNaFila === 'function') {
+        mostrarToast('Sem ligação. A guardar localmente...', 'info');
+        syncGuardarNaFila(payload)
+          .then(function() {
+            dadosAlterados = false;
+            mostrarToast('📦 Guardado localmente. Será enviado ao reconectar.', 'info');
+            mostrarBanner('pendente', '📦 Registo guardado localmente — falha de ligação.');
+            _actualizarBadgePendentes();
+          })
+          .catch(function() {
+            mostrarToast('Erro: ' + err.message, 'erro');
+          });
+      } else {
+        mostrarToast('Erro: ' + err.message, 'erro');
+      }
     }
   );
 }
@@ -314,8 +442,7 @@ function bloquearFormulario(bloquear) {
 }
 
 // ============================================================
-// LOGOUT — exposto ao HTML via botão
-// Delega em login.js que delega em auth.js.
+// LOGOUT
 // ============================================================
 
 function fazerLogout() {
