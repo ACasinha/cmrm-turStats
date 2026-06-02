@@ -1003,13 +1003,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  background: rgba(243, 156, 18, 0.15);
-  border: 1px solid rgba(243, 156, 18, 0.4);
-  border-radius: var(--radius-sm);
   padding: 6px 12px;
   font-size: var(--text-xs);
   font-weight: 600;
-  color: #8a6510;
+  color: var(--cor-aviso);
 }
 .conflitos-aviso-badge {
   background: var(--cor-aviso);
