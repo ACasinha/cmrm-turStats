@@ -402,8 +402,7 @@ function construirCardsExtras() {
   if (cardOp)  cardOp.style.display  = '';
   if (cardSug) cardSug.style.display = '';
 
-  _renderizarListaExtras('listaOperadores',    'secaoOpBadge',      'operadores');
-  _renderizarListaExtras('listaSugestoesObs',  'secaoSugObsBadge',  'sugestoes_obs');
+  _renderizarListaExtrasUnificada('listaExtras', 'secaoExtrasBadge');
 }
 
 function _parseDateDMY(str) {
@@ -420,65 +419,68 @@ function _parseDateDMY(str) {
   return new Date(y, m, d).getTime();
 }
 
-function _renderizarListaExtras(containerId, badgeId, tipo) {
+function _renderizarListaExtrasUnificada(containerId, badgeId) {
   var container = document.getElementById(containerId);
   var badge     = document.getElementById(badgeId);
   if (!container) return;
 
-  var diasComDados = [];
-
-  // Recolher todos os dias que têm dados do tipo pretendido
   var partes = _mesAtual.split('-');
-var ano = parseInt(partes[0], 10);
-var mes = parseInt(partes[1], 10);
-var numDias = new Date(ano, mes, 0).getDate();
+  var ano = parseInt(partes[0], 10);
+  var mes = parseInt(partes[1], 10);
+  var numDias = new Date(ano, mes, 0).getDate();
 
-for (var d = 1; d <= numDias; d++) {
-  var data = String(d).padStart(2, '0') + '/' +
-             String(mes).padStart(2, '0') + '/' +
-             ano;
+  var dias = [];
 
-  diasComDados.push(data);
-}
-  
+  for (var d = 1; d <= numDias; d++) {
+    var data = String(d).padStart(2, '0') + '/' +
+               String(mes).padStart(2, '0') + '/' +
+               ano;
 
-  // Ordenar por data
-  diasComDados.sort(function(a, b) {
-    return _parseDateDMY(a) - _parseDateDMY(b);
-  });
+    var extras = _dadosExtras[data] || {};
+    var alt    = _alteracoesExtras[data] || {};
 
-  if (badge) {
-    badge.textContent = diasComDados.length > 0
-      ? diasComDados.length + (diasComDados.length === 1 ? ' dia' : ' dias')
-      : 'Sem dados';
+    var temOps  = (alt.operadores !== undefined || (extras.operadores || []).length);
+    var temSugs = (alt.sugestoes !== undefined || (extras.sugestoes || []).length);
+    var temObs  = (alt.observacoes !== undefined || (extras.observacoes || '').length);
+
+    if (temOps || temSugs || temObs) {
+      dias.push({
+        data,
+        temOps,
+        temSugs,
+        temObs
+      });
+    }
   }
 
-  if (diasComDados.length === 0) {
-    container.innerHTML =
-      '<div class="lista-extras-vazia">Nenhum registo neste mês.</div>';
+  badge.textContent = dias.length
+    ? dias.length + (dias.length === 1 ? ' dia' : ' dias')
+    : 'Sem dados';
+
+  if (!dias.length) {
+    container.innerHTML = '<div class="lista-extras-vazia">Nenhum registo neste mês.</div>';
     return;
   }
 
   container.innerHTML = '';
-  diasComDados.forEach(function(data) {
-    var alt   = _alteracoesExtras[data] || {};
-    var orig  = _dadosExtras[data]      || {};
-    var temAlt = tipo === 'operadores'
-      ? alt.operadores !== undefined
-      : alt.sugestoes !== undefined || alt.observacoes !== undefined;
-    var temConflito = !!(_conflitosDoMes[data] && _conflitosDoMes[data].tipo === tipo);
+
+  dias.forEach(function(item) {
+    var data = item.data;
 
     var row = document.createElement('div');
-    row.className = 'lista-extras-row' + (temAlt ? ' alterada' : '') + (temConflito ? ' conflito' : '');
+    row.className = 'lista-extras-row';
     row.setAttribute('data-data', data);
 
-    var resumo = _resumoExtrasDia(data, tipo);
+    var badges = '';
+
+    if (item.temOps)  badges += ' <span class="badge-op">👥 Operadores</span>';
+    if (item.temSugs) badges += ' <span class="badge-sug">💬 Sugestões</span>';
+    if (item.temObs)  badges += ' <span class="badge-obs">📝 Observações</span>';
+
+    var resumo = _resumoExtrasDiaUnificado(data);
 
     row.innerHTML =
-      '<div class="extras-row-data">' + data +
-        (temConflito ? ' <span class="extras-conflito-badge">⚠️ conflito</span>' : '') +
-        (temAlt      ? ' <span class="extras-alt-badge">✏️</span>'                 : '') +
-      '</div>' +
+      '<div class="extras-row-data">' + data + badges + '</div>' +
       '<div class="extras-row-resumo">' + esc(resumo) + '</div>' +
       '<button type="button" class="btn-editar-dia-extra">✏️ Editar</button>';
 
@@ -490,24 +492,21 @@ for (var d = 1; d <= numDias; d++) {
   });
 }
 
-function _resumoExtrasDia(data, tipo) {
+function _resumoExtrasDiaUnificado(data) {
   var alt  = _alteracoesExtras[data] || {};
-  var orig = _dadosExtras[data]      || {};
+  var orig = _dadosExtras[data] || {};
 
-  if (tipo === 'operadores') {
-    var ops = alt.operadores !== undefined ? alt.operadores : (orig.operadores || []);
-    if (!ops.length) return 'Sem operadores';
-    return ops.map(function(o) {
-      return o.operador + (o.total ? ' (' + o.total + ')' : '');
-    }).join(', ');
-  } else {
-    var sugs = alt.sugestoes !== undefined ? alt.sugestoes : (orig.sugestoes || []);
-    var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
-    var partes = [];
-    if (sugs.length) partes.push(sugs.length + ' sugestão(ões)');
-    if (obs)         partes.push('observações');
-    return partes.length ? partes.join(' · ') : 'Sem dados';
-  }
+  var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores || []);
+  var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes || []);
+  var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
+
+  var partes = [];
+
+  if (ops.length)  partes.push(ops.length + ' operador(es)');
+  if (sugs.length) partes.push(sugs.length + ' sugestão(ões)');
+  if (obs)         partes.push('observações');
+
+  return partes.length ? partes.join(' · ') : 'Sem dados';
 }
 
 
