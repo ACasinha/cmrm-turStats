@@ -117,8 +117,7 @@ function carregarMes() {
   _totalAlteracoes = 0;
   atualizarBarraAlteracoes();
 
-  document.getElementById('secaoOperadores').style.display    = 'none';
-  document.getElementById('secaoSugestoesObs').style.display  = 'none';
+  document.getElementById('secaoInteracoes').style.display    = 'none';
   
   mostrarGrelhaLoading(true);
 
