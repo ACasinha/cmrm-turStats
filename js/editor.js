@@ -131,7 +131,6 @@ function carregarMes() {
   mostrarGrelhaLoading(false);
   var respDados     = resultados[0];
   var respConflitos = resultados[1];
-  var respExtras = {];
 
   if (!respDados.sucesso) {
     mostrarToast('Erro: ' + respDados.mensagem, 'erro');
@@ -149,7 +148,6 @@ function carregarMes() {
     _conflitosDoMes = {};
   } else {
     _conflitosDoMes = respConflitos.conflitos || {};
-    _dadosExtras    = (respExtras && respExtras.sucesso) ? (respExtras.dados || {}) : {};
     _alteracoesExtras = {};
   }
 
