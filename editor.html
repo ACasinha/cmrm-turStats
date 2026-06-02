@@ -170,6 +170,40 @@
         </div>
       </div>
 
+<!-- Card: Operadores e Agências -->
+      <div class="secao-card" id="secaoOperadores" style="display:none">
+        <div class="secao-card-header"
+             onclick="toggleSecaoEditor('corpoOperadores', 'iconeOpEditor')"
+             role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoEditor('corpoOperadores','iconeOpEditor')">
+          <h2>Operadores e Agências</h2>
+          <div class="secao-meta">
+            <span class="secao-total-badge" id="secaoOpBadge">—</span>
+            <span class="secao-toggle-icone" id="iconeOpEditor">▼</span>
+          </div>
+        </div>
+        <div class="secao-card-corpo" id="corpoOperadores">
+          <div id="listaOperadores" class="lista-dias-extras"></div>
+        </div>
+      </div>
+
+      <!-- Card: Sugestões e Observações -->
+      <div class="secao-card" id="secaoSugestoesObs" style="display:none">
+        <div class="secao-card-header"
+             onclick="toggleSecaoEditor('corpoSugestoesObs', 'iconeSugObsEditor')"
+             role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoEditor('corpoSugestoesObs','iconeSugObsEditor')">
+          <h2>Sugestões e Observações</h2>
+          <div class="secao-meta">
+            <span class="secao-total-badge" id="secaoSugObsBadge">—</span>
+            <span class="secao-toggle-icone" id="iconeSugObsEditor">▼</span>
+          </div>
+        </div>
+        <div class="secao-card-corpo" id="corpoSugestoesObs">
+          <div id="listaSugestoesObs" class="lista-dias-extras"></div>
+        </div>
+      </div>
+         
     </div><!-- /areaPrincipal -->
 
   </div><!-- /editor-container -->
@@ -192,6 +226,50 @@
   </footer>
 
 </div><!-- /editorWrap -->
+
+<!-- MODAL DE EDIÇÃO DE DIA (Operadores / Sugestões / Observações) -->
+<div class="modal-overlay" id="modalEditarDia">
+  <div class="modal-box modal-editar-dia-box">
+    <div class="modal-header">
+      <h2 id="modalEditarDiaTitulo">✏️ Editar dia</h2>
+      <div style="font-size:var(--text-xs);color:var(--cinza);margin-top:4px" id="modalEditarDiaMeta"></div>
+    </div>
+    <div class="modal-body">
+
+      <!-- Operadores -->
+      <div class="modal-secao-titulo">Operadores e Agências</div>
+      <div id="modalOpLista" class="modal-op-lista"></div>
+      <button type="button" class="btn-modal-add-linha" onclick="modalAdicionarOperador()">
+        + Adicionar operador
+      </button>
+
+      <!-- Sugestões -->
+      <div class="modal-secao-titulo" style="margin-top:16px">Sugestões e Críticas</div>
+      <div id="modalSugLista" class="modal-sug-lista"></div>
+      <button type="button" class="btn-modal-add-linha" onclick="modalAdicionarSugestao()">
+        + Adicionar sugestão
+      </button>
+
+      <!-- Observações -->
+      <div class="modal-secao-titulo" style="margin-top:16px">Outras Observações</div>
+      <textarea id="modalObservacoes" class="modal-obs-area"
+        placeholder="Observações do dia..."></textarea>
+
+      <!-- Aviso de conflito (se existir) -->
+      <div class="modal-conflito-aviso" id="modalConflitoAviso" style="display:none">
+        ⚠️ Este dia tem um conflito pendente de resolução.
+        <button type="button" class="btn-ver-conflito" id="btnVerConflitoExtra"
+                onclick="modalAbrirConflito()">Ver conflito</button>
+      </div>
+
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancelar" onclick="fecharModalEditarDia()">Cancelar</button>
+      <button class="btn-modal-confirmar" onclick="guardarModalDia()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ============================================================
      MODAL DE CONFIRMAÇÃO DE GUARDAR
