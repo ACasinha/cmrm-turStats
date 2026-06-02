@@ -23,6 +23,10 @@ var DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 var _conflitosDoMes  = {};   // { 'DD/MM/YYYY': { id, payloadNovo, payloadExistente, ... } }
 var _conflitoActivo  = null; // conflito aberto no modal
 
+var _dadosExtras      = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
+var _alteracoesExtras = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
+var _diaModalActivo   = null;
+
 // ============================================================
 // HELPER — verifica se o perfil tem acesso ao editor
 // ============================================================
@@ -112,13 +116,17 @@ function carregarMes() {
   _alteracoes      = {};
   _totalAlteracoes = 0;
   atualizarBarraAlteracoes();
+
+  document.getElementById('secaoOperadores').style.display    = 'none';
+  document.getElementById('secaoSugestoesObs').style.display  = 'none';
+  
   mostrarGrelhaLoading(true);
 
   // Uma única chamada que devolve todos os dias do mês de uma vez
   Promise.all([
-  chamarAPI('obterDadosMes',  { local: local, mes: mes }),
-  chamarAPI('obterConflitos', { local: local, mes: mes })
-])
+    chamarAPI('obterDadosMes',   { local: local, mes: mes }),
+    chamarAPI('obterConflitos',  { local: local, mes: mes })
+  ])
 .then(function(resultados) {
   mostrarGrelhaLoading(false);
   var respDados     = resultados[0];
@@ -130,12 +138,18 @@ function carregarMes() {
   }
 
   _dadosMes       = respDados.dados          || {};
+  _dadosExtras    = respDados.extras   || {};
+  _alteracoesExtras = {};
+
+  _conflitosDoMes = (respConflitos.sucesso ? respConflitos.conflitos : {}) || {};
 
   if (!respConflitos.sucesso) {
     console.error('Erro ao obter conflitos:', respConflitos);
     _conflitosDoMes = {};
   } else {
     _conflitosDoMes = respConflitos.conflitos || {};
+    _dadosExtras    = (respExtras && respExtras.sucesso) ? (respExtras.dados || {}) : {};
+    _alteracoesExtras = {};
   }
 
   var partes  = mes.split('-');
@@ -144,6 +158,7 @@ function carregarMes() {
   var numDias = new Date(ano, mesNum, 0).getDate();
 
   construirGrelha(local, ano, mesNum, numDias);
+  construirCardsExtras();
   atualizarBadgeConflitos();
 })
     .catch(function(err) {
@@ -377,6 +392,121 @@ function _assinalarConflitosNaGrelha() {
     });
   });
 }
+
+// ============================================================
+// Construir Cards de Operadores, Sugestões, etc
+// ============================================================
+
+function construirCardsExtras() {
+  var cardOp  = document.getElementById('secaoOperadores');
+  var cardSug = document.getElementById('secaoSugestoesObs');
+  if (cardOp)  cardOp.style.display  = '';
+  if (cardSug) cardSug.style.display = '';
+
+  _renderizarListaExtras('listaOperadores',    'secaoOpBadge',      'operadores');
+  _renderizarListaExtras('listaSugestoesObs',  'secaoSugObsBadge',  'sugestoes_obs');
+}
+
+function _renderizarListaExtras(containerId, badgeId, tipo) {
+  var container = document.getElementById(containerId);
+  var badge     = document.getElementById(badgeId);
+  if (!container) return;
+
+  // Recolher todos os dias que têm dados do tipo pretendido
+  var diasComDados = [];
+  Object.keys(_dadosExtras).forEach(function(data) {
+    var d = _dadosExtras[data];
+    var temDados = tipo === 'operadores'
+      ? (d.operadores && d.operadores.length > 0)
+      : (d.sugestoes && d.sugestoes.length > 0) || d.observacoes;
+
+    var temAlt = tipo === 'operadores'
+      ? (_alteracoesExtras[data] && _alteracoesExtras[data].operadores !== undefined)
+      : (_alteracoesExtras[data] && (_alteracoesExtras[data].sugestoes !== undefined ||
+                                      _alteracoesExtras[data].observacoes !== undefined));
+
+    if (temDados || temAlt) diasComDados.push(data);
+  });
+
+  // Incluir também dias com alterações não guardadas (pode não ter dados originais)
+  Object.keys(_alteracoesExtras).forEach(function(data) {
+    if (diasComDados.indexOf(data) === -1) {
+      var a = _alteracoesExtras[data];
+      var temAlt = tipo === 'operadores'
+        ? a.operadores !== undefined
+        : a.sugestoes !== undefined || a.observacoes !== undefined;
+      if (temAlt) diasComDados.push(data);
+    }
+  });
+
+  // Ordenar por data
+  diasComDados.sort(function(a, b) {
+    return _parseDateDMY(a) - _parseDateDMY(b);
+  });
+
+  if (badge) {
+    badge.textContent = diasComDados.length > 0
+      ? diasComDados.length + (diasComDados.length === 1 ? ' dia' : ' dias')
+      : 'Sem dados';
+  }
+
+  if (diasComDados.length === 0) {
+    container.innerHTML =
+      '<div class="lista-extras-vazia">Nenhum registo neste mês.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  diasComDados.forEach(function(data) {
+    var alt   = _alteracoesExtras[data] || {};
+    var orig  = _dadosExtras[data]      || {};
+    var temAlt = tipo === 'operadores'
+      ? alt.operadores !== undefined
+      : alt.sugestoes !== undefined || alt.observacoes !== undefined;
+    var temConflito = !!(_conflitosDoMes[data] && _conflitosDoMes[data].tipo === tipo);
+
+    var row = document.createElement('div');
+    row.className = 'lista-extras-row' + (temAlt ? ' alterada' : '') + (temConflito ? ' conflito' : '');
+    row.setAttribute('data-data', data);
+
+    var resumo = _resumoExtrasDia(data, tipo);
+
+    row.innerHTML =
+      '<div class="extras-row-data">' + data +
+        (temConflito ? ' <span class="extras-conflito-badge">⚠️ conflito</span>' : '') +
+        (temAlt      ? ' <span class="extras-alt-badge">✏️</span>'                 : '') +
+      '</div>' +
+      '<div class="extras-row-resumo">' + esc(resumo) + '</div>' +
+      '<button type="button" class="btn-editar-dia-extra">✏️ Editar</button>';
+
+    row.querySelector('.btn-editar-dia-extra').addEventListener('click', function() {
+      abrirModalEditarDia(data);
+    });
+
+    container.appendChild(row);
+  });
+}
+
+function _resumoExtrasDia(data, tipo) {
+  var alt  = _alteracoesExtras[data] || {};
+  var orig = _dadosExtras[data]      || {};
+
+  if (tipo === 'operadores') {
+    var ops = alt.operadores !== undefined ? alt.operadores : (orig.operadores || []);
+    if (!ops.length) return 'Sem operadores';
+    return ops.map(function(o) {
+      return o.operador + (o.total ? ' (' + o.total + ')' : '');
+    }).join(', ');
+  } else {
+    var sugs = alt.sugestoes !== undefined ? alt.sugestoes : (orig.sugestoes || []);
+    var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
+    var partes = [];
+    if (sugs.length) partes.push(sugs.length + ' sugestão(ões)');
+    if (obs)         partes.push('observações');
+    return partes.length ? partes.join(' · ') : 'Sem dados';
+  }
+}
+
 
 // ============================================================
 // EVENTOS DE CÉLULA
@@ -657,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') fecharModalGuardar();
+    if (e.key === 'Escape') { fecharModalGuardar(); fecharModalEditarDia(); }
   });
   window.addEventListener('beforeunload', function(e) {
     if (_totalAlteracoes > 0) {
@@ -673,6 +803,14 @@ if (overlayConflito) {
     if (e.target === overlayConflito) fecharModalConflito();
   });
 }
+
+var overlayEditarDia = document.getElementById('modalEditarDia');
+  if (overlayEditarDia) {
+    overlayEditarDia.addEventListener('click', function(e) {
+      if (e.target === overlayEditarDia) fecharModalEditarDia();
+    });
+  }
+  
 });
 
 // ============================================================
@@ -856,3 +994,193 @@ function atualizarBadgeConflitos() {
   if (badge) badge.textContent = n;
 }
 
+function toggleSecaoEditor(idCorpo, idIcone) {
+  var corpo  = document.getElementById(idCorpo);
+  var icone  = document.getElementById(idIcone);
+  if (!corpo || !icone) return;
+  var aberto = !corpo.closest('.secao-card').classList.contains('recolhido');
+  corpo.closest('.secao-card').classList.toggle('recolhido', aberto);
+  icone.textContent = aberto ? '▶' : '▼';
+}
+
+// ============================================================
+// MODAL DE EDIÇÃO DE DIA — Operadores / Sugestões / Observações
+// ============================================================
+
+function abrirModalEditarDia(data) {
+  _diaModalActivo = data;
+
+  document.getElementById('modalEditarDiaTitulo').textContent = '✏️ Editar — ' + data;
+  document.getElementById('modalEditarDiaMeta').textContent   = _localAtual;
+
+  var alt  = _alteracoesExtras[data] || {};
+  var orig = _dadosExtras[data]      || {};
+
+  var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores  || []);
+  var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes   || []);
+  var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
+
+  _modalRenderizarOperadores(ops);
+  _modalRenderizarSugestoes(sugs);
+  document.getElementById('modalObservacoes').value = obs;
+
+  // Aviso de conflito (apenas se o conflito for do tipo extra)
+  var conflito = _conflitosDoMes[data];
+  var avisoEl  = document.getElementById('modalConflitoAviso');
+  if (conflito && conflito.tipo && conflito.tipo !== 'paises') {
+    avisoEl.style.display = '';
+  } else {
+    avisoEl.style.display = 'none';
+  }
+
+  document.getElementById('modalEditarDia').classList.add('show');
+}
+
+function fecharModalEditarDia() {
+  document.getElementById('modalEditarDia').classList.remove('show');
+  _diaModalActivo = null;
+}
+
+function _modalRenderizarOperadores(ops) {
+  var lista = document.getElementById('modalOpLista');
+  lista.innerHTML = '';
+  if (!ops.length) ops = [{ operador: '', nacionalidades: '', total: '' }];
+  ops.forEach(function(op, idx) {
+    lista.appendChild(_criarLinhaOperadorModal(op, idx));
+  });
+}
+
+function _criarLinhaOperadorModal(op, idx) {
+  var div = document.createElement('div');
+  div.className = 'modal-op-linha';
+  div.innerHTML =
+    '<input type="text" class="modal-op-nome" placeholder="Nome do operador"' +
+           ' value="' + esc(op.operador || '') + '">' +
+    '<input type="text" class="modal-op-nacs" placeholder="Nacionalidades (ex: Espanha: 3, França: 1)"' +
+           ' value="' + esc(op.nacionalidades || '') + '">' +
+    '<input type="number" inputmode="numeric" class="modal-op-total" placeholder="Total" min="0"' +
+           ' value="' + esc(String(op.total || '')) + '">' +
+    '<button type="button" class="btn-rem-modal-linha" onclick="this.closest(\'.modal-op-linha\').remove()"' +
+            ' aria-label="Remover">✕</button>';
+  return div;
+}
+
+function modalAdicionarOperador() {
+  var lista = document.getElementById('modalOpLista');
+  lista.appendChild(_criarLinhaOperadorModal({ operador: '', nacionalidades: '', total: '' }, lista.children.length));
+}
+
+function _modalRenderizarSugestoes(sugs) {
+  var lista = document.getElementById('modalSugLista');
+  lista.innerHTML = '';
+  if (!sugs.length) sugs = [{ sugestao: '', nacionalidade: '' }];
+  sugs.forEach(function(s) {
+    lista.appendChild(_criarLinhaSugestaoModal(s));
+  });
+}
+
+function _criarLinhaSugestaoModal(s) {
+  var div = document.createElement('div');
+  div.className = 'modal-sug-linha';
+  div.innerHTML =
+    '<input type="text" class="modal-sug-texto" placeholder="Sugestão ou crítica"' +
+           ' value="' + esc(s.sugestao || '') + '">' +
+    '<input type="text" class="modal-sug-nac" placeholder="Nacionalidade"' +
+           ' value="' + esc(s.nacionalidade || '') + '">' +
+    '<button type="button" class="btn-rem-modal-linha" onclick="this.closest(\'.modal-sug-linha\').remove()"' +
+            ' aria-label="Remover">✕</button>';
+  return div;
+}
+
+function modalAdicionarSugestao() {
+  var lista = document.getElementById('modalSugLista');
+  lista.appendChild(_criarLinhaSugestaoModal({ sugestao: '', nacionalidade: '' }));
+}
+
+function modalAbrirConflito() {
+  fecharModalEditarDia();
+  if (_diaModalActivo) abrirModalConflito(_diaModalActivo);
+}
+
+function guardarModalDia() {
+  var data = _diaModalActivo;
+  if (!data) return;
+
+  // Recolher operadores
+  var ops = [];
+  document.querySelectorAll('#modalOpLista .modal-op-linha').forEach(function(linha) {
+    var nome = (linha.querySelector('.modal-op-nome')  || {}).value || '';
+    var nacs = (linha.querySelector('.modal-op-nacs')  || {}).value || '';
+    var tot  = parseInt((linha.querySelector('.modal-op-total') || {}).value, 10) || 0;
+    if (nome.trim()) ops.push({ operador: nome.trim(), nacionalidades: nacs.trim(), total: tot });
+  });
+
+  // Recolher sugestões
+  var sugs = [];
+  document.querySelectorAll('#modalSugLista .modal-sug-linha').forEach(function(linha) {
+    var txt = (linha.querySelector('.modal-sug-texto') || {}).value || '';
+    var nac = (linha.querySelector('.modal-sug-nac')   || {}).value || '';
+    if (txt.trim()) sugs.push({ sugestao: txt.trim(), nacionalidade: nac.trim() });
+  });
+
+  var obs = (document.getElementById('modalObservacoes') || {}).value || '';
+
+  // Comparar com originais para detectar alteração real
+  var orig = _dadosExtras[data] || {};
+  var opsChanged  = JSON.stringify(ops)  !== JSON.stringify(orig.operadores  || []);
+  var sugsChanged = JSON.stringify(sugs) !== JSON.stringify(orig.sugestoes   || []);
+  var obsChanged  = obs !== (orig.observacoes || '');
+
+  if (!opsChanged && !sugsChanged && !obsChanged) {
+    fecharModalEditarDia();
+    mostrarToast('Sem alterações a guardar.', 'info');
+    return;
+  }
+
+  if (!_alteracoesExtras[data]) _alteracoesExtras[data] = {};
+  if (opsChanged)  _alteracoesExtras[data].operadores  = ops;
+  if (sugsChanged) _alteracoesExtras[data].sugestoes   = sugs;
+  if (obsChanged)  _alteracoesExtras[data].observacoes = obs;
+
+  var btn = document.querySelector('#modalEditarDia .btn-modal-confirmar');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ A guardar...'; }
+
+  // Construir payload completo para guardar
+  var paisesOriginais = (_dadosMes[data] || {});
+  var payload = {
+    data:        data,
+    local:       _localAtual,
+    paises:      paisesOriginais,
+    operadores:  _alteracoesExtras[data].operadores  !== undefined ? _alteracoesExtras[data].operadores  : (orig.operadores  || []),
+    sugestoes:   _alteracoesExtras[data].sugestoes   !== undefined ? _alteracoesExtras[data].sugestoes   : (orig.sugestoes   || []),
+    observacoes: _alteracoesExtras[data].observacoes !== undefined ? _alteracoesExtras[data].observacoes : (orig.observacoes || '')
+  };
+
+  chamarAPI('guardarRegisto', payload)
+    .then(function(resp) {
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+      if (!resp.sucesso) {
+        mostrarToast('Erro: ' + resp.mensagem, 'erro');
+        return;
+      }
+      // Actualizar _dadosExtras com os valores guardados
+      if (!_dadosExtras[data]) _dadosExtras[data] = {};
+      if (opsChanged)  _dadosExtras[data].operadores  = ops;
+      if (sugsChanged) _dadosExtras[data].sugestoes   = sugs;
+      if (obsChanged)  _dadosExtras[data].observacoes = obs;
+
+      // Limpar alterações pendentes para este dia
+      delete _alteracoesExtras[data];
+
+      fecharModalEditarDia();
+      mostrarToast('✓ Registo guardado com sucesso.', 'sucesso');
+
+      // Re-renderizar os cards extras
+      _renderizarListaExtras('listaOperadores',   'secaoOpBadge',     'operadores');
+      _renderizarListaExtras('listaSugestoesObs', 'secaoSugObsBadge', 'sugestoes_obs');
+    })
+    .catch(function(err) {
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+      mostrarToast('Erro: ' + err.message, 'erro');
+    });
+}
