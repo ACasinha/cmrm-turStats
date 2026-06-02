@@ -406,6 +406,20 @@ function construirCardsExtras() {
   _renderizarListaExtras('listaSugestoesObs',  'secaoSugObsBadge',  'sugestoes_obs');
 }
 
+function _parseDateDMY(str) {
+  // formato esperado: "DD/MM/YYYY"
+  if (!str) return 0;
+
+  var p = str.split('/');
+  if (p.length !== 3) return 0;
+
+  var d = parseInt(p[0], 10);
+  var m = parseInt(p[1], 10) - 1;
+  var y = parseInt(p[2], 10);
+
+  return new Date(y, m, d).getTime();
+}
+
 function _renderizarListaExtras(containerId, badgeId, tipo) {
   var container = document.getElementById(containerId);
   var badge     = document.getElementById(badgeId);
