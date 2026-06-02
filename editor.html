@@ -172,20 +172,29 @@
 
 <!-- Card: Operadores, Sugestões e Observações -->
 <div class="secao-card" id="secaoExtras" style="display:none">
-  <div class="secao-card-header"
-       onclick="toggleSecaoExtras()"
-       role="button" tabindex="0"
-       onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoExtras()">
+  <div class="secao-card-header">
     <h2>Operadores, Sugestões e Observações</h2>
     <div class="secao-meta">
-      <button type="button" class="btn-novo-extra" onclick="event.stopPropagation();abrirModalNovoExtra()">
+      <button type="button" class="btn-extras-adicionar"
+              onclick="abrirModalExtras(null,'adicionar')">
         ➕ Adicionar registo
       </button>
-      <span class="secao-toggle-icone" id="iconeExtras">▼</span>
+      <span class="secao-toggle-icone" style="cursor:default">—</span>
     </div>
   </div>
-  <div class="secao-card-corpo" id="corpoExtras">
-    <!-- preenchido por construirTabelaExtras() -->
+  <div class="secao-card-corpo">
+    <div class="table-scroll">
+      <table class="extras-table">
+        <thead>
+          <tr>
+            <th class="extras-th-data">Dia</th>
+            <th class="extras-th-chips">Dados registados</th>
+            <th class="extras-th-acao"></th>
+          </tr>
+        </thead>
+        <tbody id="extrasTableBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
          
@@ -212,59 +221,59 @@
 
 </div><!-- /editorWrap -->
 
-<!-- MODAL DE EDIÇÃO DE DIA — Operadores / Sugestões / Observações -->
-<div class="modal-overlay" id="modalEditarDia">
-  <div class="modal-box modal-editar-dia-box">
+<!-- MODAL DE EXTRAS — Operadores / Sugestões / Observações -->
+<div class="modal-overlay" id="modalExtras">
+  <div class="modal-box modal-extras-box">
+
     <div class="modal-header">
-      <h2 id="modalEditarDiaTitulo">✏️ Editar dia</h2>
+      <h2 id="modalExtrasTitulo">✏️ Editar</h2>
+      <div class="modal-extras-meta" id="modalExtrasMeta"></div>
     </div>
+
+    <!-- Selector de dia — só visível no modo "adicionar" -->
+    <div id="modalExtrasSelectorDiaWrap" style="display:none">
+      <label class="modal-extras-label">Dia</label>
+      <select id="modalExtrasSelectorDia" class="modal-extras-select-dia"
+              onchange="_diaModalActivo=this.value;_preencherModalExtras(this.value)">
+      </select>
+    </div>
+
     <div class="modal-body">
 
-      <!-- Selector de dia (só visível no modo "novo") -->
-      <div class="form-group" id="modalDiaSelectWrap" style="display:none">
-        <label style="font-size:var(--text-xs);font-weight:700;text-transform:uppercase;
-                      letter-spacing:1px;color:var(--verde);display:block;margin-bottom:6px">
-          Dia
-        </label>
-        <select id="modalDiaSelect" style="width:100%;border:1.5px solid var(--cinza-claro);
-                border-radius:var(--radius-sm);padding:10px 36px 10px 12px;
-                font-size:var(--text-base);background:var(--branco);min-height:44px;
-                -webkit-appearance:none;appearance:none">
-        </select>
-      </div>
-
       <!-- Operadores -->
-      <div class="modal-secao-titulo">Operadores e Agências</div>
-      <div id="modalOpLista" class="modal-op-lista"></div>
-      <button type="button" class="btn-modal-add-linha" onclick="modalAdicionarOperador()">
-        + Adicionar operador
-      </button>
+      <div class="modal-extras-secao-titulo">Operadores e Agências</div>
+      <div id="modalExtrasOpLista" class="modal-extras-lista"></div>
+      <button type="button" class="btn-modal-add-linha"
+              onclick="modalAdicionarOperador()">+ Adicionar operador</button>
 
       <!-- Sugestões -->
-      <div class="modal-secao-titulo" style="margin-top:16px">Sugestões e Críticas</div>
-      <div id="modalSugLista" class="modal-sug-lista"></div>
-      <button type="button" class="btn-modal-add-linha" onclick="modalAdicionarSugestao()">
-        + Adicionar sugestão
-      </button>
+      <div class="modal-extras-secao-titulo" style="margin-top:16px">
+        Sugestões e Críticas
+      </div>
+      <div id="modalExtrasSugLista" class="modal-extras-lista"></div>
+      <button type="button" class="btn-modal-add-linha"
+              onclick="modalAdicionarSugestao()">+ Adicionar sugestão</button>
 
       <!-- Observações -->
-      <div class="modal-secao-titulo" style="margin-top:16px">Outras Observações</div>
-      <textarea id="modalObservacoes" class="modal-obs-area"
-        placeholder="Observações do dia..."></textarea>
+      <div class="modal-extras-secao-titulo" style="margin-top:16px">
+        Outras Observações
+      </div>
+      <textarea id="modalExtrasObservacoes" class="modal-extras-obs"
+                placeholder="Observações do dia..."></textarea>
 
       <!-- Aviso de conflito -->
-      <div class="modal-conflito-aviso" id="modalConflitoAviso" style="display:none">
+      <div class="modal-extras-conflito-aviso" id="modalExtrasConflitoAviso"
+           style="display:none">
         ⚠️ Este dia tem um conflito pendente de resolução.
-        <button type="button" class="btn-ver-conflito" onclick="modalAbrirConflito()">
-          Ver conflito
-        </button>
       </div>
 
     </div>
+
     <div class="modal-actions">
-      <button class="btn-modal-cancelar" onclick="fecharModalEditarDia()">Cancelar</button>
-      <button class="btn-modal-confirmar" onclick="guardarModalDia()">💾 Guardar</button>
+      <button class="btn-modal-cancelar" onclick="fecharModalExtras()">Cancelar</button>
+      <button class="btn-modal-confirmar" onclick="guardarModalExtras()">💾 Guardar</button>
     </div>
+
   </div>
 </div>
 
