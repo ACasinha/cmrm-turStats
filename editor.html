@@ -170,25 +170,39 @@
         </div>
       </div>
 
-<!-- Card único: Interações do dia -->
-<div class="secao-card" id="secaoInteracoes" style="display:none">
-  <div class="secao-card-header"
-       onclick="toggleSecaoEditor('corpoInteracoes', 'iconeInteracoesEditor')"
-       role="button" tabindex="0"
-       onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoEditor('corpoInteracoes','iconeInteracoesEditor')">
+<!-- Card: Operadores e Agências -->
+      <div class="secao-card" id="secaoOperadores" style="display:none">
+        <div class="secao-card-header"
+             onclick="toggleSecaoEditor('corpoOperadores', 'iconeOpEditor')"
+             role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoEditor('corpoOperadores','iconeOpEditor')">
+          <h2>Operadores e Agências</h2>
+          <div class="secao-meta">
+            <span class="secao-total-badge" id="secaoOpBadge">—</span>
+            <span class="secao-toggle-icone" id="iconeOpEditor">▼</span>
+          </div>
+        </div>
+        <div class="secao-card-corpo" id="corpoOperadores">
+          <div id="listaOperadores" class="lista-dias-extras"></div>
+        </div>
+      </div>
 
-    <h2 id="secaoGrelhaTitle">Operadores, Sugestões e Observações</h2>
-
-    <div class="secao-meta">
-      <span class="secao-total-badge" id="secaoInteracoesBadge">—</span>
-      <span class="secao-toggle-icone" id="iconeInteracoesEditor">▼</span>
-    </div>
-  </div>
-
-  <div class="secao-card-corpo" id="corpoInteracoes">
-    <div id="listaInteracoes" class="lista-dias-extras"></div>
-  </div>
-</div>
+      <!-- Card: Sugestões e Observações -->
+      <div class="secao-card" id="secaoSugestoesObs" style="display:none">
+        <div class="secao-card-header"
+             onclick="toggleSecaoEditor('corpoSugestoesObs', 'iconeSugObsEditor')"
+             role="button" tabindex="0"
+             onkeydown="if(event.key==='Enter'||event.key===' ')toggleSecaoEditor('corpoSugestoesObs','iconeSugObsEditor')">
+          <h2>Sugestões e Observações</h2>
+          <div class="secao-meta">
+            <span class="secao-total-badge" id="secaoSugObsBadge">—</span>
+            <span class="secao-toggle-icone" id="iconeSugObsEditor">▼</span>
+          </div>
+        </div>
+        <div class="secao-card-corpo" id="corpoSugestoesObs">
+          <div id="listaSugestoesObs" class="lista-dias-extras"></div>
+        </div>
+      </div>
          
     </div><!-- /areaPrincipal -->
 
