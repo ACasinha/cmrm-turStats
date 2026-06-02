@@ -979,7 +979,7 @@ function abrirModalNovoExtra() {
   // Preencher select de dias
   var sel = document.getElementById('modalDiaSelect');
   if (sel) {
-    sel.style.display = '';
+    document.getElementById('modalDiaSelectWrap').style.display = '';
     sel.innerHTML = '<option value="">— Escolha o dia —</option>';
     var partes  = _mesAtual.split('-');
     var ano     = parseInt(partes[0], 10);
@@ -1006,7 +1006,7 @@ function abrirModalEditarDia(data) {
   _diaModalActivo = data;
 
   var sel = document.getElementById('modalDiaSelect');
-  if (sel) sel.style.display = 'none';
+  document.getElementById('modalDiaSelectWrap').style.display = 'none';
 
   document.getElementById('modalEditarDiaTitulo').textContent =
     '✏️ ' + _localAtual + ' — ' + data;
