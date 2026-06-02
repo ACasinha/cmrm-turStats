@@ -26,6 +26,7 @@ var _conflitoActivo  = null; // conflito aberto no modal
 var _dadosExtras      = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
 var _alteracoesExtras = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
 var _diaModalActivo   = null;
+var _modoModalDia     = 'editar';
 
 // ============================================================
 // HELPER — verifica se o perfil tem acesso ao editor
@@ -117,8 +118,8 @@ function carregarMes() {
   _totalAlteracoes = 0;
   atualizarBarraAlteracoes();
 
-  document.getElementById('secaoOperadores').style.display    = 'none';
-  document.getElementById('secaoSugestoesObs').style.display  = 'none';
+  var secaoExtras = document.getElementById('secaoExtras');
+  if (secaoExtras) secaoExtras.style.display = 'none';
   
   mostrarGrelhaLoading(true);
 
@@ -157,7 +158,7 @@ function carregarMes() {
   var numDias = new Date(ano, mesNum, 0).getDate();
 
   construirGrelha(local, ano, mesNum, numDias);
-  construirCardsExtras();
+  construirTabelaExtras(ano, mesNum, numDias);
   atualizarBadgeConflitos();
 })
     .catch(function(err) {
@@ -393,133 +394,84 @@ function _assinalarConflitosNaGrelha() {
 }
 
 // ============================================================
-// Construir Cards de Operadores, Sugestões, etc
+// Construir Tabela de Operadores, Sugestões, etc
 // ============================================================
 
-function construirCardsExtras() {
-  var cardOp  = document.getElementById('secaoOperadores');
-  var cardSug = document.getElementById('secaoSugestoesObs');
-  if (cardOp)  cardOp.style.display  = '';
-  if (cardSug) cardSug.style.display = '';
+function construirTabelaExtras(ano, mesNum, numDias) {
+  var secao = document.getElementById('secaoExtras');
+  var corpo = document.getElementById('corpoExtras');
+  if (!secao || !corpo) return;
 
-  _renderizarListaExtras('listaOperadores',    'secaoOpBadge',      'operadores');
-  _renderizarListaExtras('listaSugestoesObs',  'secaoSugObsBadge',  'sugestoes_obs');
-}
+  secao.style.display = '';
+  corpo.innerHTML = '';
 
-function _parseDateDMY(str) {
-  // formato esperado: "DD/MM/YYYY"
-  if (!str) return 0;
+  var DIAS_SEM_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
-  var p = str.split('/');
-  if (p.length !== 3) return 0;
+  for (var d = 1; d <= numDias; d++) {
+    var dataFmt = String(d).padStart(2,'0') + '/' +
+                  String(mesNum).padStart(2,'0') + '/' + ano;
+    var dObj  = new Date(ano, mesNum - 1, d);
+    var diaSem = DIAS_SEM_PT[dObj.getDay()];
+    var eFDS   = dObj.getDay() === 0 || dObj.getDay() === 6;
 
-  var d = parseInt(p[0], 10);
-  var m = parseInt(p[1], 10) - 1;
-  var y = parseInt(p[2], 10);
+    var alt  = _alteracoesExtras[dataFmt] || {};
+    var orig = _dadosExtras[dataFmt]      || {};
 
-  return new Date(y, m, d).getTime();
-}
-
-function _renderizarListaExtras(containerId, badgeId, tipo) {
-  var container = document.getElementById(containerId);
-  var badge     = document.getElementById(badgeId);
-  if (!container) return;
-
-  // Recolher todos os dias que têm dados do tipo pretendido
-  var diasComDados = [];
-  Object.keys(_dadosExtras).forEach(function(data) {
-    var d = _dadosExtras[data];
-    var temDados = tipo === 'operadores'
-      ? (d.operadores && d.operadores.length > 0)
-      : (d.sugestoes && d.sugestoes.length > 0) || d.observacoes;
-
-    var temAlt = tipo === 'operadores'
-      ? (_alteracoesExtras[data] && _alteracoesExtras[data].operadores !== undefined)
-      : (_alteracoesExtras[data] && (_alteracoesExtras[data].sugestoes !== undefined ||
-                                      _alteracoesExtras[data].observacoes !== undefined));
-
-    if (temDados || temAlt) diasComDados.push(data);
-  });
-
-  // Incluir também dias com alterações não guardadas (pode não ter dados originais)
-  Object.keys(_alteracoesExtras).forEach(function(data) {
-    if (diasComDados.indexOf(data) === -1) {
-      var a = _alteracoesExtras[data];
-      var temAlt = tipo === 'operadores'
-        ? a.operadores !== undefined
-        : a.sugestoes !== undefined || a.observacoes !== undefined;
-      if (temAlt) diasComDados.push(data);
-    }
-  });
-
-  // Ordenar por data
-  diasComDados.sort(function(a, b) {
-    return _parseDateDMY(a) - _parseDateDMY(b);
-  });
-
-  if (badge) {
-    badge.textContent = diasComDados.length > 0
-      ? diasComDados.length + (diasComDados.length === 1 ? ' dia' : ' dias')
-      : 'Sem dados';
-  }
-
-  if (diasComDados.length === 0) {
-    container.innerHTML =
-      '<div class="lista-extras-vazia">Nenhum registo neste mês.</div>';
-    return;
-  }
-
-  container.innerHTML = '';
-  diasComDados.forEach(function(data) {
-    var alt   = _alteracoesExtras[data] || {};
-    var orig  = _dadosExtras[data]      || {};
-    var temAlt = tipo === 'operadores'
-      ? alt.operadores !== undefined
-      : alt.sugestoes !== undefined || alt.observacoes !== undefined;
-    var temConflito = !!(_conflitosDoMes[data] && _conflitosDoMes[data].tipo === tipo);
-
-    var row = document.createElement('div');
-    row.className = 'lista-extras-row' + (temAlt ? ' alterada' : '') + (temConflito ? ' conflito' : '');
-    row.setAttribute('data-data', data);
-
-    var resumo = _resumoExtrasDia(data, tipo);
-
-    row.innerHTML =
-      '<div class="extras-row-data">' + data +
-        (temConflito ? ' <span class="extras-conflito-badge">⚠️ conflito</span>' : '') +
-        (temAlt      ? ' <span class="extras-alt-badge">✏️</span>'                 : '') +
-      '</div>' +
-      '<div class="extras-row-resumo">' + esc(resumo) + '</div>' +
-      '<button type="button" class="btn-editar-dia-extra">✏️ Editar</button>';
-
-    row.querySelector('.btn-editar-dia-extra').addEventListener('click', function() {
-      abrirModalEditarDia(data);
-    });
-
-    container.appendChild(row);
-  });
-}
-
-function _resumoExtrasDia(data, tipo) {
-  var alt  = _alteracoesExtras[data] || {};
-  var orig = _dadosExtras[data]      || {};
-
-  if (tipo === 'operadores') {
-    var ops = alt.operadores !== undefined ? alt.operadores : (orig.operadores || []);
-    if (!ops.length) return 'Sem operadores';
-    return ops.map(function(o) {
-      return o.operador + (o.total ? ' (' + o.total + ')' : '');
-    }).join(', ');
-  } else {
-    var sugs = alt.sugestoes !== undefined ? alt.sugestoes : (orig.sugestoes || []);
+    var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores  || []);
+    var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes   || []);
     var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
-    var partes = [];
-    if (sugs.length) partes.push(sugs.length + ' sugestão(ões)');
-    if (obs)         partes.push('observações');
-    return partes.length ? partes.join(' · ') : 'Sem dados';
+
+    var temOps  = ops.length  > 0;
+    var temSugs = sugs.length > 0;
+    var temObs  = !!obs;
+    var temAlt  = alt.operadores !== undefined || alt.sugestoes !== undefined || alt.observacoes !== undefined;
+    var temConflito = !!_conflitosDoMes[dataFmt];
+
+    if (!temOps && !temSugs && !temObs && !temAlt) continue;
+
+    var cartao = document.createElement('div');
+    cartao.className = 'extras-cartao' +
+                       (eFDS       ? ' fds'       : '') +
+                       (temAlt     ? ' alterado'  : '') +
+                       (temConflito? ' conflito'  : '');
+    cartao.dataset.data = dataFmt;
+
+    var chipsHtml = '';
+    if (temOps)  chipsHtml += '<span class="extras-chip chip-op">Operadores (' + ops.length + ')</span>';
+    if (temSugs) chipsHtml += '<span class="extras-chip chip-sug">Sugestões (' + sugs.length + ')</span>';
+    if (temObs)  chipsHtml += '<span class="extras-chip chip-obs">Observações</span>';
+    if (temAlt)  chipsHtml += '<span class="extras-chip chip-alt">✏️ Por guardar</span>';
+    if (temConflito) chipsHtml += '<span class="extras-chip chip-conflito">⚠️ Conflito</span>';
+
+    cartao.innerHTML =
+      '<div class="extras-cartao-topo">' +
+        '<div class="extras-cartao-data">' +
+          '<span class="extras-dia-num">' + d + '</span>' +
+          '<span class="extras-dia-sem' + (eFDS ? ' fds' : '') + '">' + diaSem + '</span>' +
+        '</div>' +
+        '<div class="extras-chips">' + chipsHtml + '</div>' +
+        '<button type="button" class="btn-editar-extras" ' +
+                'onclick="abrirModalEditarDia(\'' + dataFmt + '\')" ' +
+                'aria-label="Editar ' + dataFmt + '">✏️ Editar</button>' +
+      '</div>';
+
+    corpo.appendChild(cartao);
+  }
+
+  if (!corpo.children.length) {
+    corpo.innerHTML =
+      '<div class="extras-vazio">Nenhum registo de operadores, sugestões ou observações neste mês.</div>';
   }
 }
 
+function toggleSecaoExtras() {
+  var card  = document.getElementById('secaoExtras');
+  var icone = document.getElementById('iconeExtras');
+  if (!card || !icone) return;
+  var aberto = !card.classList.contains('recolhido');
+  card.classList.toggle('recolhido', aberto);
+  icone.textContent = aberto ? '▶' : '▼';
+}
 
 // ============================================================
 // EVENTOS DE CÉLULA
@@ -818,11 +770,11 @@ if (overlayConflito) {
 }
 
 var overlayEditarDia = document.getElementById('modalEditarDia');
-  if (overlayEditarDia) {
-    overlayEditarDia.addEventListener('click', function(e) {
-      if (e.target === overlayEditarDia) fecharModalEditarDia();
-    });
-  }
+if (overlayEditarDia) {
+  overlayEditarDia.addEventListener('click', function(e) {
+    if (e.target === overlayEditarDia) fecharModalEditarDia();
+  });
+}
   
 });
 
@@ -1020,15 +972,58 @@ function toggleSecaoEditor(idCorpo, idIcone) {
 // MODAL DE EDIÇÃO DE DIA — Operadores / Sugestões / Observações
 // ============================================================
 
+function abrirModalNovoExtra() {
+  _modoModalDia   = 'novo';
+  _diaModalActivo = null;
+
+  // Preencher select de dias
+  var sel = document.getElementById('modalDiaSelect');
+  if (sel) {
+    sel.style.display = '';
+    sel.innerHTML = '<option value="">— Escolha o dia —</option>';
+    var partes  = _mesAtual.split('-');
+    var ano     = parseInt(partes[0], 10);
+    var mesNum  = parseInt(partes[1], 10);
+    var numDias = new Date(ano, mesNum, 0).getDate();
+    var DIAS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    for (var d = 1; d <= numDias; d++) {
+      var dataFmt = String(d).padStart(2,'0') + '/' + String(mesNum).padStart(2,'0') + '/' + ano;
+      var diaSem  = DIAS_PT[new Date(ano, mesNum - 1, d).getDay()];
+      var opt     = document.createElement('option');
+      opt.value       = dataFmt;
+      opt.textContent = d + ' — ' + diaSem + ' (' + dataFmt + ')';
+      sel.appendChild(opt);
+    }
+  }
+
+  _modalPreencherFormulario({}, null);
+  document.getElementById('modalEditarDiaTitulo').textContent = '➕ Novo Registo';
+  document.getElementById('modalEditarDia').classList.add('show');
+}
+
 function abrirModalEditarDia(data) {
+  _modoModalDia   = 'editar';
   _diaModalActivo = data;
 
-  document.getElementById('modalEditarDiaTitulo').textContent = '✏️ Editar — ' + data;
-  document.getElementById('modalEditarDiaMeta').textContent   = _localAtual;
+  var sel = document.getElementById('modalDiaSelect');
+  if (sel) sel.style.display = 'none';
+
+  document.getElementById('modalEditarDiaTitulo').textContent =
+    '✏️ ' + _localAtual + ' — ' + data;
 
   var alt  = _alteracoesExtras[data] || {};
   var orig = _dadosExtras[data]      || {};
+  _modalPreencherFormulario(alt, orig);
 
+  // Aviso de conflito
+  var avisoEl = document.getElementById('modalConflitoAviso');
+  if (avisoEl) avisoEl.style.display = _conflitosDoMes[data] ? '' : 'none';
+
+  document.getElementById('modalEditarDia').classList.add('show');
+}
+
+function _modalPreencherFormulario(alt, orig) {
+  orig = orig || {};
   var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores  || []);
   var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes   || []);
   var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
@@ -1036,87 +1031,87 @@ function abrirModalEditarDia(data) {
   _modalRenderizarOperadores(ops);
   _modalRenderizarSugestoes(sugs);
   document.getElementById('modalObservacoes').value = obs;
-
-  // Aviso de conflito (apenas se o conflito for do tipo extra)
-  var conflito = _conflitosDoMes[data];
-  var avisoEl  = document.getElementById('modalConflitoAviso');
-  if (conflito && conflito.tipo && conflito.tipo !== 'paises') {
-    avisoEl.style.display = '';
-  } else {
-    avisoEl.style.display = 'none';
-  }
-
-  document.getElementById('modalEditarDia').classList.add('show');
 }
 
 function fecharModalEditarDia() {
   document.getElementById('modalEditarDia').classList.remove('show');
   _diaModalActivo = null;
+  _modoModalDia   = 'editar';
 }
 
 function _modalRenderizarOperadores(ops) {
   var lista = document.getElementById('modalOpLista');
   lista.innerHTML = '';
-  if (!ops.length) ops = [{ operador: '', nacionalidades: '', total: '' }];
-  ops.forEach(function(op, idx) {
-    lista.appendChild(_criarLinhaOperadorModal(op, idx));
-  });
+  var fonte = (ops && ops.length) ? ops : [];
+  fonte.forEach(function(op) { lista.appendChild(_criarLinhaOpModal(op)); });
 }
 
-function _criarLinhaOperadorModal(op, idx) {
+function _criarLinhaOpModal(op) {
+  op = op || {};
   var div = document.createElement('div');
   div.className = 'modal-op-linha';
   div.innerHTML =
-    '<input type="text" class="modal-op-nome" placeholder="Nome do operador"' +
+    '<input type="text"   class="modal-op-nome"  placeholder="Nome do operador"' +
            ' value="' + esc(op.operador || '') + '">' +
-    '<input type="text" class="modal-op-nacs" placeholder="Nacionalidades (ex: Espanha: 3, França: 1)"' +
+    '<input type="text"   class="modal-op-nacs"  placeholder="Nac. (ex: Espanha: 3)"' +
            ' value="' + esc(op.nacionalidades || '') + '">' +
-    '<input type="number" inputmode="numeric" class="modal-op-total" placeholder="Total" min="0"' +
+    '<input type="number" class="modal-op-total" placeholder="Total" min="0"' +
            ' value="' + esc(String(op.total || '')) + '">' +
-    '<button type="button" class="btn-rem-modal-linha" onclick="this.closest(\'.modal-op-linha\').remove()"' +
+    '<button type="button" class="btn-rem-modal-linha"' +
+            ' onclick="this.closest(\'.modal-op-linha\').remove()"' +
             ' aria-label="Remover">✕</button>';
   return div;
 }
 
 function modalAdicionarOperador() {
-  var lista = document.getElementById('modalOpLista');
-  lista.appendChild(_criarLinhaOperadorModal({ operador: '', nacionalidades: '', total: '' }, lista.children.length));
+  document.getElementById('modalOpLista')
+    .appendChild(_criarLinhaOpModal({}));
 }
 
 function _modalRenderizarSugestoes(sugs) {
   var lista = document.getElementById('modalSugLista');
   lista.innerHTML = '';
-  if (!sugs.length) sugs = [{ sugestao: '', nacionalidade: '' }];
-  sugs.forEach(function(s) {
-    lista.appendChild(_criarLinhaSugestaoModal(s));
-  });
+  var fonte = (sugs && sugs.length) ? sugs : [];
+  fonte.forEach(function(s) { lista.appendChild(_criarLinhaSugModal(s)); });
 }
 
-function _criarLinhaSugestaoModal(s) {
+function _criarLinhaSugModal(s) {
+  s = s || {};
   var div = document.createElement('div');
   div.className = 'modal-sug-linha';
   div.innerHTML =
     '<input type="text" class="modal-sug-texto" placeholder="Sugestão ou crítica"' +
            ' value="' + esc(s.sugestao || '') + '">' +
-    '<input type="text" class="modal-sug-nac" placeholder="Nacionalidade"' +
+    '<input type="text" class="modal-sug-nac"   placeholder="Nacionalidade"' +
            ' value="' + esc(s.nacionalidade || '') + '">' +
-    '<button type="button" class="btn-rem-modal-linha" onclick="this.closest(\'.modal-sug-linha\').remove()"' +
+    '<button type="button" class="btn-rem-modal-linha"' +
+            ' onclick="this.closest(\'.modal-sug-linha\').remove()"' +
             ' aria-label="Remover">✕</button>';
   return div;
 }
 
 function modalAdicionarSugestao() {
-  var lista = document.getElementById('modalSugLista');
-  lista.appendChild(_criarLinhaSugestaoModal({ sugestao: '', nacionalidade: '' }));
+  document.getElementById('modalSugLista')
+    .appendChild(_criarLinhaSugModal({}));
 }
 
 function modalAbrirConflito() {
+  var data = _diaModalActivo;
   fecharModalEditarDia();
-  if (_diaModalActivo) abrirModalConflito(_diaModalActivo);
+  if (data) abrirModalConflito(data);
 }
 
 function guardarModalDia() {
+  // Determinar o dia a guardar
   var data = _diaModalActivo;
+  if (_modoModalDia === 'novo') {
+    var sel = document.getElementById('modalDiaSelect');
+    data = sel ? sel.value : '';
+    if (!data) {
+      mostrarToast('Por favor escolha o dia.', 'erro');
+      return;
+    }
+  }
   if (!data) return;
 
   // Recolher operadores
@@ -1139,7 +1134,7 @@ function guardarModalDia() {
   var obs = (document.getElementById('modalObservacoes') || {}).value || '';
 
   // Comparar com originais para detectar alteração real
-  var orig = _dadosExtras[data] || {};
+  var orig        = _dadosExtras[data] || {};
   var opsChanged  = JSON.stringify(ops)  !== JSON.stringify(orig.operadores  || []);
   var sugsChanged = JSON.stringify(sugs) !== JSON.stringify(orig.sugestoes   || []);
   var obsChanged  = obs !== (orig.observacoes || '');
@@ -1158,15 +1153,17 @@ function guardarModalDia() {
   var btn = document.querySelector('#modalEditarDia .btn-modal-confirmar');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ A guardar...'; }
 
-  // Construir payload completo para guardar
-  var paisesOriginais = (_dadosMes[data] || {});
+  var paisesOriginais = _dadosMes[data] || {};
   var payload = {
     data:        data,
     local:       _localAtual,
     paises:      paisesOriginais,
-    operadores:  _alteracoesExtras[data].operadores  !== undefined ? _alteracoesExtras[data].operadores  : (orig.operadores  || []),
-    sugestoes:   _alteracoesExtras[data].sugestoes   !== undefined ? _alteracoesExtras[data].sugestoes   : (orig.sugestoes   || []),
-    observacoes: _alteracoesExtras[data].observacoes !== undefined ? _alteracoesExtras[data].observacoes : (orig.observacoes || '')
+    operadores:  _alteracoesExtras[data].operadores  !== undefined
+                   ? _alteracoesExtras[data].operadores  : (orig.operadores  || []),
+    sugestoes:   _alteracoesExtras[data].sugestoes   !== undefined
+                   ? _alteracoesExtras[data].sugestoes   : (orig.sugestoes   || []),
+    observacoes: _alteracoesExtras[data].observacoes !== undefined
+                   ? _alteracoesExtras[data].observacoes : (orig.observacoes || '')
   };
 
   chamarAPI('guardarRegisto', payload)
@@ -1176,21 +1173,22 @@ function guardarModalDia() {
         mostrarToast('Erro: ' + resp.mensagem, 'erro');
         return;
       }
-      // Actualizar _dadosExtras com os valores guardados
+      // Actualizar _dadosExtras
       if (!_dadosExtras[data]) _dadosExtras[data] = {};
       if (opsChanged)  _dadosExtras[data].operadores  = ops;
       if (sugsChanged) _dadosExtras[data].sugestoes   = sugs;
       if (obsChanged)  _dadosExtras[data].observacoes = obs;
-
-      // Limpar alterações pendentes para este dia
       delete _alteracoesExtras[data];
 
       fecharModalEditarDia();
       mostrarToast('✓ Registo guardado com sucesso.', 'sucesso');
 
-      // Re-renderizar os cards extras
-      _renderizarListaExtras('listaOperadores',   'secaoOpBadge',     'operadores');
-      _renderizarListaExtras('listaSugestoesObs', 'secaoSugObsBadge', 'sugestoes_obs');
+      // Re-renderizar a tabela de extras
+      var partes  = _mesAtual.split('-');
+      var ano     = parseInt(partes[0], 10);
+      var mesNum  = parseInt(partes[1], 10);
+      var numDias = new Date(ano, mesNum, 0).getDate();
+      construirTabelaExtras(ano, mesNum, numDias);
     })
     .catch(function(err) {
       if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
