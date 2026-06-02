@@ -998,6 +998,44 @@ function abrirModalExtras(data, modo) {
   var meta = document.getElementById('modalExtrasMeta');
   if (meta) meta.textContent = _localAtual;
 
+
+  // Preencher selector de dia (modo adicionar)
+var selectorWrap = document.getElementById('modalExtrasSelectorDiaWrap');
+var selectorDia  = document.getElementById('modalExtrasSelectorDia');
+if (selectorDia && selectorWrap) {
+  if (modo === 'adicionar') {
+    selectorWrap.style.display = '';
+    selectorDia.innerHTML = '';
+    // Construir lista de dias do mês actual
+    var partes  = _mesAtual.split('-');
+    var anoSel  = parseInt(partes[0], 10);
+    var mesSel  = parseInt(partes[1], 10);
+    var nDias   = new Date(anoSel, mesSel, 0).getDate();
+    for (var dd = 1; dd <= nDias; dd++) {
+  var dfmt = String(dd).padStart(2,'0') + '/' +
+             String(mesSel).padStart(2,'0') + '/' + anoSel;
+
+  var temDadosBD  = !!(_dadosExtras[dfmt] &&
+                       (_dadosExtras[dfmt].operadores && _dadosExtras[dfmt].operadores.length ||
+                        _dadosExtras[dfmt].sugestoes  && _dadosExtras[dfmt].sugestoes.length  ||
+                        _dadosExtras[dfmt].observacoes));
+  var temDadosAlt = !!(_alteracoesExtras[dfmt]);
+  if (temDadosBD || temDadosAlt) continue;
+
+  var opt  = document.createElement('option');
+  opt.value       = dfmt;
+  opt.textContent = dfmt + ' (' + DIAS_SEM[new Date(anoSel, mesSel-1, dd).getDay()] + ')';
+  selectorDia.appendChild(opt);
+}
+
+if (!selectorDia.options.length) {
+  mostrarToast('Todos os dias do mês já têm registos.', 'info');
+  return;
+}
+  } else {
+    selectorWrap.style.display = 'none';
+  }
+}
   _preencherModalExtras(data);
 
   document.getElementById('modalExtras').classList.add('show');
@@ -1043,23 +1081,113 @@ function _modalRenderizarOperadores(ops) {
   var items = ops.length ? ops : [{ operador: '', nacionalidades: '', total: '' }];
   items.forEach(function(op) {
     lista.appendChild(_criarLinhaOperadorModal(op));
+    items.forEach(function(op) {
+  var cartao = _criarLinhaOperadorModal(op);
+  // Ligar eventos de recalculo às linhas já existentes
+  cartao.querySelectorAll('.modal-op-nac-select, .modal-op-nac-num').forEach(function(el) {
+    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function() {
+      _recalcularTotalModalOp(cartao);
+    });
+  });
+  lista.appendChild(cartao);
+});
   });
 }
 
 function _criarLinhaOperadorModal(op) {
   var div = document.createElement('div');
-  div.className = 'modal-extras-linha';
+  div.className = 'modal-extras-op-cartao';
+
+  var pares = _parsearNacionalidadesEditor(op.nacionalidades || '');
+
+  var nacHtml = '';
+  if (pares.length > 0) {
+    pares.forEach(function(par) {
+      nacHtml += _htmlLinhaNacModal(par.pais, par.num);
+    });
+  } else {
+    nacHtml = _htmlLinhaNacModal('', '');
+  }
+
   div.innerHTML =
-    '<input type="text"   class="modal-extras-op-nome" placeholder="Nome do operador"' +
-           ' value="' + esc(op.operador || '') + '">' +
-    '<input type="text"   class="modal-extras-op-nacs" placeholder="Nacionalidades (ex: Espanha: 3)"' +
-           ' value="' + esc(op.nacionalidades || '') + '">' +
-    '<input type="number" class="modal-extras-op-total" inputmode="numeric" placeholder="Total" min="0"' +
-           ' value="' + esc(String(op.total || '')) + '">' +
-    '<button type="button" class="btn-rem-modal-linha"' +
-            ' onclick="this.closest(\'.modal-extras-linha\').remove()"' +
-            ' aria-label="Remover">✕</button>';
+    '<div class="modal-op-cartao-header">' +
+      '<input type="text" class="modal-extras-op-nome" placeholder="Nome do operador ou agência"' +
+             ' value="' + esc(op.operador || '') + '">' +
+      '<button type="button" class="btn-rem-modal-linha modal-op-cartao-rem"' +
+              ' onclick="this.closest(\'.modal-extras-op-cartao\').remove()"' +
+              ' aria-label="Remover operador">✕</button>' +
+    '</div>' +
+    '<div class="modal-op-nac-lista">' + nacHtml + '</div>' +
+    '<button type="button" class="btn-modal-add-nac"' +
+            ' onclick="_adicionarLinhaNacModal(this)">+ Adicionar nacionalidade</button>' +
+    '<div class="modal-op-cartao-total-wrap">' +
+      '<span class="modal-op-cartao-total-label">TOTAL</span>' +
+      '<input type="number" class="modal-extras-op-total" inputmode="numeric"' +
+             ' min="0" placeholder="0" readonly' +
+             ' value="' + esc(String(op.total || '')) + '">' +
+    '</div>';
+
+  // Recalcular total ao criar
+  _recalcularTotalModalOp(div);
+
   return div;
+}
+
+function _htmlLinhaNacModal(paisSel, num) {
+  var optsHtml = '<option value="">— País —</option>';
+  PAISES.forEach(function(p) {
+    var sel = p.nome === paisSel ? ' selected' : '';
+    optsHtml += '<option value="' + esc(p.nome) + '"' + sel + '>' + esc(p.nome) + '</option>';
+  });
+
+  return '<div class="modal-op-nac-linha">' +
+    '<select class="modal-op-nac-select">' + optsHtml + '</select>' +
+    '<input type="number" inputmode="numeric" class="modal-op-nac-num"' +
+           ' min="0" placeholder="0" value="' + esc(String(num || '')) + '">' +
+    '<button type="button" class="btn-rem-nac-modal"' +
+            ' onclick="_removerLinhaNacModal(this)" aria-label="Remover">✕</button>' +
+  '</div>';
+}
+
+function _adicionarLinhaNacModal(btn) {
+  var lista = btn.previousElementSibling;
+  var div   = document.createElement('div');
+  div.innerHTML = _htmlLinhaNacModal('', '');
+  var linha = div.firstChild;
+  // Ligar eventos de recalculo
+  var cartao = btn.closest('.modal-extras-op-cartao');
+  linha.querySelector('.modal-op-nac-select').addEventListener('change', function() {
+    _recalcularTotalModalOp(cartao);
+  });
+  linha.querySelector('.modal-op-nac-num').addEventListener('input', function() {
+    _recalcularTotalModalOp(cartao);
+  });
+  lista.appendChild(linha);
+}
+
+function _removerLinhaNacModal(btn) {
+  var linha  = btn.closest('.modal-op-nac-linha');
+  var cartao = btn.closest('.modal-extras-op-cartao');
+  linha.remove();
+  _recalcularTotalModalOp(cartao);
+}
+
+function _recalcularTotalModalOp(cartao) {
+  if (!cartao) return;
+  var total = 0;
+  cartao.querySelectorAll('.modal-op-nac-num').forEach(function(inp) {
+    total += parseInt(inp.value, 10) || 0;
+  });
+  var totEl = cartao.querySelector('.modal-extras-op-total');
+  if (totEl) totEl.value = total > 0 ? total : '';
+}
+
+function _parsearNacionalidadesEditor(str) {
+  if (!str) return [];
+  return str.split(',').map(function(s) {
+    var partes = s.trim().split(':');
+    return { pais: (partes[0] || '').trim(), num: parseInt((partes[1] || ''), 10) || 0 };
+  }).filter(function(p) { return p.pais; });
 }
 
 function modalAdicionarOperador() {
@@ -1080,11 +1208,17 @@ function _modalRenderizarSugestoes(sugs) {
 function _criarLinhaSugestaoModal(s) {
   var div = document.createElement('div');
   div.className = 'modal-extras-linha';
+
+  var optsHtml = '<option value="">— País —</option>';
+  PAISES.forEach(function(p) {
+    var sel = p.nome === (s.nacionalidade || '') ? ' selected' : '';
+    optsHtml += '<option value="' + esc(p.nome) + '"' + sel + '>' + esc(p.nome) + '</option>';
+  });
+
   div.innerHTML =
     '<input type="text" class="modal-extras-sug-texto" placeholder="Sugestão ou crítica"' +
            ' value="' + esc(s.sugestao || '') + '">' +
-    '<input type="text" class="modal-extras-sug-nac"   placeholder="Nacionalidade"' +
-           ' value="' + esc(s.nacionalidade || '') + '">' +
+    '<select class="modal-extras-sug-nac">' + optsHtml + '</select>' +
     '<button type="button" class="btn-rem-modal-linha"' +
             ' onclick="this.closest(\'.modal-extras-linha\').remove()"' +
             ' aria-label="Remover">✕</button>';
@@ -1113,12 +1247,20 @@ function guardarModalExtras() {
 
   // Recolher operadores
   var ops = [];
-  document.querySelectorAll('#modalExtrasOpLista .modal-extras-linha').forEach(function(linha) {
-    var nome = (linha.querySelector('.modal-extras-op-nome')  || {}).value || '';
-    var nacs = (linha.querySelector('.modal-extras-op-nacs')  || {}).value || '';
-    var tot  = parseInt((linha.querySelector('.modal-extras-op-total') || {}).value, 10) || 0;
-    if (nome.trim()) ops.push({ operador: nome.trim(), nacionalidades: nacs.trim(), total: tot });
+document.querySelectorAll('#modalExtrasOpLista .modal-extras-op-cartao').forEach(function(cartao) {
+  var nome = (cartao.querySelector('.modal-extras-op-nome') || {}).value || '';
+  if (!nome.trim()) return;
+
+  var nacs = [];
+  cartao.querySelectorAll('.modal-op-nac-linha').forEach(function(linha) {
+    var pais = (linha.querySelector('.modal-op-nac-select') || {}).value || '';
+    var num  = parseInt((linha.querySelector('.modal-op-nac-num') || {}).value, 10) || 0;
+    if (pais && num > 0) nacs.push(pais + ': ' + num);
   });
+
+  var tot = parseInt((cartao.querySelector('.modal-extras-op-total') || {}).value, 10) || 0;
+  ops.push({ operador: nome.trim(), nacionalidades: nacs.join(', '), total: tot });
+});
 
   // Recolher sugestões
   var sugs = [];
