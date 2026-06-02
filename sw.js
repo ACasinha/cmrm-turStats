@@ -6,8 +6,8 @@
 // O sw-update.js lê esta constante para mostrar a versão no rodapé.
 // ============================================================
 
-const CACHE_NAME   = 'rmz-nacionalidades-v1.5.2.b';
-const CACHE_STATIC = 'rmz-static-v1.5.1.b';
+const CACHE_NAME   = 'rmz-nacionalidades-v1.5.2.c';
+const CACHE_STATIC = 'rmz-static-v1.5.1.c';
 
 const STATIC_ASSETS = [
   './index.html',
