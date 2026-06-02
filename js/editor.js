@@ -26,7 +26,7 @@ var _conflitoActivo  = null; // conflito aberto no modal
 var _dadosExtras      = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
 var _alteracoesExtras = {};  // { 'DD/MM/YYYY': { operadores, sugestoes, observacoes } }
 var _diaModalActivo   = null;
-var _modoModalDia     = 'editar';
+var _modoModalExtras  = null;
 
 // ============================================================
 // HELPER — verifica se o perfil tem acesso ao editor
@@ -118,8 +118,8 @@ function carregarMes() {
   _totalAlteracoes = 0;
   atualizarBarraAlteracoes();
 
-  var secaoExtras = document.getElementById('secaoExtras');
-  if (secaoExtras) secaoExtras.style.display = 'none';
+  var cardExtras = document.getElementById('secaoExtras');
+  if (cardExtras) cardExtras.style.display = 'none';
   
   mostrarGrelhaLoading(true);
 
@@ -398,79 +398,88 @@ function _assinalarConflitosNaGrelha() {
 // ============================================================
 
 function construirTabelaExtras(ano, mesNum, numDias) {
-  var secao = document.getElementById('secaoExtras');
-  var corpo = document.getElementById('corpoExtras');
-  if (!secao || !corpo) return;
+  var card = document.getElementById('secaoExtras');
+  if (card) card.style.display = '';
 
-  secao.style.display = '';
-  corpo.innerHTML = '';
+  var tbody = document.getElementById('extrasTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-  var DIAS_SEM_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  var hoje     = new Date();
+  var hojeAno  = hoje.getFullYear();
+  var hojesMes = hoje.getMonth() + 1;
+  var hojesDia = hoje.getDate();
 
   for (var d = 1; d <= numDias; d++) {
-    var dataFmt = String(d).padStart(2,'0') + '/' +
-                  String(mesNum).padStart(2,'0') + '/' + ano;
-    var dObj  = new Date(ano, mesNum - 1, d);
-    var diaSem = DIAS_SEM_PT[dObj.getDay()];
-    var eFDS   = dObj.getDay() === 0 || dObj.getDay() === 6;
+    var dataFmt = String(d).padStart(2, '0') + '/' +
+                  String(mesNum).padStart(2, '0') + '/' + ano;
+    var dataObj = new Date(ano, mesNum - 1, d);
+    var diaSem  = DIAS_SEM[dataObj.getDay()];
+    var ehFDS   = dataObj.getDay() === 0 || dataObj.getDay() === 6;
+    var ehHoje  = (ano === hojeAno && mesNum === hojesMes && d === hojesDia);
 
-    var alt  = _alteracoesExtras[dataFmt] || {};
-    var orig = _dadosExtras[dataFmt]      || {};
+    var ext       = _dadosExtras[dataFmt] || {};
+    var altExt    = _alteracoesExtras[dataFmt] || {};
+    var ops       = altExt.operadores  !== undefined ? altExt.operadores  : (ext.operadores  || []);
+    var sugs      = altExt.sugestoes   !== undefined ? altExt.sugestoes   : (ext.sugestoes   || []);
+    var obs       = altExt.observacoes !== undefined ? altExt.observacoes : (ext.observacoes || '');
+    var temConflito = !!(_conflitosDoMes[dataFmt]);
+    var temAlt      = !!_alteracoesExtras[dataFmt];
 
-    var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores  || []);
-    var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes   || []);
-    var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
+    var chips = '';
+    if (ops.length)  chips += '<span class="extras-chip chip-op">Operadores (' + ops.length + ')</span>';
+    if (sugs.length) chips += '<span class="extras-chip chip-sug">Sugestões (' + sugs.length + ')</span>';
+    if (obs)         chips += '<span class="extras-chip chip-obs">Observações</span>';
+    if (temConflito) chips += '<span class="extras-chip chip-conflito">⚠️ Conflito</span>';
+    if (temAlt)      chips += '<span class="extras-chip chip-alt">✏️ Por guardar</span>';
 
-    var temOps  = ops.length  > 0;
-    var temSugs = sugs.length > 0;
-    var temObs  = !!obs;
-    var temAlt  = alt.operadores !== undefined || alt.sugestoes !== undefined || alt.observacoes !== undefined;
-    var temConflito = !!_conflitosDoMes[dataFmt];
+    var tr = document.createElement('tr');
+    tr.className = (ehFDS ? 'extras-fds' : '') + (ehHoje ? ' extras-hoje' : '');
+    tr.dataset.data = dataFmt;
 
-    if (!temOps && !temSugs && !temObs && !temAlt) continue;
+    tr.innerHTML =
+      '<td class="extras-td-data">' +
+        '<span class="extras-dia-num">' + String(d).padStart(2, '0') + '</span>' +
+        '<span class="extras-dia-sem">' + diaSem + '</span>' +
+      '</td>' +
+      '<td class="extras-td-chips">' +
+        (chips || '<span class="extras-sem-dados">—</span>') +
+      '</td>' +
+      '<td class="extras-td-acao">' +
+        '<button type="button" class="btn-editar-extras" data-data="' + dataFmt + '">' +
+          '✏️ Editar' +
+        '</button>' +
+      '</td>';
 
-    var cartao = document.createElement('div');
-    cartao.className = 'extras-cartao' +
-                       (eFDS       ? ' fds'       : '') +
-                       (temAlt     ? ' alterado'  : '') +
-                       (temConflito? ' conflito'  : '');
-    cartao.dataset.data = dataFmt;
+    tr.querySelector('.btn-editar-extras').addEventListener('click', function() {
+      abrirModalExtras(this.dataset.data, 'editar');
+    });
 
-    var chipsHtml = '';
-    if (temOps)  chipsHtml += '<span class="extras-chip chip-op">Operadores (' + ops.length + ')</span>';
-    if (temSugs) chipsHtml += '<span class="extras-chip chip-sug">Sugestões (' + sugs.length + ')</span>';
-    if (temObs)  chipsHtml += '<span class="extras-chip chip-obs">Observações</span>';
-    if (temAlt)  chipsHtml += '<span class="extras-chip chip-alt">✏️ Por guardar</span>';
-    if (temConflito) chipsHtml += '<span class="extras-chip chip-conflito">⚠️ Conflito</span>';
-
-    cartao.innerHTML =
-      '<div class="extras-cartao-topo">' +
-        '<div class="extras-cartao-data">' +
-          '<span class="extras-dia-num">' + d + '</span>' +
-          '<span class="extras-dia-sem' + (eFDS ? ' fds' : '') + '">' + diaSem + '</span>' +
-        '</div>' +
-        '<div class="extras-chips">' + chipsHtml + '</div>' +
-        '<button type="button" class="btn-editar-extras" ' +
-                'onclick="abrirModalEditarDia(\'' + dataFmt + '\')" ' +
-                'aria-label="Editar ' + dataFmt + '">✏️ Editar</button>' +
-      '</div>';
-
-    corpo.appendChild(cartao);
-  }
-
-  if (!corpo.children.length) {
-    corpo.innerHTML =
-      '<div class="extras-vazio">Nenhum registo de operadores, sugestões ou observações neste mês.</div>';
+    tbody.appendChild(tr);
   }
 }
 
-function toggleSecaoExtras() {
-  var card  = document.getElementById('secaoExtras');
-  var icone = document.getElementById('iconeExtras');
-  if (!card || !icone) return;
-  var aberto = !card.classList.contains('recolhido');
-  card.classList.toggle('recolhido', aberto);
-  icone.textContent = aberto ? '▶' : '▼';
+function _actualizarLinhaExtras(dataFmt) {
+  var tr = document.querySelector('#extrasTableBody tr[data-data="' + dataFmt + '"]');
+  if (!tr) return;
+
+  var ext    = _dadosExtras[dataFmt]      || {};
+  var altExt = _alteracoesExtras[dataFmt] || {};
+  var ops    = altExt.operadores  !== undefined ? altExt.operadores  : (ext.operadores  || []);
+  var sugs   = altExt.sugestoes   !== undefined ? altExt.sugestoes   : (ext.sugestoes   || []);
+  var obs    = altExt.observacoes !== undefined ? altExt.observacoes : (ext.observacoes || '');
+  var temConflito = !!(_conflitosDoMes[dataFmt]);
+  var temAlt      = !!_alteracoesExtras[dataFmt];
+
+  var chips = '';
+  if (ops.length)  chips += '<span class="extras-chip chip-op">Operadores (' + ops.length + ')</span>';
+  if (sugs.length) chips += '<span class="extras-chip chip-sug">Sugestões (' + sugs.length + ')</span>';
+  if (obs)         chips += '<span class="extras-chip chip-obs">Observações</span>';
+  if (temConflito) chips += '<span class="extras-chip chip-conflito">⚠️ Conflito</span>';
+  if (temAlt)      chips += '<span class="extras-chip chip-alt">✏️ Por guardar</span>';
+
+  var tdChips = tr.querySelector('.extras-td-chips');
+  if (tdChips) tdChips.innerHTML = chips || '<span class="extras-sem-dados">—</span>';
 }
 
 // ============================================================
@@ -752,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { fecharModalGuardar(); fecharModalEditarDia(); }
+    if (e.key === 'Escape') { fecharModalGuardar(); fecharModalExtras(); }
   });
   window.addEventListener('beforeunload', function(e) {
     if (_totalAlteracoes > 0) {
@@ -762,18 +771,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-var overlayConflito = document.getElementById('modalConflito');
-if (overlayConflito) {
-  overlayConflito.addEventListener('click', function(e) {
-    if (e.target === overlayConflito) fecharModalConflito();
+var overlayExtras = document.getElementById('modalExtras');
+if (overlayExtras) {
+  overlayExtras.addEventListener('click', function(e) {
+    if (e.target === overlayExtras) fecharModalExtras();
   });
 }
-
-var overlayEditarDia = document.getElementById('modalEditarDia');
-if (overlayEditarDia) {
-  overlayEditarDia.addEventListener('click', function(e) {
-    if (e.target === overlayEditarDia) fecharModalEditarDia();
-  });
 }
   
 });
@@ -969,188 +972,177 @@ function toggleSecaoEditor(idCorpo, idIcone) {
 }
 
 // ============================================================
-// MODAL DE EDIÇÃO DE DIA — Operadores / Sugestões / Observações
+// MODAL DE EXTRAS — Operadores / Sugestões / Observações
 // ============================================================
 
-function abrirModalNovoExtra() {
-  _modoModalDia   = 'novo';
-  _diaModalActivo = null;
+function abrirModalExtras(data, modo) {
+  _diaModalActivo  = data;
+  _modoModalExtras = modo;
 
-  // Preencher select de dias
-  var sel = document.getElementById('modalDiaSelect');
-  if (sel) {
-    document.getElementById('modalDiaSelectWrap').style.display = '';
-    sel.innerHTML = '<option value="">— Escolha o dia —</option>';
-    var partes  = _mesAtual.split('-');
-    var ano     = parseInt(partes[0], 10);
-    var mesNum  = parseInt(partes[1], 10);
-    var numDias = new Date(ano, mesNum, 0).getDate();
-    var DIAS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    for (var d = 1; d <= numDias; d++) {
-      var dataFmt = String(d).padStart(2,'0') + '/' + String(mesNum).padStart(2,'0') + '/' + ano;
-      var diaSem  = DIAS_PT[new Date(ano, mesNum - 1, d).getDay()];
-      var opt     = document.createElement('option');
-      opt.value       = dataFmt;
-      opt.textContent = d + ' — ' + diaSem + ' (' + dataFmt + ')';
-      sel.appendChild(opt);
+  var selectorDia = document.getElementById('modalExtrasSelectorDia');
+  if (selectorDia) {
+    selectorDia.style.display = modo === 'adicionar' ? '' : 'none';
+    if (modo === 'adicionar') {
+      // Não pré-preencher dia — utilizador escolhe
+      selectorDia.value = data || '';
+      _diaModalActivo   = selectorDia.value || null;
     }
   }
 
-  _modalPreencherFormulario({}, null);
-  document.getElementById('modalEditarDiaTitulo').textContent = '➕ Novo Registo';
-  document.getElementById('modalEditarDia').classList.add('show');
+  var titulo = document.getElementById('modalExtrasTitulo');
+  if (titulo) {
+    titulo.textContent = modo === 'adicionar'
+      ? '➕ Adicionar Registo'
+      : '✏️ Editar — ' + data;
+  }
+  var meta = document.getElementById('modalExtrasMeta');
+  if (meta) meta.textContent = _localAtual;
+
+  _preencherModalExtras(data);
+
+  document.getElementById('modalExtras').classList.add('show');
 }
 
-function abrirModalEditarDia(data) {
-  _modoModalDia   = 'editar';
-  _diaModalActivo = data;
+function _preencherModalExtras(data) {
+  if (!data) {
+    _modalRenderizarOperadores([]);
+    _modalRenderizarSugestoes([]);
+    var obsEl = document.getElementById('modalExtrasObservacoes');
+    if (obsEl) obsEl.value = '';
+    return;
+  }
 
-  var sel = document.getElementById('modalDiaSelect');
-  document.getElementById('modalDiaSelectWrap').style.display = 'none';
-
-  document.getElementById('modalEditarDiaTitulo').textContent =
-    '✏️ ' + _localAtual + ' — ' + data;
-
-  var alt  = _alteracoesExtras[data] || {};
-  var orig = _dadosExtras[data]      || {};
-  _modalPreencherFormulario(alt, orig);
-
-  // Aviso de conflito
-  var avisoEl = document.getElementById('modalConflitoAviso');
-  if (avisoEl) avisoEl.style.display = _conflitosDoMes[data] ? '' : 'none';
-
-  document.getElementById('modalEditarDia').classList.add('show');
-}
-
-function _modalPreencherFormulario(alt, orig) {
-  orig = orig || {};
-  var ops  = alt.operadores  !== undefined ? alt.operadores  : (orig.operadores  || []);
-  var sugs = alt.sugestoes   !== undefined ? alt.sugestoes   : (orig.sugestoes   || []);
-  var obs  = alt.observacoes !== undefined ? alt.observacoes : (orig.observacoes || '');
+  var ext    = _dadosExtras[data]      || {};
+  var altExt = _alteracoesExtras[data] || {};
+  var ops    = altExt.operadores  !== undefined ? altExt.operadores  : (ext.operadores  || []);
+  var sugs   = altExt.sugestoes   !== undefined ? altExt.sugestoes   : (ext.sugestoes   || []);
+  var obs    = altExt.observacoes !== undefined ? altExt.observacoes : (ext.observacoes || '');
 
   _modalRenderizarOperadores(ops);
   _modalRenderizarSugestoes(sugs);
-  document.getElementById('modalObservacoes').value = obs;
+  var obsEl = document.getElementById('modalExtrasObservacoes');
+  if (obsEl) obsEl.value = obs;
+
+  var avisoEl = document.getElementById('modalExtrasConflitoAviso');
+  if (avisoEl) {
+    var temConflito = !!(_conflitosDoMes[data]);
+    avisoEl.style.display = temConflito ? '' : 'none';
+  }
 }
 
-function fecharModalEditarDia() {
-  document.getElementById('modalEditarDia').classList.remove('show');
-  _diaModalActivo = null;
-  _modoModalDia   = 'editar';
+function fecharModalExtras() {
+  document.getElementById('modalExtras').classList.remove('show');
+  _diaModalActivo  = null;
+  _modoModalExtras = null;
 }
 
 function _modalRenderizarOperadores(ops) {
-  var lista = document.getElementById('modalOpLista');
+  var lista = document.getElementById('modalExtrasOpLista');
+  if (!lista) return;
   lista.innerHTML = '';
-  var fonte = (ops && ops.length) ? ops : [];
-  fonte.forEach(function(op) { lista.appendChild(_criarLinhaOpModal(op)); });
+  var items = ops.length ? ops : [{ operador: '', nacionalidades: '', total: '' }];
+  items.forEach(function(op) {
+    lista.appendChild(_criarLinhaOperadorModal(op));
+  });
 }
 
-function _criarLinhaOpModal(op) {
-  op = op || {};
+function _criarLinhaOperadorModal(op) {
   var div = document.createElement('div');
-  div.className = 'modal-op-linha';
+  div.className = 'modal-extras-linha';
   div.innerHTML =
-    '<input type="text"   class="modal-op-nome"  placeholder="Nome do operador"' +
+    '<input type="text"   class="modal-extras-op-nome" placeholder="Nome do operador"' +
            ' value="' + esc(op.operador || '') + '">' +
-    '<input type="text"   class="modal-op-nacs"  placeholder="Nac. (ex: Espanha: 3)"' +
+    '<input type="text"   class="modal-extras-op-nacs" placeholder="Nacionalidades (ex: Espanha: 3)"' +
            ' value="' + esc(op.nacionalidades || '') + '">' +
-    '<input type="number" class="modal-op-total" placeholder="Total" min="0"' +
+    '<input type="number" class="modal-extras-op-total" inputmode="numeric" placeholder="Total" min="0"' +
            ' value="' + esc(String(op.total || '')) + '">' +
     '<button type="button" class="btn-rem-modal-linha"' +
-            ' onclick="this.closest(\'.modal-op-linha\').remove()"' +
+            ' onclick="this.closest(\'.modal-extras-linha\').remove()"' +
             ' aria-label="Remover">✕</button>';
   return div;
 }
 
 function modalAdicionarOperador() {
-  document.getElementById('modalOpLista')
-    .appendChild(_criarLinhaOpModal({}));
+  var lista = document.getElementById('modalExtrasOpLista');
+  if (lista) lista.appendChild(_criarLinhaOperadorModal({ operador: '', nacionalidades: '', total: '' }));
 }
 
 function _modalRenderizarSugestoes(sugs) {
-  var lista = document.getElementById('modalSugLista');
+  var lista = document.getElementById('modalExtrasSugLista');
+  if (!lista) return;
   lista.innerHTML = '';
-  var fonte = (sugs && sugs.length) ? sugs : [];
-  fonte.forEach(function(s) { lista.appendChild(_criarLinhaSugModal(s)); });
+  var items = sugs.length ? sugs : [{ sugestao: '', nacionalidade: '' }];
+  items.forEach(function(s) {
+    lista.appendChild(_criarLinhaSugestaoModal(s));
+  });
 }
 
-function _criarLinhaSugModal(s) {
-  s = s || {};
+function _criarLinhaSugestaoModal(s) {
   var div = document.createElement('div');
-  div.className = 'modal-sug-linha';
+  div.className = 'modal-extras-linha';
   div.innerHTML =
-    '<input type="text" class="modal-sug-texto" placeholder="Sugestão ou crítica"' +
+    '<input type="text" class="modal-extras-sug-texto" placeholder="Sugestão ou crítica"' +
            ' value="' + esc(s.sugestao || '') + '">' +
-    '<input type="text" class="modal-sug-nac"   placeholder="Nacionalidade"' +
+    '<input type="text" class="modal-extras-sug-nac"   placeholder="Nacionalidade"' +
            ' value="' + esc(s.nacionalidade || '') + '">' +
     '<button type="button" class="btn-rem-modal-linha"' +
-            ' onclick="this.closest(\'.modal-sug-linha\').remove()"' +
+            ' onclick="this.closest(\'.modal-extras-linha\').remove()"' +
             ' aria-label="Remover">✕</button>';
   return div;
 }
 
 function modalAdicionarSugestao() {
-  document.getElementById('modalSugLista')
-    .appendChild(_criarLinhaSugModal({}));
+  var lista = document.getElementById('modalExtrasSugLista');
+  if (lista) lista.appendChild(_criarLinhaSugestaoModal({ sugestao: '', nacionalidade: '' }));
 }
 
-function modalAbrirConflito() {
+function guardarModalExtras() {
   var data = _diaModalActivo;
-  fecharModalEditarDia();
-  if (data) abrirModalConflito(data);
-}
 
-function guardarModalDia() {
-  // Determinar o dia a guardar
-  var data = _diaModalActivo;
-  if (_modoModalDia === 'novo') {
-    var sel = document.getElementById('modalDiaSelect');
-    data = sel ? sel.value : '';
-    if (!data) {
-      mostrarToast('Por favor escolha o dia.', 'erro');
-      return;
-    }
+  // No modo adicionar, ler o dia seleccionado no selector
+  if (_modoModalExtras === 'adicionar') {
+    var sel = document.getElementById('modalExtrasSelectorDia');
+    data = sel ? sel.value : null;
+    _diaModalActivo = data;
   }
-  if (!data) return;
+
+  if (!data) {
+    mostrarToast('Escolha o dia do registo.', 'erro');
+    return;
+  }
 
   // Recolher operadores
   var ops = [];
-  document.querySelectorAll('#modalOpLista .modal-op-linha').forEach(function(linha) {
-    var nome = (linha.querySelector('.modal-op-nome')  || {}).value || '';
-    var nacs = (linha.querySelector('.modal-op-nacs')  || {}).value || '';
-    var tot  = parseInt((linha.querySelector('.modal-op-total') || {}).value, 10) || 0;
+  document.querySelectorAll('#modalExtrasOpLista .modal-extras-linha').forEach(function(linha) {
+    var nome = (linha.querySelector('.modal-extras-op-nome')  || {}).value || '';
+    var nacs = (linha.querySelector('.modal-extras-op-nacs')  || {}).value || '';
+    var tot  = parseInt((linha.querySelector('.modal-extras-op-total') || {}).value, 10) || 0;
     if (nome.trim()) ops.push({ operador: nome.trim(), nacionalidades: nacs.trim(), total: tot });
   });
 
   // Recolher sugestões
   var sugs = [];
-  document.querySelectorAll('#modalSugLista .modal-sug-linha').forEach(function(linha) {
-    var txt = (linha.querySelector('.modal-sug-texto') || {}).value || '';
-    var nac = (linha.querySelector('.modal-sug-nac')   || {}).value || '';
+  document.querySelectorAll('#modalExtrasSugLista .modal-extras-linha').forEach(function(linha) {
+    var txt = (linha.querySelector('.modal-extras-sug-texto') || {}).value || '';
+    var nac = (linha.querySelector('.modal-extras-sug-nac')   || {}).value || '';
     if (txt.trim()) sugs.push({ sugestao: txt.trim(), nacionalidade: nac.trim() });
   });
 
-  var obs = (document.getElementById('modalObservacoes') || {}).value || '';
+  var obs = (document.getElementById('modalExtrasObservacoes') || {}).value || '';
 
-  // Comparar com originais para detectar alteração real
+  // Comparar com originais
   var orig        = _dadosExtras[data] || {};
   var opsChanged  = JSON.stringify(ops)  !== JSON.stringify(orig.operadores  || []);
   var sugsChanged = JSON.stringify(sugs) !== JSON.stringify(orig.sugestoes   || []);
   var obsChanged  = obs !== (orig.observacoes || '');
 
   if (!opsChanged && !sugsChanged && !obsChanged) {
-    fecharModalEditarDia();
+    fecharModalExtras();
     mostrarToast('Sem alterações a guardar.', 'info');
     return;
   }
 
-  if (!_alteracoesExtras[data]) _alteracoesExtras[data] = {};
-  if (opsChanged)  _alteracoesExtras[data].operadores  = ops;
-  if (sugsChanged) _alteracoesExtras[data].sugestoes   = sugs;
-  if (obsChanged)  _alteracoesExtras[data].observacoes = obs;
-
-  var btn = document.querySelector('#modalEditarDia .btn-modal-confirmar');
+  var btn = document.querySelector('#modalExtras .btn-modal-confirmar');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ A guardar...'; }
 
   var paisesOriginais = _dadosMes[data] || {};
@@ -1158,12 +1150,9 @@ function guardarModalDia() {
     data:        data,
     local:       _localAtual,
     paises:      paisesOriginais,
-    operadores:  _alteracoesExtras[data].operadores  !== undefined
-                   ? _alteracoesExtras[data].operadores  : (orig.operadores  || []),
-    sugestoes:   _alteracoesExtras[data].sugestoes   !== undefined
-                   ? _alteracoesExtras[data].sugestoes   : (orig.sugestoes   || []),
-    observacoes: _alteracoesExtras[data].observacoes !== undefined
-                   ? _alteracoesExtras[data].observacoes : (orig.observacoes || '')
+    operadores:  opsChanged  ? ops  : (orig.operadores  || []),
+    sugestoes:   sugsChanged ? sugs : (orig.sugestoes   || []),
+    observacoes: obsChanged  ? obs  : (orig.observacoes || '')
   };
 
   chamarAPI('guardarRegisto', payload)
@@ -1173,22 +1162,19 @@ function guardarModalDia() {
         mostrarToast('Erro: ' + resp.mensagem, 'erro');
         return;
       }
+
       // Actualizar _dadosExtras
       if (!_dadosExtras[data]) _dadosExtras[data] = {};
       if (opsChanged)  _dadosExtras[data].operadores  = ops;
       if (sugsChanged) _dadosExtras[data].sugestoes   = sugs;
       if (obsChanged)  _dadosExtras[data].observacoes = obs;
+
+      // Limpar alterações pendentes
       delete _alteracoesExtras[data];
 
-      fecharModalEditarDia();
+      fecharModalExtras();
       mostrarToast('✓ Registo guardado com sucesso.', 'sucesso');
-
-      // Re-renderizar a tabela de extras
-      var partes  = _mesAtual.split('-');
-      var ano     = parseInt(partes[0], 10);
-      var mesNum  = parseInt(partes[1], 10);
-      var numDias = new Date(ano, mesNum, 0).getDate();
-      construirTabelaExtras(ano, mesNum, numDias);
+      _actualizarLinhaExtras(data);
     })
     .catch(function(err) {
       if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
