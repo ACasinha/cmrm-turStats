@@ -358,41 +358,6 @@ function construirGrelha(local, ano, mesNum, numDias) {
     'A editar: <strong>' + esc(local) + '</strong> — <strong>' + nomeMes + '</strong>';
 }
 
-function _assinalarConflitosNaGrelha() {
-  Object.keys(_conflitosDoMes).forEach(function(dataFmt) {
-    var dia = parseInt(dataFmt.split('/')[0], 10);
-
-    // Marcar cabeçalho do dia
-    var ths = document.querySelectorAll('.th-dia');
-    ths.forEach(function(th) {
-      var numEl = th.querySelector('.th-dia-num');
-      if (numEl && parseInt(numEl.textContent, 10) === dia) {
-        th.classList.add('tem-conflito');
-        th.style.cursor = 'pointer';
-        th.title = 'Conflito pendente — clique para resolver';
-        th.addEventListener('click', function() {
-          abrirModalConflito(dataFmt);
-        });
-      }
-    });
-
-    // Marcar células com valores diferentes
-    var conflito     = _conflitosDoMes[dataFmt];
-    var paisesNovos  = (conflito.payloadNovo      || {}).paises || {};
-    var paisesExist  = (conflito.payloadExistente || {}).paises || {};
-    var todosPaises  = Object.keys(Object.assign({}, paisesNovos, paisesExist));
-
-    todosPaises.forEach(function(pais) {
-      if ((paisesNovos[pais] || 0) !== (paisesExist[pais] || 0)) {
-        var inp = document.querySelector(
-          '.cel-input[data-data="' + dataFmt + '"][data-pais="' + CSS.escape(pais) + '"]'
-        );
-        if (inp) inp.classList.add('celula-conflito');
-      }
-    });
-  });
-}
-
 // ============================================================
 // Construir Tabela de Operadores, Sugestões, etc
 // ============================================================
@@ -457,6 +422,41 @@ function construirTabelaExtras(ano, mesNum, numDias) {
 
     tbody.appendChild(tr);
   }
+}
+
+function _assinalarConflitosNaGrelha() {
+  Object.keys(_conflitosDoMes).forEach(function(dataFmt) {
+    var dia = parseInt(dataFmt.split('/')[0], 10);
+
+    // Marcar cabeçalho do dia
+    var ths = document.querySelectorAll('.th-dia');
+    ths.forEach(function(th) {
+      var numEl = th.querySelector('.th-dia-num');
+      if (numEl && parseInt(numEl.textContent, 10) === dia) {
+        th.classList.add('tem-conflito');
+        th.style.cursor = 'pointer';
+        th.title = 'Conflito pendente — clique para resolver';
+        th.addEventListener('click', function() {
+          abrirModalConflito(dataFmt);
+        });
+      }
+    });
+
+    // Marcar células com valores diferentes
+    var conflito     = _conflitosDoMes[dataFmt];
+    var paisesNovos  = (conflito.payloadNovo      || {}).paises || {};
+    var paisesExist  = (conflito.payloadExistente || {}).paises || {};
+    var todosPaises  = Object.keys(Object.assign({}, paisesNovos, paisesExist));
+
+    todosPaises.forEach(function(pais) {
+      if ((paisesNovos[pais] || 0) !== (paisesExist[pais] || 0)) {
+        var inp = document.querySelector(
+          '.cel-input[data-data="' + dataFmt + '"][data-pais="' + CSS.escape(pais) + '"]'
+        );
+        if (inp) inp.classList.add('celula-conflito');
+      }
+    });
+  });
 }
 
 function _actualizarLinhaExtras(dataFmt) {
