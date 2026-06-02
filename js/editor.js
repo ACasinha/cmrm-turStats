@@ -425,6 +425,8 @@ function _renderizarListaExtras(containerId, badgeId, tipo) {
   var badge     = document.getElementById(badgeId);
   if (!container) return;
 
+  var diasComDados = [];
+
   // Recolher todos os dias que têm dados do tipo pretendido
   var partes = _mesAtual.split('-');
 var ano = parseInt(partes[0], 10);
