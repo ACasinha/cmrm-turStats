@@ -1080,17 +1080,13 @@ function _modalRenderizarOperadores(ops) {
   lista.innerHTML = '';
   var items = ops.length ? ops : [{ operador: '', nacionalidades: '', total: '' }];
   items.forEach(function(op) {
-    lista.appendChild(_criarLinhaOperadorModal(op));
-    items.forEach(function(op) {
-  var cartao = _criarLinhaOperadorModal(op);
-  // Ligar eventos de recalculo às linhas já existentes
-  cartao.querySelectorAll('.modal-op-nac-select, .modal-op-nac-num').forEach(function(el) {
-    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function() {
-      _recalcularTotalModalOp(cartao);
+    var cartao = _criarLinhaOperadorModal(op);
+    cartao.querySelectorAll('.modal-op-nac-select, .modal-op-nac-num').forEach(function(el) {
+      el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', function() {
+        _recalcularTotalModalOp(cartao);
+      });
     });
-  });
-  lista.appendChild(cartao);
-});
+    lista.appendChild(cartao);
   });
 }
 
