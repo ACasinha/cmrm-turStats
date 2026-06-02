@@ -224,11 +224,42 @@ function verificarDados() {
 
   // Sem rede: não verificar (não há dados no servidor para comparar)
   if (!navigator.onLine) {
-    mostrarBanner('novo', '📦 Sem ligação — os dados serão guardados localmente.');
-    document.getElementById('btnGuardar').disabled = false;
-    bloquearFormulario(false);
-    return;
+  bloquearFormulario(false);
+  document.getElementById('btnGuardar').disabled = false;
+
+  // Consultar IndexedDB — pode já existir um registo local para este local/data
+  if (typeof syncObterRegistoLocalPorLocalData === 'function') {
+    var partes2       = data.split('-');
+    var dataFmt2      = partes2[2] + '/' + partes2[1] + '/' + partes2[0];
+
+    syncObterRegistoLocalPorLocalData(local, dataFmt2)
+      .then(function(payloadLocal) {
+        if (payloadLocal) {
+          // Carregar dados do registo local na UI
+          carregarDados({
+            paises:      payloadLocal.paises      || {},
+            operadores:  payloadLocal.operadores  || [],
+            sugestoes:   payloadLocal.sugestoes   || [],
+            observacoes: payloadLocal.observacoes || ''
+          });
+          mostrarBanner('carregado',
+            '📦 Dados locais carregados (offline). Pode editar — serão sincronizados ao reconectar.');
+          mostrarToast('✓ Dados locais carregados.', 'info');
+        } else {
+          mostrarBanner('novo',
+            '📦 Sem ligação — o registo será guardado localmente e enviado ao reconectar.');
+        }
+      })
+      .catch(function() {
+        mostrarBanner('novo',
+          '📦 Sem ligação — o registo será guardado localmente e enviado ao reconectar.');
+      });
+  } else {
+    mostrarBanner('novo',
+      '📦 Sem ligação — o registo será guardado localmente e enviado ao reconectar.');
   }
+  return;
+}
 
   bloquearFormulario(false);
   document.getElementById('btnGuardar').disabled = false;
