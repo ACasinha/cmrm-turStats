@@ -777,8 +777,6 @@ if (overlayExtras) {
     if (e.target === overlayExtras) fecharModalExtras();
   });
 }
-}
-  
 });
 
 // ============================================================
