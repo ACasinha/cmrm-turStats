@@ -130,7 +130,18 @@ function carregarMes() {
   }
 
   _dadosMes       = respDados.dados          || {};
-  _conflitosDoMes = respConflitos.conflitos  || {};
+
+  if (!respConflitos.sucesso) {
+    console.error('Erro ao obter conflitos:', respConflitos);
+    _conflitosDoMes = {};
+  } else {
+    _conflitosDoMes = respConflitos.conflitos || {};
+  }
+
+  var partes  = mes.split('-');
+  var ano     = parseInt(partes[0], 10);
+  var mesNum  = parseInt(partes[1], 10);
+  var numDias = new Date(ano, mesNum, 0).getDate();
 
   construirGrelha(local, ano, mesNum, numDias);
   atualizarBadgeConflitos();
