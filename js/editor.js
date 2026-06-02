@@ -426,31 +426,19 @@ function _renderizarListaExtras(containerId, badgeId, tipo) {
   if (!container) return;
 
   // Recolher todos os dias que têm dados do tipo pretendido
-  var diasComDados = [];
-  Object.keys(_dadosExtras).forEach(function(data) {
-    var d = _dadosExtras[data];
-    var temDados = tipo === 'operadores'
-      ? (d.operadores && d.operadores.length > 0)
-      : (d.sugestoes && d.sugestoes.length > 0) || d.observacoes;
+  var partes = _mesAtual.split('-');
+var ano = parseInt(partes[0], 10);
+var mes = parseInt(partes[1], 10);
+var numDias = new Date(ano, mes, 0).getDate();
 
-    var temAlt = tipo === 'operadores'
-      ? (_alteracoesExtras[data] && _alteracoesExtras[data].operadores !== undefined)
-      : (_alteracoesExtras[data] && (_alteracoesExtras[data].sugestoes !== undefined ||
-                                      _alteracoesExtras[data].observacoes !== undefined));
+for (var d = 1; d <= numDias; d++) {
+  var data = String(d).padStart(2, '0') + '/' +
+             String(mes).padStart(2, '0') + '/' +
+             ano;
 
-    if (temDados || temAlt) diasComDados.push(data);
-  });
-
-  // Incluir também dias com alterações não guardadas (pode não ter dados originais)
-  Object.keys(_alteracoesExtras).forEach(function(data) {
-    if (diasComDados.indexOf(data) === -1) {
-      var a = _alteracoesExtras[data];
-      var temAlt = tipo === 'operadores'
-        ? a.operadores !== undefined
-        : a.sugestoes !== undefined || a.observacoes !== undefined;
-      if (temAlt) diasComDados.push(data);
-    }
-  });
+  diasComDados.push(data);
+}
+  
 
   // Ordenar por data
   diasComDados.sort(function(a, b) {
