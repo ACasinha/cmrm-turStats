@@ -136,6 +136,16 @@ function guardarNaFila(payload) {
 // ============================================================
 
 function sincronizarFila() {
+  var resetPromise = initSync().then(function(db) {
+    return db.getAllFromIndex(SYNC_STORE, 'estado', ESTADO.A_SINCRONIZAR)
+      .then(function(presos) {
+        return Promise.all(presos.map(function(r) {
+          console.log('[Sync] Reset de registo preso:', r.id);
+          return _atualizarEstado(r.id, ESTADO.PENDENTE);
+        }));
+      });
+  }).catch(function() {});
+  
   if (_sincronizando) {
     console.log('[Sync] Sincronização já em curso — ignorar pedido duplicado.');
     return Promise.resolve();
@@ -260,6 +270,29 @@ function obterTodosPendentesERevisao() {
 function obterRegistoPorId(id) {
   return initSync().then(function(db) {
     return db.get(SYNC_STORE, id);
+  });
+}
+
+// Consulta a fila por local+data — usado por app.js ao verificar
+// dados quando está offline, em substituição da chamada à API.
+function obterRegistoLocalPorLocalData(local, data) {
+  var chave = local + '|' + data;
+  return initSync().then(function(db) {
+    return db.getAllFromIndex(SYNC_STORE, 'local_data', chave);
+  }).then(function(registos) {
+    if (!registos || registos.length === 0) return null;
+
+    // Se houver mais do que um (improvável), preferir o mais recente
+    registos.sort(function(a, b) {
+      return new Date(b.criadoEm) - new Date(a.criadoEm);
+    });
+
+    // Devolver apenas registos activos (não rejeitados nem com erro permanente)
+    var activo = registos.find(function(r) {
+      return r.estado !== ESTADO.REJEITADO && r.estado !== ESTADO.ERRO;
+    });
+
+    return activo ? activo.payload : null;
   });
 }
 
@@ -478,3 +511,4 @@ window.syncObterRegistoPorId = obterRegistoPorId;
 window.syncMarcarResolvido   = marcarResolvido;
 window.syncLimparResolvidos  = limparResolvidos;
 window.SYNC_ESTADO           = ESTADO;
+window.syncObterRegistoLocalPorLocalData = obterRegistoLocalPorLocalData;
