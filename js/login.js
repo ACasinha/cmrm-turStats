@@ -143,6 +143,8 @@ function _processarUtilizador(userOuDados) {
 // ============================================================
 
 function _esconderEcraLogin() {
+  document.documentElement.classList.remove('tem-sessao');
+  
   var overlay = document.getElementById('loginOverlay');
   if (overlay) overlay.classList.add('hidden');
 
@@ -153,6 +155,8 @@ function _esconderEcraLogin() {
 }
 
 function _mostrarEcraLogin() {
+  document.documentElement.classList.remove('tem-sessao');
+  
   var overlay = document.getElementById('loginOverlay');
   if (overlay) overlay.classList.remove('hidden');
 
