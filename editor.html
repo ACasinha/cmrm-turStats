@@ -6,10 +6,24 @@
 <meta name="theme-color" content="#8B4A2B">
 <link rel="icon" type="image/png" href="img/logo-small.png">
 <title>Editor Mensal — Registo de Nacionalidades</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style-editor.css">
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" ><link rel="stylesheet" href="css/style-editor.css">
 <link rel="stylesheet" href="css/nav-menu.css">
 <link rel="manifest" href="manifest.json">
+
+<!-- Preload de scripts críticos -->
+<link rel="preload" href="js/api.js"    as="script">
+<link rel="preload" href="js/auth.js"   as="script">
+<link rel="preload" href="js/users.js"  as="script">
+<link rel="preload" href="js/login.js"  as="script">
+
+<!-- Preconnect aos domínios externos usados no arranque -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
 </head>
 <body>
 
@@ -351,17 +365,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- Aplicação -->
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/users.js"></script>
-<script src="js/login.js"></script>
-<script src="js/sw-update.js"></script>
+<script defer src="js/api.js"></script>
+<script defer src="js/auth.js"></script>
+<script defer src="js/users.js"></script>
+<script defer src="js/login.js"></script>
+<script defer src="js/sw-update.js"></script>
      
-<script src="js/data.js"></script>
-<script src="js/editor.js"></script>
-<script src="js/editor-sticky.js"></script>
+<script defer src="js/data.js"></script>
+<script defer src="js/editor.js"></script>
+<script defer src="js/editor-sticky.js"></script>
 
-<script src="js/nav-menu.js"></script>
+<script defer src="js/nav-menu.js"></script>
 
 
 <script>
