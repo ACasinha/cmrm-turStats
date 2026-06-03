@@ -104,6 +104,7 @@ function logout(temAlteracoes) {
     _opcoesLogin.onSessaoTerminada();
   }
 
+  sessionStorage.removeItem('perfilUtilizador');
   // Após apiLogout, o onAuthStateChanged dispara com user=null
   // e _mostrarEcraLogin() é chamado automaticamente.
   apiLogout();
@@ -130,6 +131,12 @@ function _processarUtilizador(userOuDados) {
       }
 
       _esconderEcraLogin();
+
+      sessionStorage.setItem(
+  'perfilUtilizador',
+  JSON.stringify(perfil)
+  );
+      
       _opcoesLogin.onSucesso(perfil);
     })
     .catch(function () {
@@ -188,6 +195,7 @@ function _mostrarErroCampo(erroEl, mensagem) {
 }
 
 function _fazerSignOut() {
+  sessionStorage.removeItem('perfilUtilizador');
   if (typeof limparCacheUtilizador === 'function') limparCacheUtilizador();
   firebaseAuth.signOut();
 }
