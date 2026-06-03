@@ -32,6 +32,14 @@ var _erroLoginPendente = '';
 function inicializarLogin(opcoes) {
   _opcoesLogin = opcoes;
 
+  // Ocultar overlay imediatamente se há sessão local válida,
+  // para evitar o flash do ecrã de login durante a navegação.
+  // O onAuthStateChanged confirma (ou desfaz) a seguir.
+  if (typeof sessaoValida === 'function' && sessaoValida()) {
+    var overlay = document.getElementById('loginOverlay');
+    if (overlay) overlay.style.visibility = 'hidden';
+  }
+
   // Usado apenas para sessões persistidas (refresh de página)
   // e para logout. O login activo é tratado em fazerLogin().
   apiObservarAuth(function (user) {
