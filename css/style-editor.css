@@ -103,6 +103,60 @@ input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; marg
 input[type="number"] { -moz-appearance: textfield; }
 
 /* ============================================================
+   Overlay de carregamento entre páginas
+   Partilhado por todas as páginas
+============================================================ */
+
+.page-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #F5EBE0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+.page-loading-overlay.oculto {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.page-loading-logo {
+  width: clamp(80px, 20vw, 120px);
+  opacity: 0.85;
+}
+
+.page-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(139, 74, 43, 0.15);
+  border-top: 3px solid #8B4A2B;
+  border-radius: 50%;
+  animation: loading-spin 0.85s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+.page-loading-texto {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.82rem;
+  color: #8B4A2B;
+  opacity: 0.6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
    ANIMAÇÕES
 ============================================================ */
 @keyframes loginEntrada {
