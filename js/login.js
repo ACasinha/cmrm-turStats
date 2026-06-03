@@ -104,9 +104,10 @@ function logout(temAlteracoes) {
     _opcoesLogin.onSessaoTerminada();
   }
 
-  // Após apiLogout, o onAuthStateChanged dispara com user=null
-  // e _mostrarEcraLogin() é chamado automaticamente.
-  apiLogout();
+  // apiLogout está em auth.js; o onAuthStateChanged re-mostrará o login
+  apiLogout().then(function () {
+    _mostrarEcraLogin();
+  });
 }
 
 // ============================================================
