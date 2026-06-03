@@ -96,6 +96,7 @@ function obterPerfilUtilizador(forcar) {
 function limparCacheUtilizador() {
   _cacheUtilizador = null;
   _timestampCache  = 0;
+  try { sessionStorage.removeItem('rmz_perfil'); } catch(e) {}
 }
 
 // ============================================================
