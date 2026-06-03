@@ -32,18 +32,20 @@ var _erroLoginPendente = '';
 function inicializarLogin(opcoes) {
   _opcoesLogin = opcoes;
 
-  // Ocultar overlay imediatamente se há sessão local válida,
-  // para evitar o flash do ecrã de login durante a navegação.
-  // O onAuthStateChanged confirma (ou desfaz) a seguir.
+  // Mostrar overlay de carregamento imediatamente
+  _mostrarLoadingOverlay();
+
+  // Ocultar overlay de login enquanto o Firebase resolve
   if (typeof sessaoValida === 'function' && sessaoValida()) {
     var overlay = document.getElementById('loginOverlay');
     if (overlay) overlay.style.visibility = 'hidden';
   }
 
-  // Usado apenas para sessões persistidas (refresh de página)
-  // e para logout. O login activo é tratado em fazerLogin().
   apiObservarAuth(function (user) {
     if (!user) {
+      var overlay = document.getElementById('loginOverlay');
+      if (overlay) overlay.style.visibility = '';
+      _ocultarLoadingOverlay();
       _mostrarEcraLogin();
       return;
     }
@@ -144,6 +146,7 @@ function _processarUtilizador(userOuDados) {
 // ============================================================
 
 function _esconderEcraLogin() {
+  _ocultarLoadingOverlay();
   document.documentElement.classList.remove('tem-sessao');
   
   var overlay = document.getElementById('loginOverlay');
@@ -195,4 +198,34 @@ function _mostrarErroCampo(erroEl, mensagem) {
 function _fazerSignOut() {
   if (typeof limparCacheUtilizador === 'function') limparCacheUtilizador();
   firebaseAuth.signOut();
+}
+
+// ============================================================
+// OVERLAY DE CARREGAMENTO ENTRE PÁGINAS
+// ============================================================
+
+function _mostrarLoadingOverlay() {
+  // Reutilizar se já existir (navegação rápida)
+  if (document.getElementById('pageLoadingOverlay')) return;
+
+  var div = document.createElement('div');
+  div.id        = 'pageLoadingOverlay';
+  div.className = 'page-loading-overlay';
+  div.innerHTML =
+    '<img class="page-loading-logo" src="img/logo-small.png" alt="">' +
+    '<div class="page-loading-spinner"></div>' +
+    '<span class="page-loading-texto">A carregar...</span>';
+
+  // Inserir antes de qualquer outro elemento para garantir z-index
+  document.body.insertBefore(div, document.body.firstChild);
+}
+
+function _ocultarLoadingOverlay() {
+  var overlay = document.getElementById('pageLoadingOverlay');
+  if (!overlay) return;
+  overlay.classList.add('oculto');
+  // Remover do DOM após a transição
+  setTimeout(function() {
+    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  }, 350);
 }
