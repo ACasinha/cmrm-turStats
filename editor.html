@@ -393,6 +393,7 @@ function toggleSecaoGrelha() {
 // ── Mostrar o card de grelha após carregar dados ────────────
 // Sobrepor a função construirGrelha do editor.js para também
 // mostrar / atualizar os elementos de UI do HTML.
+document.addEventListener('DOMContentLoaded', function() {
 var _construirGrelhaOriginal = construirGrelha;
 construirGrelha = function(local, ano, mesNum, numDias) {
   // Esconder estado vazio, mostrar secção de grelha
@@ -423,6 +424,7 @@ construirGrelha = function(local, ano, mesNum, numDias) {
   // Observar alterações para avisos no card
   observarAlteracoesParaAviso();
 };
+     });
 
 // Atualizar aviso de alterações não guardadas no card
 function observarAlteracoesParaAviso() {
