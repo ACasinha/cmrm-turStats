@@ -40,6 +40,40 @@ function inicializarLogin(opcoes) {
     if (overlay) overlay.style.visibility = 'hidden';
   }
 
+  if (
+  typeof sessaoValida === 'function' &&
+  sessaoValida()
+) {
+
+  var perfilCache =
+  sessionStorage.getItem('perfilUtilizador');
+
+var perfil = null;
+var cacheValida = false;
+
+if (perfilCache) {
+  try {
+    var cache = JSON.parse(perfilCache);
+
+    if (
+      cache &&
+      cache.perfil &&
+      cache.timestamp &&
+      (Date.now() - cache.timestamp < 5 * 60 * 1000) // 5 min
+    ) {
+      perfil = cache.perfil;
+      cacheValida = true;
+    } else {
+      sessionStorage.removeItem('perfilUtilizador');
+    }
+
+  } catch (e) {
+    sessionStorage.removeItem('perfilUtilizador');
+  }
+}
+
+}
+
   // Usado apenas para sessões persistidas (refresh de página)
   // e para logout. O login activo é tratado em fazerLogin().
   apiObservarAuth(function (user) {
@@ -116,33 +150,128 @@ function logout(temAlteracoes) {
 // ============================================================
 
 function _processarUtilizador(userOuDados) {
+
+  // 1. Tentar usar cache imediatamente
+  var perfilCache =
+  sessionStorage.getItem('perfilUtilizador');
+
+var perfil = null;
+var cacheValida = false;
+
+if (perfilCache) {
+  try {
+    var cache = JSON.parse(perfilCache);
+
+    if (
+      cache &&
+      cache.perfil &&
+      cache.timestamp &&
+      (Date.now() - cache.timestamp < 5 * 60 * 1000) // 5 min
+    ) {
+      perfil = cache.perfil;
+      cacheValida = true;
+    } else {
+      sessionStorage.removeItem('perfilUtilizador');
+    }
+
+  } catch (e) {
+    sessionStorage.removeItem('perfilUtilizador');
+  }
+}
+
+  if (cacheValida) {
+
+  if (
+    perfil.ativo &&
+    _opcoesLogin.verificarAcesso(perfil)
+  ) {
+
+    _esconderEcraLogin();
+    _opcoesLogin.onSucesso(perfil);
+
+  }
+}
+
+  // 2. Atualizar sempre a partir do Firestore
   obterPerfilUtilizador()
-    .then(function (perfil) {
+    .then(function(perfil) {
+
+      sessionStorage.setItem(
+      'perfilUtilizador',
+      JSON.stringify({
+        timestamp: Date.now(),
+        perfil: perfil
+      })
+    );
+
       if (!perfil.ativo) {
-        _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
+
+        sessionStorage.removeItem(
+          'perfilUtilizador'
+        );
+
+        _mostrarErroLogin(
+          'Esta conta foi desativada. Contacte o administrador.'
+        );
+
         _fazerSignOut();
+
         return;
       }
 
       if (!_opcoesLogin.verificarAcesso(perfil)) {
-        _mostrarErroLogin(_opcoesLogin.mensagemSemAcesso || 'Acesso negado.');
+
+        sessionStorage.removeItem(
+          'perfilUtilizador'
+        );
+
+        _mostrarErroLogin(
+          _opcoesLogin.mensagemSemAcesso ||
+          'Acesso negado.'
+        );
+
         _fazerSignOut();
+
         return;
       }
 
-      _esconderEcraLogin();
-
+      // Atualizar cache
       sessionStorage.setItem(
-  'perfilUtilizador',
-  JSON.stringify(perfil)
-  );
-      
-      _opcoesLogin.onSucesso(perfil);
+      'perfilUtilizador',
+      JSON.stringify({
+      timestamp: Date.now(),
+      perfil: perfil
+      })
+        );
+
+      // Só atualizar UI se ainda não foi mostrada
+      var overlay =
+        document.getElementById('loginOverlay');
+
+      var loginVisivel =
+        overlay &&
+        !overlay.classList.contains('hidden');
+
+      if (loginVisivel) {
+
+        _esconderEcraLogin();
+
+        _opcoesLogin.onSucesso(perfil);
+
+      }
+
     })
-    .catch(function () {
-      // Falha ao ler perfil (ex.: sem ligação)
-      _mostrarEcraLogin();
+    .catch(function() {
+
+      // Se não havia cache, mostrar login
+      if (!perfilCache) {
+
+        _mostrarEcraLogin();
+
+      }
+
     });
+
 }
 
 // ============================================================
