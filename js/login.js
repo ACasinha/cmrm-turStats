@@ -40,38 +40,6 @@ function inicializarLogin(opcoes) {
     if (overlay) overlay.style.visibility = 'hidden';
   }
 
-  if (
-  typeof sessaoValida === 'function' &&
-  sessaoValida()
-) {
-
-   var perfilCache = sessionStorage.getItem('perfilUtilizador');
-
-var cache = null;
-var cacheValida = false;
-
-if (perfilCache) {
-  try {
-    cache = JSON.parse(perfilCache);
-
-    if (
-      cache &&
-      cache.uid &&
-      cache.timestamp &&
-      (Date.now() - cache.timestamp < 5 * 60 * 1000)
-    ) {
-      cacheValida = true;
-    } else {
-      sessionStorage.removeItem('perfilUtilizador');
-    }
-
-  } catch (e) {
-    sessionStorage.removeItem('perfilUtilizador');
-  }
-} 
-
-}
-
   // Usado apenas para sessões persistidas (refresh de página)
   // e para logout. O login activo é tratado em fazerLogin().
   apiObservarAuth(function (user) {
@@ -136,7 +104,6 @@ function logout(temAlteracoes) {
     _opcoesLogin.onSessaoTerminada();
   }
 
-  sessionStorage.removeItem('perfilUtilizador');
   // Após apiLogout, o onAuthStateChanged dispara com user=null
   // e _mostrarEcraLogin() é chamado automaticamente.
   apiLogout();
@@ -148,131 +115,27 @@ function logout(temAlteracoes) {
 // ============================================================
 
 function _processarUtilizador(userOuDados) {
-
-  // 1. Tentar usar cache imediatamente
-  var perfilCache = sessionStorage.getItem('perfilUtilizador');
-
-var cache = null;
-var cacheValida = false;
-
-if (perfilCache) {
-  try {
-    cache = JSON.parse(perfilCache);
-
-    if (
-      cache &&
-      cache.uid &&
-      cache.timestamp &&
-      (Date.now() - cache.timestamp < 5 * 60 * 1000)
-    ) {
-      cacheValida = true;
-    } else {
-      sessionStorage.removeItem('perfilUtilizador');
-    }
-
-  } catch (e) {
-    sessionStorage.removeItem('perfilUtilizador');
-  }
-}
-
-  if (cacheValida) {
-
-  _esconderEcraLogin();
-
-  _opcoesLogin.onSucesso({
-    uid: cache.uid,
-    nome: cache.nome,
-    email: cache.email
-  });
-
-}
-
-  // 2. Atualizar sempre a partir do Firestore
   obterPerfilUtilizador()
-    .then(function(perfil) {
-
-      sessionStorage.setItem(
-  'perfilUtilizador',
-  JSON.stringify({
-    uid: perfil.uid,
-    nome: perfil.nome,
-    email: perfil.email,
-    timestamp: Date.now()
-  })
-);
-
+    .then(function (perfil) {
       if (!perfil.ativo) {
-
-        sessionStorage.removeItem(
-          'perfilUtilizador'
-        );
-
-        _mostrarErroLogin(
-          'Esta conta foi desativada. Contacte o administrador.'
-        );
-
+        _mostrarErroLogin('Esta conta foi desativada. Contacte o administrador.');
         _fazerSignOut();
-        _mostrarEcraLogin();
-
         return;
       }
 
       if (!_opcoesLogin.verificarAcesso(perfil)) {
-
-        sessionStorage.removeItem(
-          'perfilUtilizador'
-        );
-
-        _mostrarErroLogin(
-          _opcoesLogin.mensagemSemAcesso ||
-          'Acesso negado.'
-        );
-
+        _mostrarErroLogin(_opcoesLogin.mensagemSemAcesso || 'Acesso negado.');
         _fazerSignOut();
-        _mostrarEcraLogin();
-
         return;
       }
 
-      // Atualizar cache
-      sessionStorage.setItem(
-      'perfilUtilizador',
-      JSON.stringify({
-      uid: perfil.uid,
-    nome: perfil.nome,
-    email: perfil.email,
-    timestamp: Date.now()
-      })
-        );
-
-      // Só atualizar UI se ainda não foi mostrada
-      var overlay =
-        document.getElementById('loginOverlay');
-
-      var loginVisivel =
-        overlay &&
-        !overlay.classList.contains('hidden');
-
-      if (loginVisivel) {
-
-        _esconderEcraLogin();
-
-        _opcoesLogin.onSucesso(perfil);
-
-      }
-
+      _esconderEcraLogin();
+      _opcoesLogin.onSucesso(perfil);
     })
-    .catch(function() {
-
-      // Se não havia cache, mostrar login
-      if (!perfilCache) {
-
-        _mostrarEcraLogin();
-
-      }
-
+    .catch(function () {
+      // Falha ao ler perfil (ex.: sem ligação)
+      _mostrarEcraLogin();
     });
-
 }
 
 // ============================================================
@@ -325,7 +188,6 @@ function _mostrarErroCampo(erroEl, mensagem) {
 }
 
 function _fazerSignOut() {
-  sessionStorage.removeItem('perfilUtilizador');
   if (typeof limparCacheUtilizador === 'function') limparCacheUtilizador();
   firebaseAuth.signOut();
 }
