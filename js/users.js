@@ -50,6 +50,18 @@ function obterPerfilUtilizador(forcar) {
     return Promise.resolve(_cacheUtilizador);
   }
 
+  if (!forcar) {
+    try {
+      var cached = sessionStorage.getItem('rmz_perfil');
+      if (cached) {
+        var parsed = JSON.parse(cached);
+        _cacheUtilizador = parsed;
+        _timestampCache  = agora;
+        return Promise.resolve(parsed);
+      }
+    } catch(e) {}
+  }
+  
   var user = firebaseAuth.currentUser;
   if (!user) {
     return Promise.reject(new Error('Utilizador não autenticado.'));
@@ -68,6 +80,7 @@ function obterPerfilUtilizador(forcar) {
     .then(function (perfil) {
       _cacheUtilizador = perfil;
       _timestampCache  = Date.now();
+      try { sessionStorage.setItem('rmz_perfil', JSON.stringify(perfil)); } catch(e) {}
       return perfil;
     })
     .catch(function (err) {
