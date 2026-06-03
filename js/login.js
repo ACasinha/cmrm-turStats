@@ -45,23 +45,21 @@ function inicializarLogin(opcoes) {
   sessaoValida()
 ) {
 
-  var perfilCache =
-  sessionStorage.getItem('perfilUtilizador');
+   var perfilCache = sessionStorage.getItem('perfilUtilizador');
 
-var perfil = null;
+var cache = null;
 var cacheValida = false;
 
 if (perfilCache) {
   try {
-    var cache = JSON.parse(perfilCache);
+    cache = JSON.parse(perfilCache);
 
     if (
       cache &&
-      cache.perfil &&
+      cache.uid &&
       cache.timestamp &&
-      (Date.now() - cache.timestamp < 5 * 60 * 1000) // 5 min
+      (Date.now() - cache.timestamp < 5 * 60 * 1000)
     ) {
-      perfil = cache.perfil;
       cacheValida = true;
     } else {
       sessionStorage.removeItem('perfilUtilizador');
@@ -70,7 +68,7 @@ if (perfilCache) {
   } catch (e) {
     sessionStorage.removeItem('perfilUtilizador');
   }
-}
+} 
 
 }
 
@@ -197,12 +195,14 @@ if (perfilCache) {
     .then(function(perfil) {
 
       sessionStorage.setItem(
-      'perfilUtilizador',
-      JSON.stringify({
-        timestamp: Date.now(),
-        perfil: perfil
-      })
-    );
+  'perfilUtilizador',
+  JSON.stringify({
+    uid: perfil.uid,
+    nome: perfil.nome,
+    email: perfil.email,
+    timestamp: Date.now()
+  })
+ );
 
       if (!perfil.ativo) {
 
