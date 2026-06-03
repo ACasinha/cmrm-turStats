@@ -150,23 +150,21 @@ function logout(temAlteracoes) {
 function _processarUtilizador(userOuDados) {
 
   // 1. Tentar usar cache imediatamente
-  var perfilCache =
-  sessionStorage.getItem('perfilUtilizador');
+  var perfilCache = sessionStorage.getItem('perfilUtilizador');
 
-var perfil = null;
+var cache = null;
 var cacheValida = false;
 
 if (perfilCache) {
   try {
-    var cache = JSON.parse(perfilCache);
+    cache = JSON.parse(perfilCache);
 
     if (
       cache &&
-      cache.perfil &&
+      cache.uid &&
       cache.timestamp &&
-      (Date.now() - cache.timestamp < 5 * 60 * 1000) // 5 min
+      (Date.now() - cache.timestamp < 5 * 60 * 1000)
     ) {
-      perfil = cache.perfil;
       cacheValida = true;
     } else {
       sessionStorage.removeItem('perfilUtilizador');
@@ -179,15 +177,14 @@ if (perfilCache) {
 
   if (cacheValida) {
 
-  if (
-    perfil.ativo &&
-    _opcoesLogin.verificarAcesso(perfil)
-  ) {
+  _esconderEcraLogin();
 
-    _esconderEcraLogin();
-    _opcoesLogin.onSucesso(perfil);
+  _opcoesLogin.onSucesso({
+    uid: cache.uid,
+    nome: cache.nome,
+    email: cache.email
+  });
 
-  }
 }
 
   // 2. Atualizar sempre a partir do Firestore
@@ -202,7 +199,7 @@ if (perfilCache) {
     email: perfil.email,
     timestamp: Date.now()
   })
- );
+);
 
       if (!perfil.ativo) {
 
@@ -215,6 +212,7 @@ if (perfilCache) {
         );
 
         _fazerSignOut();
+        _mostrarEcraLogin();
 
         return;
       }
@@ -231,6 +229,7 @@ if (perfilCache) {
         );
 
         _fazerSignOut();
+        _mostrarEcraLogin();
 
         return;
       }
@@ -239,8 +238,10 @@ if (perfilCache) {
       sessionStorage.setItem(
       'perfilUtilizador',
       JSON.stringify({
-      timestamp: Date.now(),
-      perfil: perfil
+      uid: perfil.uid,
+    nome: perfil.nome,
+    email: perfil.email,
+    timestamp: Date.now()
       })
         );
 
