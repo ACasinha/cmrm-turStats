@@ -12,7 +12,6 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" ><link rel="stylesheet" href="css/style-admin.css">
 <link rel="stylesheet" href="css/nav-menu.css">
 <link rel="manifest" href="manifest.json">
-</head>
 
 <!-- Preload de scripts críticos -->
 <link rel="preload" href="js/api.js"    as="script">
@@ -24,7 +23,44 @@
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+<style>
+  body { background: #F5EBE0; margin: 0; }
 
+  .login-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(145deg, #5a2d1a 0%, #8B4A2B 50%, #6B3320 100%);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  .login-overlay.hidden   { opacity: 0; visibility: hidden; pointer-events: none; }
+  .login-overlay.aguardar { visibility: hidden; opacity: 0; }
+</style>
+
+<script>
+  // Executado de forma síncrona antes de qualquer render.
+  // Se há sessão local válida, ocultar o overlay desde o início.
+  // O onAuthStateChanged vai confirmar ou reverter.
+  (function() {
+    try {
+      var ts = localStorage.getItem('rmz_login_ts');
+      if (ts && (Date.now() - parseInt(ts, 10)) < 36000000) {
+        document.documentElement.classList.add('tem-sessao');
+      }
+    } catch(e) {}
+  })();
+</script>
+
+<style>
+  /* Quando há sessão provável, ocultar overlay sem transição */
+  html.tem-sessao .login-overlay {
+    visibility: hidden;
+    opacity: 0;
+    transition: none;
+  }
+</style>
+  
+</head>
 <body>
 
 <!-- LOGIN -->
