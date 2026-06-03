@@ -24,6 +24,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
+<style>
+  /* Estilo crítico inline — evita flash de conteúdo não estilizado */
+  .login-overlay {
+    visibility: hidden; position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(145deg, #5a2d1a 0%, #8B4A2B 50%, #6B3320 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  body { background: #F5EBE0; margin: 0; }
+</style>
+     
 </head>
 <body>
 
