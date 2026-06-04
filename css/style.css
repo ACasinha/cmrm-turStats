@@ -608,7 +608,7 @@ input:-webkit-autofill:focus {
 
 .section-header {
   background: white;
-  color: white;
+  color: var(--terra);
   padding: clamp(10px,2vw,14px) clamp(12px,3vw,20px);
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   min-height: 50px;
