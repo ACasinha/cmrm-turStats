@@ -275,7 +275,7 @@ input[type="number"] {
 .btn-login {
   width: 100%;
   padding: clamp(13px, 3vw, 16px);
-  background: var(--terra-light);
+  background: var(--terra);
   color: white; border: none;
   border-radius: var(--radius-sm);
   font-size: var(--text-base); font-weight: 700;
@@ -1048,7 +1048,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .btn-limpar:active:not(:disabled) { transform:scale(0.97); }
 
 .btn-guardar {
-  background: var(--terra-light);
+  background: var(--terra);
   color:white; box-shadow:0 4px 14px rgba(139,74,43,0.35);
 }
 .btn-guardar:hover:not(:disabled)  { transform:translateY(-1px); box-shadow:0 6px 20px rgba(139,74,43,0.45); }
