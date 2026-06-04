@@ -107,8 +107,6 @@ function irParaEditor()    { window.location.href = 'editor.html'; }
 // ============================================================
 
 function activarApp(perfil) {
-  var elNome = document.getElementById('headerNomeFuncionario');
-  if (elNome) elNome.textContent = perfil.nome || perfil.email || '—';
 
   if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
 
