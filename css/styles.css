@@ -307,6 +307,42 @@ input[type="number"] {
 .btn-login-pdf:hover { border-color:var(--terra); color:var(--terra); }
 
 /* ============================================================
+   BOTÕES — guardar / limpar / ações
+============================================================ */
+.actions {
+  display:flex; gap:10px; justify-content:flex-end;
+  margin-top:clamp(14px,3vw,20px); flex-wrap:wrap;
+}
+
+.btn {
+  padding: clamp(12px,2.5vw,13px) clamp(16px,3.5vw,24px);
+  border:none; border-radius:10px;
+  font-size:var(--text-base); font-weight:600;
+  cursor:pointer; letter-spacing:0.4px;
+  white-space:nowrap; min-height:46px; touch-action:manipulation;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-sm);
+}
+
+.btn-limpar {
+  background:white; color:var(--cinza); border:1.5px solid var(--cinza-claro);
+}
+.btn-limpar:hover:not(:disabled)  { border-color:var(--cinza); background:var(--terra-pale); }
+.btn-limpar:active:not(:disabled) { transform:scale(0.97); }
+
+.btn-guardar {
+  background: var(--terra);
+  color:white; box-shadow:0 4px 14px rgba(139,74,43,0.35);
+}
+.btn-guardar:hover:not(:disabled)  { transform:translateY(-1px); box-shadow:0 6px 20px rgba(139,74,43,0.45); }
+.btn-guardar:active:not(:disabled) { transform:translateY(1px);  box-shadow:0 2px 8px rgba(139,74,43,0.25); }
+.btn-guardar:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+
+@media (max-width:380px) {
+  .actions { flex-direction:column; }
+  .btn     { width:100%; text-align:center; }
+}
+
+/* ============================================================
    RODAPÉ
 ============================================================ */
 .rodape {
