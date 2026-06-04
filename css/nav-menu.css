@@ -12,8 +12,8 @@
   width: auto;
   height: auto;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
   color: var(--terra-dark);
   cursor: pointer;
   flex-shrink: 0;
@@ -28,11 +28,11 @@
 }
 
 .nav-menu-btn:hover {
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .nav-menu-btn:focus-visible {
-  outline: 2px solid rgba(0, 0, 0, 0.07);
+  outline: 2px solid rgba(0, 0, 0, 0.04);
   outline-offset: 2px;
 }
 
