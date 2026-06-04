@@ -75,8 +75,8 @@ function fazerLogout() {
 // ============================================================
 
 function activarEditor(perfil) {
-  document.getElementById('headerNomeFuncionario').textContent =
-    perfil.nome || perfil.email || '—';
+  var elNome = document.getElementById('headerNomeFuncionario');
+  if (elNome) elNome.textContent = perfil.nome || perfil.email || '—';
 
   var badgeModo = document.getElementById('badgeModo');
   if (badgeModo) {
