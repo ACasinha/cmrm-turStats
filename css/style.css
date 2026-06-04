@@ -642,7 +642,7 @@ input:-webkit-autofill:focus {
 
 table { width: 100%; border-collapse: collapse; }
 
-table thead tr { background: var(--cinza-claro); }
+table thead tr { background: white; }
 
 table th {
   padding: clamp(7px,1.5vw,10px) clamp(10px,2vw,16px);
@@ -658,7 +658,7 @@ table td {
 }
 
 table tbody tr { transition: background var(--transition-fast); }
-table tbody tr:hover { background: rgba(245,235,224,0.6); }
+table tbody tr:hover { background: rgba(0,0,0,0.04); }
 
 /* Tabela de países */
 .paises-table th:last-child {
