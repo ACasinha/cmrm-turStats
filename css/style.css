@@ -275,7 +275,7 @@ input[type="number"] {
 .btn-login {
   width: 100%;
   padding: clamp(13px, 3vw, 16px);
-  background: linear-gradient(135deg, var(--terra) 0%, var(--terra-light) 100%);
+  background: var(--terra-light);
   color: white; border: none;
   border-radius: var(--radius-sm);
   font-size: var(--text-base); font-weight: 700;
