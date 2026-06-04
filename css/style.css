@@ -1216,10 +1216,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 
 .btn-novo-operador {
   width: 100%;
-  background: none;
-  border: 1.5px dashed var(--cinza-claro);
+  background: var(--branco);
+  border: 1.5px solid var(--cinza-claro);
   border-radius: var(--radius-sm);
-  color: var(--cinza);
+  color: var(--terra);
   font-size: var(--text-sm);
   font-weight: 600;
   padding: 11px 16px;
@@ -1376,9 +1376,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important;
 .btn-add-nac-cartao {
   width: calc(100% - 28px);
   margin: 2px 14px 10px;
-  background: none;
-  border: 1.5px dashed var(--cinza-claro);
-  color: var(--cinza);
+  background: var(--branco);
+  border: 1.5px solid var(--cinza-claro);
+  color: var(--terra);
   border-radius: var(--radius-sm);
   padding: 7px 10px;
   font-size: var(--text-xs);
