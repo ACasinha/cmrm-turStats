@@ -119,8 +119,8 @@ function fazerLogout() {
 function activarDashboard(perfil) {
   document.getElementById('loginOverlay').classList.add('hidden');
   document.getElementById('dashboardWrap').style.display = '';
-  document.getElementById('headerNomeFuncionario').textContent =
-    perfil.nome || perfil.email || '—';
+  var elNome = document.getElementById('headerNomeFuncionario');
+  if (elNome) elNome.textContent = perfil.nome || perfil.email || '—';
 
   // Barra de admin
   if (_isAdmin) {
