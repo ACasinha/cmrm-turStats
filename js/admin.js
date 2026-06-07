@@ -49,22 +49,6 @@ function fazerLogout() {
 function voltarParaApp()   { window.location.href = 'index.html'; }
 
 // ============================================================
-// NOME NO HEADER
-// ============================================================
-
-function mostrarNomeUtilizador() {
-  obterPerfilUtilizador()
-    .then(function(perfil) {
-      var nome = perfil.nome || (firebaseAuth.currentUser && firebaseAuth.currentUser.email) || '—';
-      document.getElementById('headerNomeFuncionario').textContent = nome;
-    })
-    .catch(function() {
-      var user = firebaseAuth.currentUser;
-      document.getElementById('headerNomeFuncionario').textContent = (user && user.email) || '—';
-    });
-}
-
-// ============================================================
 // CARREGAR UTILIZADORES
 // ============================================================
 
@@ -346,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function() {
     },
     mensagemSemAcesso: 'Acesso negado. Apenas administradores podem aceder a esta área.',
     onSucesso:         function(perfil) {
-      mostrarNomeUtilizador();
       carregarUtilizadores();
 
       if (typeof construirMenuNav === 'function') construirMenuNav(perfil);
