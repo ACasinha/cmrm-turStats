@@ -183,13 +183,19 @@
     var painel = document.getElementById('navMenuPainel');
     if (!btn || !painel) return;
 
-    _posicionarPainel();
     _menuAberto = true;
     btn.classList.add('aberto');
     btn.setAttribute('aria-expanded', 'true');
+    
+    // 1. Força o display a block primeiro para o browser saber que ele existe
+    painel.style.display = 'block';
+    
+    // 2. Agora o getBoundingClientRect() já consegue ler o botão
+    _posicionarPainel();
+
+    // 3. Aplica a classe de animação/visibilidade
     painel.classList.add('visivel');
 
-    // Focar no primeiro item
     var primeiro = painel.querySelector('.nav-menu-item:not(.activo)');
     if (primeiro) setTimeout(function() { primeiro.focus(); }, 50);
   }
@@ -198,10 +204,20 @@
     var btn    = document.getElementById('navMenuBtn');
     var painel = document.getElementById('navMenuPainel');
     if (!btn || !painel) return;
+    
     _menuAberto = false;
     btn.classList.remove('aberto');
     btn.setAttribute('aria-expanded', 'false');
+    
+    // 1. Remove a classe visual
     painel.classList.remove('visivel');
+    
+    // 2. Esconde o elemento do fluxo de cliques completamente
+    painel.style.display = 'none';
+    
+    // 3. Atira o menu para fora do ecrã (garantia absoluta contra bugs de renderização)
+    painel.style.top = '-9999px';
+    painel.style.right = '-9999px';
   }
 
   function _posicionarPainel() {
